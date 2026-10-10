@@ -1,0 +1,150 @@
+export interface PriceRange {
+  min: number;
+  max: number;
+  price: number;
+}
+
+export interface Subproduct {
+  id: string;
+  sku: string;
+  status: boolean;
+  color: string;
+  stock: number;
+  prices: PriceRange[];
+}
+
+export interface ProductImage {
+  url: string;
+  alt?: string;
+}
+
+export interface Customization {
+  type: string;
+  description: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+}
+
+export interface Product {
+  id: string;
+  slug: string;
+  code: string;
+  name: string;
+  sku: string;
+  description: string;
+  tech_description: string;
+  status: boolean;
+  featured: boolean;
+  stock: number;
+  price: number;
+  min_quantity: number;
+  categories: Category[];
+  images: ProductImage[];
+  customizations: Customization[];
+  subproducts: Subproduct[];
+  /** NOT from the API — used locally until Fase 3 adds semantic search */
+  tags_ocasiao?: string[];
+}
+
+export interface ProductListResponse {
+  data: Product[];
+  total: number;
+  per_page: number;
+  current_page: number;
+}
+
+export interface BudgetItem {
+  subproduct_id: string;
+  quantity: number;
+}
+
+export interface CreateBudgetBody {
+  type: "PF" | "PJ";
+  customer_name: string;
+  customer_phone: string;
+  customer_email: string;
+  items: BudgetItem[];
+  comments?: string;
+  origin?: string;
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  admin_id?: string;
+}
+
+export interface Budget {
+  id: string;
+  code: string;
+  type: "PF" | "PJ";
+  status_id: number;
+  status_name: string;
+  customer_name: string;
+  customer_phone: string;
+  customer_email: string;
+  items: BudgetItemDetail[];
+  comments?: string;
+  admin_id?: string;
+  mockup_url?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BudgetItemDetail {
+  subproduct_id: string;
+  quantity: number;
+  unit_price: number;
+  subtotal: number;
+  product_name: string;
+  color: string;
+}
+
+export interface Order {
+  id: string;
+  code: string;
+  status_id: number;
+  status_name: string;
+  budget_code: string;
+  customer_name: string;
+  customer_cpf: string;
+  customer_email: string;
+  customer_phone: string;
+  shipping_type: string;
+  shipping_time: number;
+  subtotal: number;
+  total: number;
+  items: OrderItem[];
+  file_url?: string;
+  nfs?: string[];
+  bankslips?: string[];
+}
+
+export interface OrderItem {
+  subproduct_id: string;
+  quantity: number;
+  unit_price: number;
+  subtotal: number;
+  product_name: string;
+  color: string;
+}
+
+export interface Admin {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+}
+
+export interface ApiError {
+  message: string;
+  errors?: Record<string, string[]>;
+}
+
+export type FaultType = "timeout" | "500" | "404" | "412" | "422";
+
+export interface FaultConfig {
+  type: FaultType;
+  remaining: number;
+}

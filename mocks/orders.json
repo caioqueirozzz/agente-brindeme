@@ -1,0 +1,130 @@
+[
+  {
+    "id": "order-001",
+    "code": "PED-2024-001",
+    "status_id": 3,
+    "status_name": "Em produção",
+    "budget_code": "ORC-1001",
+    "customer_name": "João Silva",
+    "customer_cpf": "123.456.789-00",
+    "customer_email": "joao.silva@empresa.com.br",
+    "customer_phone": "5583999990000",
+    "shipping_type": "Sedex",
+    "shipping_time": 5,
+    "subtotal": 945.00,
+    "total": 1045.00,
+    "items": [
+      {
+        "subproduct_id": "sub-001-branco",
+        "quantity": 50,
+        "unit_price": 15.40,
+        "subtotal": 770.00,
+        "product_name": "Caneca de Porcelana Personalizada",
+        "color": "Branco"
+      },
+      {
+        "subproduct_id": "sub-004-azul",
+        "quantity": 10,
+        "unit_price": 17.50,
+        "subtotal": 175.00,
+        "product_name": "Caderno A5 Personalizado",
+        "color": "Azul"
+      }
+    ],
+    "file_url": "https://cdn.brindeme.com/artes/order-001-arte.pdf",
+    "nfs": ["https://cdn.brindeme.com/nfs/nf-001.pdf"],
+    "bankslips": []
+  },
+  {
+    "id": "order-002",
+    "code": "PED-2024-002",
+    "status_id": 5,
+    "status_name": "Entregue",
+    "budget_code": "ORC-1002",
+    "customer_name": "Maria Oliveira",
+    "customer_cpf": "987.654.321-00",
+    "customer_email": "maria.oliveira@gmail.com",
+    "customer_phone": "5511988887777",
+    "shipping_type": "PAC",
+    "shipping_time": 10,
+    "subtotal": 1800.00,
+    "total": 1950.00,
+    "items": [
+      {
+        "subproduct_id": "sub-002-azul",
+        "quantity": 100,
+        "unit_price": 18.00,
+        "subtotal": 1800.00,
+        "product_name": "Squeeze de Alumínio Personalizado",
+        "color": "Azul"
+      }
+    ],
+    "file_url": "https://cdn.brindeme.com/artes/order-002-arte.pdf",
+    "nfs": ["https://cdn.brindeme.com/nfs/nf-002.pdf"],
+    "bankslips": ["https://cdn.brindeme.com/boletos/bol-002.pdf"]
+  },
+  {
+    "id": "order-003",
+    "code": "PED-2024-003",
+    "status_id": 1,
+    "status_name": "Aguardando aprovação do mockup",
+    "budget_code": "ORC-1003",
+    "customer_name": "Carlos Mendes",
+    "customer_cpf": "456.789.123-00",
+    "customer_email": "carlos@agencia.com",
+    "customer_phone": "5521977776666",
+    "shipping_type": "Retirada",
+    "shipping_time": 0,
+    "subtotal": 4200.00,
+    "total": 4200.00,
+    "items": [
+      {
+        "subproduct_id": "sub-007-preto",
+        "quantity": 100,
+        "unit_price": 34.00,
+        "subtotal": 3400.00,
+        "product_name": "Kit Escritório Personalizado",
+        "color": "Preto"
+      },
+      {
+        "subproduct_id": "sub-006-cristal",
+        "quantity": 100,
+        "unit_price": 8.00,
+        "subtotal": 800.00,
+        "product_name": "Chaveiro de Acrílico Personalizado",
+        "color": "Cristal"
+      }
+    ],
+    "file_url": null,
+    "nfs": [],
+    "bankslips": []
+  },
+  {
+    "id": "order-004",
+    "code": "PED-2024-004",
+    "status_id": 2,
+    "status_name": "Aguardando pagamento",
+    "budget_code": "ORC-1004",
+    "customer_name": "Ana Costa",
+    "customer_cpf": "321.654.987-00",
+    "customer_email": "ana.costa@construtora.com",
+    "customer_phone": "5547966665555",
+    "shipping_type": "Transportadora",
+    "shipping_time": 7,
+    "subtotal": 2175.00,
+    "total": 2375.00,
+    "items": [
+      {
+        "subproduct_id": "sub-005-natural",
+        "quantity": 150,
+        "unit_price": 14.50,
+        "subtotal": 2175.00,
+        "product_name": "Ecobag Personalizada",
+        "color": "Natural"
+      }
+    ],
+    "file_url": "https://cdn.brindeme.com/artes/order-004-arte.pdf",
+    "nfs": [],
+    "bankslips": ["https://cdn.brindeme.com/boletos/bol-004.pdf"]
+  }
+]

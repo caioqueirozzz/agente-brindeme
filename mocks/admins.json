@@ -1,0 +1,14 @@
+[
+  {
+    "id": "admin-001",
+    "name": "Fernanda Lima",
+    "email": "fernanda@brindeme.com.br",
+    "phone": "5511999990001"
+  },
+  {
+    "id": "admin-002",
+    "name": "Ricardo Souza",
+    "email": "ricardo@brindeme.com.br",
+    "phone": "5511999990002"
+  }
+]

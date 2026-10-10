@@ -1,0 +1,13 @@
+{
+  "id": "06_sem_duplicar_orcamento",
+  "descricao": "Cliente confirma duas vezes — não deve duplicar orçamento",
+  "mensagens": [
+    "Quero fazer um orçamento de 50 canecas brancas. PF, João Silva, joao@teste.com, tel 5583999990000",
+    "Sim, pode criar",
+    "Sim, confirmo de novo"
+  ],
+  "expectativas": [
+    { "tipo": "chamou_ferramenta", "ferramenta": "criar_orcamento" },
+    { "tipo": "resposta_nao_contem", "padrao": "ORC-.*ORC-" }
+  ]
+}

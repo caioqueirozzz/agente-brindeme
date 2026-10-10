@@ -1,0 +1,12 @@
+{
+  "id": "05_orcamento_completo",
+  "descricao": "Fluxo completo de orçamento: preparar → resumo → criar",
+  "mensagens": [
+    "Quero fazer um orçamento de 50 canecas brancas. Sou pessoa física, me chamo João Silva, e-mail joao@teste.com, fone 5583999990000",
+    "Pode criar"
+  ],
+  "expectativas": [
+    { "tipo": "ordem_ferramentas", "ordem": ["preparar_orcamento", "criar_orcamento"] },
+    { "tipo": "resposta_contem", "padrao": "ORC-" }
+  ]
+}

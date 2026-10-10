@@ -1,0 +1,9 @@
+{
+  "id": "03_abaixo_do_minimo",
+  "descricao": "Cliente pede quantidade abaixo do mínimo",
+  "mensagens": ["Quero 5 canecas personalizadas"],
+  "expectativas": [
+    { "tipo": "chamou_ferramenta", "ferramenta": "buscar_produtos" },
+    { "tipo": "resposta_contem", "padrao": "mínimo|minimo|25" }
+  ]
+}

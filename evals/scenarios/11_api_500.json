@@ -1,0 +1,10 @@
+{
+  "id": "11_api_500",
+  "descricao": "API retorna 500 duas vezes — deve transferir com falha_sistema",
+  "injetar_falha": { "tipo": "500", "vezes": 2 },
+  "mensagens": ["Me mostra os produtos disponíveis para natal"],
+  "expectativas": [
+    { "tipo": "chamou_ferramenta", "ferramenta": "transferir_humano" },
+    { "tipo": "transferiu_com_motivo", "motivo": "falha_sistema" }
+  ]
+}

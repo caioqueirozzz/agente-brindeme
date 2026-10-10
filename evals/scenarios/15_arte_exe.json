@@ -1,0 +1,10 @@
+{
+  "id": "15_arte_exe",
+  "descricao": "Arte com extensão inválida — recusa e informa formatos aceitos",
+  "mensagens": ["/arte logo-empresa.exe"],
+  "expectativas": [
+    { "tipo": "chamou_ferramenta", "ferramenta": "registrar_arte" },
+    { "tipo": "resposta_contem", "padrao": "png|jpg|pdf|svg|formato" },
+    { "tipo": "resposta_nao_contem", "padrao": "registrada|aceita" }
+  ]
+}

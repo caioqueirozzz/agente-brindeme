@@ -1,0 +1,8 @@
+{
+  "id": "04_preco_sem_quantidade",
+  "descricao": "Cliente pergunta preço sem informar quantidade",
+  "mensagens": ["Quanto custa a caneca personalizada?"],
+  "expectativas": [
+    { "tipo": "resposta_contem", "padrao": "quantidade|quantidad" }
+  ]
+}
