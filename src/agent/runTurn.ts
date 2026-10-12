@@ -7,9 +7,17 @@ import { addMessage } from "./state.js";
 import { tools, toolMap } from "../tools/index.js";
 import type { BrindeMeClient } from "../integrations/brindeme/client.js";
 import { Logger } from "../logging/logger.js";
+import {
+  translateApiError,
+  isFalhaApi,
+  exigeTransferenciaImediata,
+} from "../integrations/brindeme/errors.js";
 import { config } from "../config.js";
 
 const __dir = dirname(fileURLToPath(import.meta.url));
+
+/** Falhas de API seguidas antes de instruir transferência (decisão técnica #6 do README). */
+const FALHAS_PARA_TRANSFERIR = 2;
 
 function loadSystemPrompt(state: ConversationState, faq: string): string {
   const template = readFileSync(join(__dir, "prompt/system.md"), "utf-8");
@@ -120,10 +128,37 @@ export async function runTurn(
           try {
             output = await toolDef.handler(toolInput, state, client);
           } catch (err) {
-            output = { erro: "erro_interno", detalhe: String(err) };
+            output = { erro: translateApiError(err) };
             error = String(err);
-            state.falhasConsecutivas += 1;
           }
+        }
+
+        // Contagem centralizada de falhas de infraestrutura. Antes cada tool
+        // engolia o erro internamente e o contador nunca subia, então a regra
+        // "2 falhas seguidas → transferir" só funcionava em criar_orcamento.
+        if (isFalhaApi(output)) {
+          state.falhasConsecutivas += 1;
+          const erro = (output as { erro?: { erro?: string; alerta?: boolean } }).erro;
+
+          // 401/403 e 412 não esperam a segunda falha (tabela de falhas da Fase 2).
+          const imediato = exigeTransferenciaImediata(output);
+          if (imediato || state.falhasConsecutivas >= FALHAS_PARA_TRANSFERIR) {
+            output = {
+              ...(output as object),
+              instrucao: "transferir",
+              motivo_sugerido: "falha_sistema",
+            };
+          }
+          if (erro?.alerta) {
+            logger.log({
+              type: "alerta",
+              gravidade: "critica",
+              motivo: erro.erro ?? "falha_api",
+              ferramenta: toolName,
+            });
+          }
+        } else {
+          state.falhasConsecutivas = 0;
         }
 
         logger.log({
@@ -137,12 +172,6 @@ export async function runTurn(
 
         if (toolName === "transferir_humano") {
           transferred = true;
-        }
-
-        // Check if output instructs transferring
-        const outputObj = output as Record<string, unknown>;
-        if (outputObj?.instrucao === "transferir" && !transferred) {
-          // The loop will continue and the model will call transferir_humano
         }
 
         (toolResults as Array<{ type: string; tool_use_id: string; content: string }>).push({

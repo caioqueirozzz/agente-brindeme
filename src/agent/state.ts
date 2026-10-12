@@ -52,11 +52,26 @@ export interface ConversationState {
     dataLimite?: string;
   };
   produtosDiscutidos: string[];
+  /**
+   * subproduto_id → produto_id. GET /product (listagem) não traz subprodutos,
+   * então só dá para resolver um subproduto via GET /product/{id}. O mapa é
+   * preenchido por buscar_produtos e detalhar_produto.
+   */
+  subprodutoParaProduto: Record<string, string>;
   artes: ArteRegistrada[];
   orcamentoPendente?: OrcamentoPendente;
   orcamentos: string[];
+  /**
+   * código do orçamento → UUID. GET /budget/{id} só aceita o UUID, mas o
+   * cliente (e o modelo) só conhecem o código. Guardado na criação.
+   */
+  orcamentoIds: Record<string, string>;
+  /** token de confirmação → código do orçamento criado. Garante idempotência sem depender da implementação do client. */
+  orcamentoTokens: Record<string, string>;
   falhasConsecutivas: number;
   falhasValidacaoPedido: number;
+  /** Consultas de pedido nesta conversa — teto contra varredura de códigos. */
+  consultasPedido: number;
   historico: Mensagem[];
 }
 
@@ -68,10 +83,14 @@ export function createInitialState(telefone: string): ConversationState {
     cliente: {},
     necessidade: {},
     produtosDiscutidos: [],
+    subprodutoParaProduto: {},
     artes: [],
     orcamentos: [],
+    orcamentoIds: {},
+    orcamentoTokens: {},
     falhasConsecutivas: 0,
     falhasValidacaoPedido: 0,
+    consultasPedido: 0,
     historico: [],
   };
 }

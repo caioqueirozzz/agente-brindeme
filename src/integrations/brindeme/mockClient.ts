@@ -12,7 +12,14 @@ import type {
   FaultConfig,
   FaultType,
 } from "./types.js";
-import type { BrindeMeClient, ListProductsParams } from "./client.js";
+import type {
+  BrindeMeClient,
+  ListProductsParams,
+  CreateBudgetOptions,
+  ListOrdersParams,
+  OrderListResponse,
+} from "./client.js";
+import { ApiError } from "./errors.js";
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const mocksDir = join(__dir, "../../../mocks");
@@ -21,21 +28,12 @@ function loadJson<T>(filename: string): T {
   return JSON.parse(readFileSync(join(mocksDir, filename), "utf-8")) as T;
 }
 
-class ApiError extends Error {
-  constructor(
-    public readonly status: number,
-    public readonly body: object
-  ) {
-    super(`HTTP ${status}`);
-  }
-}
-
 let budgetCounter = 1040;
 
 export class MockBrindeMeClient implements BrindeMeClient {
   private fault: FaultConfig | null = null;
   private budgetStore: Map<string, Budget> = new Map();
-  private createdBudgetsByToken: Map<string, string> = new Map();
+  private budgetsByIdempotencyKey: Map<string, Budget> = new Map();
 
   injectFault(fault: FaultConfig): void {
     this.fault = { ...fault };
@@ -88,8 +86,15 @@ export class MockBrindeMeClient implements BrindeMeClient {
     return product;
   }
 
-  async createBudget(body: CreateBudgetBody): Promise<Budget> {
+  async createBudget(body: CreateBudgetBody, options?: CreateBudgetOptions): Promise<Budget> {
     this.checkFault();
+
+    // Idempotência no lado do "servidor" simulado, espelhando o que a API real deve fazer.
+    if (options?.idempotencyKey) {
+      const existente = this.budgetsByIdempotencyKey.get(options.idempotencyKey);
+      if (existente) return existente;
+    }
+
     const products = loadJson<Product[]>("products.json");
 
     const items = body.items.map((item) => {
@@ -124,7 +129,7 @@ export class MockBrindeMeClient implements BrindeMeClient {
       id,
       code,
       type: body.type,
-      status_id: 1,
+      status_id: "1",
       status_name: "Aguardando mockup",
       customer_name: body.customer_name,
       customer_phone: body.customer_phone,
@@ -137,6 +142,9 @@ export class MockBrindeMeClient implements BrindeMeClient {
     };
     this.budgetStore.set(id, budget);
     this.budgetStore.set(code, budget);
+    if (options?.idempotencyKey) {
+      this.budgetsByIdempotencyKey.set(options.idempotencyKey, budget);
+    }
     return budget;
   }
 
@@ -155,45 +163,23 @@ export class MockBrindeMeClient implements BrindeMeClient {
     return order;
   }
 
+  async listOrders(params?: ListOrdersParams): Promise<OrderListResponse> {
+    this.checkFault();
+    const orders = loadJson<Order[]>("orders.json");
+    const perPage = params?.per_page ?? 100;
+    const page = params?.page ?? 1;
+    const data = orders.slice((page - 1) * perPage, page * perPage);
+    return {
+      data,
+      total: orders.length,
+      per_page: perPage,
+      current_page: page,
+      last_page: Math.max(1, Math.ceil(orders.length / perPage)),
+    };
+  }
+
   async listAdmins(): Promise<Admin[]> {
     this.checkFault();
     return loadJson<Admin[]>("admins.json");
   }
-
-  /** Used by criarOrcamento for idempotency */
-  getBudgetByToken(token: string): Budget | undefined {
-    const id = this.createdBudgetsByToken.get(token);
-    return id ? this.budgetStore.get(id) : undefined;
-  }
-
-  setBudgetToken(token: string, budgetId: string): void {
-    this.createdBudgetsByToken.set(token, budgetId);
-  }
-}
-
-export function translateApiError(err: unknown): {
-  erro: string;
-  tentar_novamente: boolean;
-  detalhes?: string;
-} {
-  if (err instanceof ApiError) {
-    switch (err.status) {
-      case 404:
-        return { erro: "nao_encontrado", tentar_novamente: false };
-      case 408:
-        return { erro: "timeout", tentar_novamente: true };
-      case 412:
-        return { erro: "precondition_falhou", tentar_novamente: false, detalhes: "Verifique os dados enviados (erro 412 — detalhes pendentes na Fase 2)" };
-      case 422:
-        return { erro: "dados_invalidos", tentar_novamente: false, detalhes: JSON.stringify((err.body as { errors?: unknown }).errors) };
-      case 500:
-        return { erro: "instabilidade", tentar_novamente: true };
-      default:
-        return { erro: "erro_desconhecido", tentar_novamente: true };
-    }
-  }
-  if (err instanceof Error && err.message.includes("timeout")) {
-    return { erro: "timeout", tentar_novamente: true };
-  }
-  return { erro: "erro_desconhecido", tentar_novamente: true };
 }

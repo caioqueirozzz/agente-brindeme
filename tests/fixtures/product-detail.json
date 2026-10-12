@@ -1,0 +1,344 @@
+{
+  "data": {
+    "id": "dfa3d674-9202-40c1-a60c-48937db9e2be",
+    "slug": "caneta-ecologica-kraft",
+    "code": 15437,
+    "name": "Fulana de Tal",
+    "description": "Caneta em kraft com aparência que remete ao bambu, além de ponta, clipe e acionamento em plástico. Possui acionamento por clique e carga esferográfica azul de 1,0mm.",
+    "status": true,
+    "sku": "09319",
+    "tag": null,
+    "subproducts": [
+      {
+        "id": "0b6cd894-3b70-4fd6-b70d-accacff9f823",
+        "product_id": "dfa3d674-9202-40c1-a60c-48937db9e2be",
+        "product_image_id": "4f1340de-5bf2-45e6-b3f2-f56929b40688",
+        "color_id": "60b43f3c-ef9e-4cbb-97fd-2ad262c660ba",
+        "sku": "09319-PRE",
+        "status": true,
+        "image": {
+          "image_url": {
+            "original": "https://cdn.brinde.me/shared/products/original/caneta-ecologica-kraft-27d2b748.webp",
+            "small": "https://cdn.brinde.me/shared/products/small/caneta-ecologica-kraft-27d2b748.webp",
+            "thumbnail": "https://cdn.brinde.me/shared/products/thumbnail/caneta-ecologica-kraft-27d2b748.webp",
+            "medium": "https://cdn.brinde.me/shared/products/medium/caneta-ecologica-kraft-27d2b748.webp",
+            "large": "https://cdn.brinde.me/shared/products/large/caneta-ecologica-kraft-27d2b748.webp"
+          }
+        },
+        "color": {
+          "id": "60b43f3c-ef9e-4cbb-97fd-2ad262c660ba",
+          "name": "Fulana de Tal",
+          "type": "image",
+          "hexadecimal": null,
+          "sku": "PRE",
+          "image_url": {
+            "original": "https://cdn.brinde.me/shared/colors/original/30133345dfe5dae931ef329fb94a5c04.webp",
+            "small": "https://cdn.brinde.me/shared/colors/small/30133345dfe5dae931ef329fb94a5c04.webp",
+            "thumbnail": "https://cdn.brinde.me/shared/colors/thumbnail/30133345dfe5dae931ef329fb94a5c04.webp"
+          }
+        },
+        "stock": 19977,
+        "prices": [
+          {
+            "init_quantity": 1,
+            "final_quantity": 9999999,
+            "price": 68
+          }
+        ]
+      },
+      {
+        "id": "0f6ba4ec-87fe-4989-893f-14ece19cb539",
+        "product_id": "dfa3d674-9202-40c1-a60c-48937db9e2be",
+        "product_image_id": "e1500cff-f852-4e89-9edb-e6787bfc3b0e",
+        "color_id": "c7b9ad81-238b-4862-b48a-cf087f07b301",
+        "sku": "09319-VM",
+        "status": true,
+        "image": {
+          "image_url": {
+            "original": "https://cdn.brinde.me/shared/products/original/caneta-ecologica-kraft-7ab3a76a.webp",
+            "small": "https://cdn.brinde.me/shared/products/small/caneta-ecologica-kraft-7ab3a76a.webp",
+            "thumbnail": "https://cdn.brinde.me/shared/products/thumbnail/caneta-ecologica-kraft-7ab3a76a.webp",
+            "medium": "https://cdn.brinde.me/shared/products/medium/caneta-ecologica-kraft-7ab3a76a.webp",
+            "large": "https://cdn.brinde.me/shared/products/large/caneta-ecologica-kraft-7ab3a76a.webp"
+          }
+        },
+        "color": {
+          "id": "c7b9ad81-238b-4862-b48a-cf087f07b301",
+          "name": "Fulana de Tal",
+          "type": "image",
+          "hexadecimal": null,
+          "sku": "VM",
+          "image_url": {
+            "original": "https://cdn.brinde.me/shared/colors/original/2f525d114586bfbc7e967e0a51831d32.webp",
+            "small": "https://cdn.brinde.me/shared/colors/small/2f525d114586bfbc7e967e0a51831d32.webp",
+            "thumbnail": "https://cdn.brinde.me/shared/colors/thumbnail/2f525d114586bfbc7e967e0a51831d32.webp"
+          }
+        },
+        "stock": 19977,
+        "prices": [
+          {
+            "init_quantity": 1,
+            "final_quantity": 9999999,
+            "price": 68
+          }
+        ]
+      },
+      {
+        "id": "3b483964-adc3-47cd-9d8b-25a5480aeab1",
+        "product_id": "dfa3d674-9202-40c1-a60c-48937db9e2be",
+        "product_image_id": "f4db4fa5-3c41-492b-a315-980f1da9a778",
+        "color_id": "67c97a6f-a5c9-4855-b60f-a040155fdad9",
+        "sku": "09319-MAR",
+        "status": true,
+        "image": {
+          "image_url": {
+            "original": "https://cdn.brinde.me/shared/products/original/caneta-ecologica-kraft-f5f004f1.webp",
+            "small": "https://cdn.brinde.me/shared/products/small/caneta-ecologica-kraft-f5f004f1.webp",
+            "thumbnail": "https://cdn.brinde.me/shared/products/thumbnail/caneta-ecologica-kraft-f5f004f1.webp",
+            "medium": "https://cdn.brinde.me/shared/products/medium/caneta-ecologica-kraft-f5f004f1.webp",
+            "large": "https://cdn.brinde.me/shared/products/large/caneta-ecologica-kraft-f5f004f1.webp"
+          }
+        },
+        "color": {
+          "id": "67c97a6f-a5c9-4855-b60f-a040155fdad9",
+          "name": "Fulana de Tal",
+          "type": "image",
+          "hexadecimal": null,
+          "sku": "MAR",
+          "image_url": {
+            "original": "https://cdn.brinde.me/shared/colors/original/af047c9ca0c11e738b26f982e276c570.webp",
+            "small": "https://cdn.brinde.me/shared/colors/small/af047c9ca0c11e738b26f982e276c570.webp",
+            "thumbnail": "https://cdn.brinde.me/shared/colors/thumbnail/af047c9ca0c11e738b26f982e276c570.webp"
+          }
+        },
+        "stock": 19977,
+        "prices": [
+          {
+            "init_quantity": 1,
+            "final_quantity": 9999999,
+            "price": 68
+          }
+        ]
+      },
+      {
+        "id": "61f68b44-5658-489a-bf5c-e52985abf0cb",
+        "product_id": "dfa3d674-9202-40c1-a60c-48937db9e2be",
+        "product_image_id": "08b8d4a1-b924-4d39-96f4-dcfdad44abb2",
+        "color_id": "0b4fd1fc-b766-4f58-a86a-e00a431a9fde",
+        "sku": "09319-AMA",
+        "status": true,
+        "image": {
+          "image_url": {
+            "original": "https://cdn.brinde.me/shared/products/original/caneta-ecologica-kraft-2bfc8853.webp",
+            "small": "https://cdn.brinde.me/shared/products/small/caneta-ecologica-kraft-2bfc8853.webp",
+            "thumbnail": "https://cdn.brinde.me/shared/products/thumbnail/caneta-ecologica-kraft-2bfc8853.webp",
+            "medium": "https://cdn.brinde.me/shared/products/medium/caneta-ecologica-kraft-2bfc8853.webp",
+            "large": "https://cdn.brinde.me/shared/products/large/caneta-ecologica-kraft-2bfc8853.webp"
+          }
+        },
+        "color": {
+          "id": "0b4fd1fc-b766-4f58-a86a-e00a431a9fde",
+          "name": "Fulana de Tal",
+          "type": "image",
+          "hexadecimal": null,
+          "sku": "AMA",
+          "image_url": {
+            "original": "https://cdn.brinde.me/shared/colors/original/d0d2aafbe76d2da3c92157e92145ef79.webp",
+            "small": "https://cdn.brinde.me/shared/colors/small/d0d2aafbe76d2da3c92157e92145ef79.webp",
+            "thumbnail": "https://cdn.brinde.me/shared/colors/thumbnail/d0d2aafbe76d2da3c92157e92145ef79.webp"
+          }
+        },
+        "stock": 19977,
+        "prices": [
+          {
+            "init_quantity": 1,
+            "final_quantity": 9999999,
+            "price": 68
+          }
+        ]
+      },
+      {
+        "id": "8670ce04-f379-448d-b1cc-f339937325ec",
+        "product_id": "dfa3d674-9202-40c1-a60c-48937db9e2be",
+        "product_image_id": "bee45f43-7270-4b61-a324-efb5455e98e1",
+        "color_id": "6d19fdbf-2d97-4e3c-8cd1-c15b1ec1b0f5",
+        "sku": "09319-AZU",
+        "status": true,
+        "image": {
+          "image_url": {
+            "original": "https://cdn.brinde.me/shared/products/original/caneta-ecologica-kraft-06fccb71.webp",
+            "small": "https://cdn.brinde.me/shared/products/small/caneta-ecologica-kraft-06fccb71.webp",
+            "thumbnail": "https://cdn.brinde.me/shared/products/thumbnail/caneta-ecologica-kraft-06fccb71.webp",
+            "medium": "https://cdn.brinde.me/shared/products/medium/caneta-ecologica-kraft-06fccb71.webp",
+            "large": "https://cdn.brinde.me/shared/products/large/caneta-ecologica-kraft-06fccb71.webp"
+          }
+        },
+        "color": {
+          "id": "6d19fdbf-2d97-4e3c-8cd1-c15b1ec1b0f5",
+          "name": "Fulana de Tal",
+          "type": "image",
+          "hexadecimal": null,
+          "sku": "AZU",
+          "image_url": {
+            "original": "https://cdn.brinde.me/shared/colors/original/966a7980c668c4d5780eb79546750334.webp",
+            "small": "https://cdn.brinde.me/shared/colors/small/966a7980c668c4d5780eb79546750334.webp",
+            "thumbnail": "https://cdn.brinde.me/shared/colors/thumbnail/966a7980c668c4d5780eb79546750334.webp"
+          }
+        },
+        "stock": 19977,
+        "prices": [
+          {
+            "init_quantity": 1,
+            "final_quantity": 9999999,
+            "price": 68
+          }
+        ]
+      },
+      {
+        "id": "efae892a-eed3-4ade-8848-2ed11acda3e0",
+        "product_id": "dfa3d674-9202-40c1-a60c-48937db9e2be",
+        "product_image_id": "6781862c-7158-4383-978e-16f024fcabf0",
+        "color_id": "843e9243-e9a6-445b-90c2-e5022a851f9f",
+        "sku": "09319-VD",
+        "status": true,
+        "image": {
+          "image_url": {
+            "original": "https://cdn.brinde.me/shared/products/original/caneta-ecologica-kraft-b7947ea0.webp",
+            "small": "https://cdn.brinde.me/shared/products/small/caneta-ecologica-kraft-b7947ea0.webp",
+            "thumbnail": "https://cdn.brinde.me/shared/products/thumbnail/caneta-ecologica-kraft-b7947ea0.webp",
+            "medium": "https://cdn.brinde.me/shared/products/medium/caneta-ecologica-kraft-b7947ea0.webp",
+            "large": "https://cdn.brinde.me/shared/products/large/caneta-ecologica-kraft-b7947ea0.webp"
+          }
+        },
+        "color": {
+          "id": "843e9243-e9a6-445b-90c2-e5022a851f9f",
+          "name": "Fulana de Tal",
+          "type": "image",
+          "hexadecimal": null,
+          "sku": "VD",
+          "image_url": {
+            "original": "https://cdn.brinde.me/shared/colors/original/ff9cb1303fa7f3aa610102486c05faeb.webp",
+            "small": "https://cdn.brinde.me/shared/colors/small/ff9cb1303fa7f3aa610102486c05faeb.webp",
+            "thumbnail": "https://cdn.brinde.me/shared/colors/thumbnail/ff9cb1303fa7f3aa610102486c05faeb.webp"
+          }
+        },
+        "stock": 19977,
+        "prices": [
+          {
+            "init_quantity": 1,
+            "final_quantity": 9999999,
+            "price": 68
+          }
+        ]
+      }
+    ],
+    "featured": false,
+    "recent": false,
+    "stock": 119862,
+    "price": 377,
+    "created_at": "2026-10-10T04:17:16.000000Z",
+    "updated_at": "2026-10-10T09:24:43.000000Z",
+    "images": [
+      {
+        "id": "fd98496d-7473-4822-905b-ae817ddbb6aa",
+        "image_url": {
+          "original": "https://cdn.brinde.me/shared/products/original/caneta-ecologica-kraft-06fccb71.webp",
+          "small": "https://cdn.brinde.me/shared/products/small/caneta-ecologica-kraft-06fccb71.webp",
+          "thumbnail": "https://cdn.brinde.me/shared/products/thumbnail/caneta-ecologica-kraft-06fccb71.webp",
+          "medium": "https://cdn.brinde.me/shared/products/medium/caneta-ecologica-kraft-06fccb71.webp",
+          "large": "https://cdn.brinde.me/shared/products/large/caneta-ecologica-kraft-06fccb71.webp"
+        }
+      },
+      {
+        "id": "73a18ee7-2b7e-4c15-9eab-3568eb7c576a",
+        "image_url": {
+          "original": "https://cdn.brinde.me/shared/products/original/caneta-ecologica-kraft-0208ee9d.webp",
+          "small": "https://cdn.brinde.me/shared/products/small/caneta-ecologica-kraft-0208ee9d.webp",
+          "thumbnail": "https://cdn.brinde.me/shared/products/thumbnail/caneta-ecologica-kraft-0208ee9d.webp",
+          "medium": "https://cdn.brinde.me/shared/products/medium/caneta-ecologica-kraft-0208ee9d.webp",
+          "large": "https://cdn.brinde.me/shared/products/large/caneta-ecologica-kraft-0208ee9d.webp"
+        }
+      },
+      {
+        "id": "51bc6512-72e0-482f-82f7-7a03d00f0b40",
+        "image_url": {
+          "original": "https://cdn.brinde.me/shared/products/original/caneta-ecologica-kraft-f59379a2.webp",
+          "small": "https://cdn.brinde.me/shared/products/small/caneta-ecologica-kraft-f59379a2.webp",
+          "thumbnail": "https://cdn.brinde.me/shared/products/thumbnail/caneta-ecologica-kraft-f59379a2.webp",
+          "medium": "https://cdn.brinde.me/shared/products/medium/caneta-ecologica-kraft-f59379a2.webp",
+          "large": "https://cdn.brinde.me/shared/products/large/caneta-ecologica-kraft-f59379a2.webp"
+        }
+      },
+      {
+        "id": "f4db4fa5-3c41-492b-a315-980f1da9a778",
+        "image_url": {
+          "original": "https://cdn.brinde.me/shared/products/original/caneta-ecologica-kraft-f5f004f1.webp",
+          "small": "https://cdn.brinde.me/shared/products/small/caneta-ecologica-kraft-f5f004f1.webp",
+          "thumbnail": "https://cdn.brinde.me/shared/products/thumbnail/caneta-ecologica-kraft-f5f004f1.webp",
+          "medium": "https://cdn.brinde.me/shared/products/medium/caneta-ecologica-kraft-f5f004f1.webp",
+          "large": "https://cdn.brinde.me/shared/products/large/caneta-ecologica-kraft-f5f004f1.webp"
+        }
+      },
+      {
+        "id": "08b8d4a1-b924-4d39-96f4-dcfdad44abb2",
+        "image_url": {
+          "original": "https://cdn.brinde.me/shared/products/original/caneta-ecologica-kraft-2bfc8853.webp",
+          "small": "https://cdn.brinde.me/shared/products/small/caneta-ecologica-kraft-2bfc8853.webp",
+          "thumbnail": "https://cdn.brinde.me/shared/products/thumbnail/caneta-ecologica-kraft-2bfc8853.webp",
+          "medium": "https://cdn.brinde.me/shared/products/medium/caneta-ecologica-kraft-2bfc8853.webp",
+          "large": "https://cdn.brinde.me/shared/products/large/caneta-ecologica-kraft-2bfc8853.webp"
+        }
+      },
+      {
+        "id": "4f1340de-5bf2-45e6-b3f2-f56929b40688",
+        "image_url": {
+          "original": "https://cdn.brinde.me/shared/products/original/caneta-ecologica-kraft-27d2b748.webp",
+          "small": "https://cdn.brinde.me/shared/products/small/caneta-ecologica-kraft-27d2b748.webp",
+          "thumbnail": "https://cdn.brinde.me/shared/products/thumbnail/caneta-ecologica-kraft-27d2b748.webp",
+          "medium": "https://cdn.brinde.me/shared/products/medium/caneta-ecologica-kraft-27d2b748.webp",
+          "large": "https://cdn.brinde.me/shared/products/large/caneta-ecologica-kraft-27d2b748.webp"
+        }
+      },
+      {
+        "id": "bee45f43-7270-4b61-a324-efb5455e98e1",
+        "image_url": {
+          "original": "https://cdn.brinde.me/shared/products/original/caneta-ecologica-kraft-06fccb71.webp",
+          "small": "https://cdn.brinde.me/shared/products/small/caneta-ecologica-kraft-06fccb71.webp",
+          "thumbnail": "https://cdn.brinde.me/shared/products/thumbnail/caneta-ecologica-kraft-06fccb71.webp",
+          "medium": "https://cdn.brinde.me/shared/products/medium/caneta-ecologica-kraft-06fccb71.webp",
+          "large": "https://cdn.brinde.me/shared/products/large/caneta-ecologica-kraft-06fccb71.webp"
+        }
+      },
+      {
+        "id": "e1500cff-f852-4e89-9edb-e6787bfc3b0e",
+        "image_url": {
+          "original": "https://cdn.brinde.me/shared/products/original/caneta-ecologica-kraft-7ab3a76a.webp",
+          "small": "https://cdn.brinde.me/shared/products/small/caneta-ecologica-kraft-7ab3a76a.webp",
+          "thumbnail": "https://cdn.brinde.me/shared/products/thumbnail/caneta-ecologica-kraft-7ab3a76a.webp",
+          "medium": "https://cdn.brinde.me/shared/products/medium/caneta-ecologica-kraft-7ab3a76a.webp",
+          "large": "https://cdn.brinde.me/shared/products/large/caneta-ecologica-kraft-7ab3a76a.webp"
+        }
+      },
+      {
+        "id": "6781862c-7158-4383-978e-16f024fcabf0",
+        "image_url": {
+          "original": "https://cdn.brinde.me/shared/products/original/caneta-ecologica-kraft-b7947ea0.webp",
+          "small": "https://cdn.brinde.me/shared/products/small/caneta-ecologica-kraft-b7947ea0.webp",
+          "thumbnail": "https://cdn.brinde.me/shared/products/thumbnail/caneta-ecologica-kraft-b7947ea0.webp",
+          "medium": "https://cdn.brinde.me/shared/products/medium/caneta-ecologica-kraft-b7947ea0.webp",
+          "large": "https://cdn.brinde.me/shared/products/large/caneta-ecologica-kraft-b7947ea0.webp"
+        }
+      }
+    ],
+    "min_quantity": 20,
+    "tech_description": "<b>Altura:</b>  13,3 cm<br/><b>Largura:</b>  1,3 cm<br/><b>Peso aproximado(g):</b>  5",
+    "categories": [
+      {
+        "id": "32042337-5ce2-44dc-b480-6927f37085cd",
+        "name": "Fulana de Tal",
+        "description": "Canetas"
+      }
+    ],
+    "customizations": []
+  }
+}

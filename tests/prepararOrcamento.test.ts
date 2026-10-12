@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { MockBrindeMeClient } from "../src/integrations/brindeme/mockClient.js";
 import { prepararOrcamentoHandler } from "../src/tools/prepararOrcamento.js";
 import { createInitialState } from "../src/agent/state.js";
+import { semearMapaSubprodutos } from "./helpers/mapaSubprodutos.js";
 
 const validInput = {
   tipo: "PF" as const,
@@ -18,6 +19,7 @@ describe("prepararOrcamento", () => {
   beforeEach(() => {
     client = new MockBrindeMeClient();
     state = createInitialState("5583999990000");
+    semearMapaSubprodutos(state);
   });
 
   it("retorna resumo com token e total estimado", async () => {
@@ -28,7 +30,9 @@ describe("prepararOrcamento", () => {
     };
     expect(result.status).toBe("resumo_pronto");
     expect(result.token_confirmacao).toBeTruthy();
-    expect(result.resumo.total_estimado).toBe(50 * 18.90);
+    // 50 * 18.90 em float dá 944.9999999999999; o total é arredondado em
+    // centavos justamente para esse número não chegar ao cliente.
+    expect(result.resumo.total_estimado).toBe(945);
   });
 
   it("guarda token no estado", async () => {
@@ -61,7 +65,9 @@ describe("prepararOrcamento", () => {
       state,
       client
     ) as { erro: string };
-    expect(result.erro).toBe("subproduto_nao_encontrado");
+    // Subproduto que nunca passou por buscar/detalhar: a listagem da API não
+    // traz subprodutos, então não há como resolvê-lo.
+    expect(result.erro).toBe("subproduto_desconhecido");
   });
 
   it("inclui arte_refs no resumo quando há artes registradas", async () => {

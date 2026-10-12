@@ -4,6 +4,7 @@ import { createInitialState } from "./agent/state.js";
 import { runTurn } from "./agent/runTurn.js";
 import { AnthropicProvider } from "./llm/anthropic.js";
 import { MockBrindeMeClient } from "./integrations/brindeme/mockClient.js";
+import { createBrindeMeClient } from "./integrations/brindeme/factory.js";
 import { Logger } from "./logging/logger.js";
 import { config } from "./config.js";
 import type { FaultType } from "./integrations/brindeme/types.js";
@@ -25,13 +26,13 @@ function parseArgs(): { telefone: string } {
 
 async function main() {
   const { telefone } = parseArgs();
-  const client = new MockBrindeMeClient();
+  const client = createBrindeMeClient();
   const llm = new AnthropicProvider();
   let state = createInitialState(telefone);
   let logger = new Logger(state.conversaId);
 
   console.log(`${BOLD}${CYAN}=== Agente de Atendimento — Terminal ===${RESET}`);
-  console.log(`${GRAY}Telefone: ${telefone}${RESET}`);
+  console.log(`${GRAY}Telefone: ${telefone} · API: ${config.brindeMe.mode}${RESET}`);
   console.log(`${GRAY}Comandos: /arte <arquivo>, /estado, /falha <tipo> [n], /humano, /retomar [nota], /reset, /sair${RESET}`);
   console.log(`${GRAY}────────────────────────────────────────${RESET}\n`);
 
@@ -78,9 +79,11 @@ async function main() {
       const validTypes: FaultType[] = ["timeout", "500", "404", "412", "422"];
       if (!validTypes.includes(tipo)) {
         console.log(`${GRAY}Tipos válidos: ${validTypes.join(", ")}${RESET}\n`);
-      } else {
+      } else if (client instanceof MockBrindeMeClient) {
         client.injectFault({ type: tipo, remaining: n });
         console.log(`${GRAY}[Falha "${tipo}" injetada por ${n} chamada(s)]${RESET}\n`);
+      } else {
+        console.log(`${GRAY}[/falha só funciona com BRINDEME_MODE=mock]${RESET}\n`);
       }
       prompt();
       return;

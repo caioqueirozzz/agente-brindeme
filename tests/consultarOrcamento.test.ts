@@ -4,6 +4,7 @@ import { prepararOrcamentoHandler } from "../src/tools/prepararOrcamento.js";
 import { criarOrcamentoHandler } from "../src/tools/criarOrcamento.js";
 import { consultarOrcamentoHandler } from "../src/tools/consultarOrcamento.js";
 import { createInitialState } from "../src/agent/state.js";
+import { semearMapaSubprodutos } from "./helpers/mapaSubprodutos.js";
 
 describe("consultarOrcamento", () => {
   let client: MockBrindeMeClient;
@@ -18,6 +19,7 @@ describe("consultarOrcamento", () => {
 
   it("retorna dados do orçamento criado nesta conversa", async () => {
     const state = createInitialState("5583999990000");
+    semearMapaSubprodutos(state);
 
     const prep = await prepararOrcamentoHandler(
       { tipo: "PF", nome: "Test", telefone: "5583999990000", email: "test@test.com", itens: [{ subproduto_id: "sub-001-branco", quantidade: 50 }] },

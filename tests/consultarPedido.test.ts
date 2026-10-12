@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { MockBrindeMeClient } from "../src/integrations/brindeme/mockClient.js";
 import { consultarPedidoHandler, type PedidoSafeResult } from "../src/tools/consultarPedido.js";
 import { createInitialState } from "../src/agent/state.js";
+import { setOrderIndexStore } from "../src/tools/consultarPedido.js";
+import { indiceDosMocks } from "./helpers/indicePedidos.js";
 
 type ResultadoField = Extract<PedidoSafeResult, { resultado: string }>["resultado"];
 
@@ -10,7 +12,10 @@ const SENSITIVE_FIELDS = ["customer_cpf", "customer_email", "customer_phone", "f
 describe("consultarPedido", () => {
   let client: MockBrindeMeClient;
 
-  beforeEach(() => { client = new MockBrindeMeClient(); });
+  beforeEach(() => {
+    client = new MockBrindeMeClient();
+    setOrderIndexStore(indiceDosMocks());
+  });
 
   it("encontra pedido com telefone correto", async () => {
     const state = createInitialState("5583999990000");
