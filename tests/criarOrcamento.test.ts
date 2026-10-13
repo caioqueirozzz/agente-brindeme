@@ -3,6 +3,7 @@ import { MockBrindeMeClient } from "../src/integrations/brindeme/mockClient.js";
 import { prepararOrcamentoHandler } from "../src/tools/prepararOrcamento.js";
 import { criarOrcamentoHandler } from "../src/tools/criarOrcamento.js";
 import { createInitialState } from "../src/agent/state.js";
+import { semearMapaSubprodutos } from "./helpers/mapaSubprodutos.js";
 
 const validPreparar = {
   tipo: "PF" as const,
@@ -19,6 +20,7 @@ describe("criarOrcamento", () => {
   beforeEach(() => {
     client = new MockBrindeMeClient();
     state = createInitialState("5583999990000");
+    semearMapaSubprodutos(state);
   });
 
   it("cria orçamento com token válido", async () => {

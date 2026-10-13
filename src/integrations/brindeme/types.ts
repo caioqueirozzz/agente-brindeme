@@ -47,6 +47,11 @@ export interface Product {
   subproducts: Subproduct[];
   /** NOT from the API — used locally until Fase 3 adds semantic search */
   tags_ocasiao?: string[];
+  /**
+   * false quando o produto veio de GET /product (listagem), que não traz
+   * subproducts, min_quantity, images, categories nem customizations.
+   */
+  detalhe_carregado?: boolean;
 }
 
 export interface ProductListResponse {
@@ -54,6 +59,7 @@ export interface ProductListResponse {
   total: number;
   per_page: number;
   current_page: number;
+  last_page?: number;
 }
 
 export interface BudgetItem {
@@ -79,7 +85,8 @@ export interface Budget {
   id: string;
   code: string;
   type: "PF" | "PJ";
-  status_id: number;
+  /** UUID na API real — não número, apesar do nome. */
+  status_id: string;
   status_name: string;
   customer_name: string;
   customer_phone: string;
@@ -99,12 +106,15 @@ export interface BudgetItemDetail {
   subtotal: number;
   product_name: string;
   color: string;
+  /** Imagem do mockup gerada pela equipe da loja (product_mock_image_url). */
+  mockup_url?: string;
 }
 
 export interface Order {
   id: string;
   code: string;
-  status_id: number;
+  /** UUID na API real — não número, apesar do nome. */
+  status_id: string;
   status_name: string;
   budget_code: string;
   customer_name: string;
@@ -112,13 +122,15 @@ export interface Order {
   customer_email: string;
   customer_phone: string;
   shipping_type: string;
-  shipping_time: number;
+  /** null quando a loja ainda não definiu o frete do pedido. */
+  shipping_time: number | null;
   subtotal: number;
   total: number;
   items: OrderItem[];
   file_url?: string;
   nfs?: string[];
   bankslips?: string[];
+  created_at?: string;
 }
 
 export interface OrderItem {

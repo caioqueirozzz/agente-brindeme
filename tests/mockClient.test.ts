@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { MockBrindeMeClient, translateApiError } from "../src/integrations/brindeme/mockClient.js";
+import { MockBrindeMeClient } from "../src/integrations/brindeme/mockClient.js";
+import { translateApiError } from "../src/integrations/brindeme/errors.js";
 import { createInitialState } from "../src/agent/state.js";
 
 describe("MockBrindeMeClient — falhas simuladas", () => {

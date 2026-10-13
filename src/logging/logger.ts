@@ -12,7 +12,8 @@ type LogEvent =
   | { type: "tool_call"; name: string; input: unknown; output: unknown; duration_ms: number; error?: string }
   | { type: "response_sent"; content: string; input_tokens?: number; output_tokens?: number }
   | { type: "transfer"; motivo: string; prioridade: string }
-  | { type: "state_change"; change: string };
+  | { type: "state_change"; change: string }
+  | { type: "alerta"; gravidade: "critica" | "alta"; motivo: string; ferramenta?: string };
 
 function maskCpf(s: string): string {
   return s.replace(/\d{3}\.\d{3}\.\d{3}-\d{2}/g, (m) => `***.***.***-${m.slice(-2)}`);

@@ -8,7 +8,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "evals": "tsx evals/runEvals.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check:api": "tsx scripts/checkApi.ts",
+    "sync:pedidos": "tsx scripts/syncPedidos.ts",
+    "test:orcamento": "tsx scripts/testCriarOrcamento.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.36.0",

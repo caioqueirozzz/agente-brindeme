@@ -1,0 +1,105 @@
+{
+  "data": {
+    "items": [
+      {
+        "id": "537c4238-f904-45af-8885-d97d1bcac108",
+        "code": 2,
+        "customer_purchase_order": null,
+        "budget_id": "1faf51f4-a79f-4096-9a55-0bc0acebb0b6",
+        "budget_code": 10,
+        "type": "PJ",
+        "billing_company_cnpj": "00.000.000/0001-00",
+        "billing_company_company_name": "EMPRESA EXEMPLO LTDA",
+        "billing_company_trade_name": "EMPRESA EXEMPLO",
+        "customer_company_cnpj": "00.000.000/0001-00",
+        "customer_company_company_name": "CLIENTE EXEMPLO LTDA",
+        "customer_company_trade_name": "CLIENTE EXEMPLO",
+        "customer_name": "Fulano de Tal",
+        "customer_cpf": null,
+        "customer_email": "fulano@exemplo.test",
+        "customer_phone": "(83) 90000-0000",
+        "status_id": "7bb0e82d-b221-4c72-b38b-404f4197548f",
+        "status_name": "Aprovado",
+        "status_color": "#2FAA59",
+        "admin_id": null,
+        "admin_name": null,
+        "admin_email": null,
+        "shipping_recipient_name": "Fulano de Tal",
+        "shipping_company_cnpj": "00.000.000/0001-00",
+        "shipping_company_company_name": "EMPRESA EXEMPLO LTDA",
+        "shipping_company_trade_name": "EMPRESA EXEMPLO",
+        "payment_term": "pix",
+        "payment_form": "Crédito",
+        "comments": null,
+        "shipping_type": null,
+        "shipping_time": null,
+        "shipping_fee": 0,
+        "subtotal": 112650,
+        "total": 112650,
+        "created_at": "2026-07-30T13:14:13-03:00",
+        "items": [
+          {
+            "id": "2e593406-3d33-4c9f-aac0-e81f5329a71c",
+            "product_id": "69816baa-b4cb-4dc1-9d9f-65c68a67852d",
+            "product_name": "Bolsa de Ombro Couro Sintético",
+            "subproduct_id": "40b37400-84ad-4c95-9c64-185dcbd4d660",
+            "subproduct_sku": "15387A-PRE",
+            "subproduct_image_url": "https://app3.brinde.me/presentes_especiais/assets/shared/products/small/bolsa-de-ombro-couro-sintetico-5.webp",
+            "product_mock_image_url": null,
+            "quantity": 30,
+            "price": 3755,
+            "total": 112650,
+            "comments": null,
+            "color_id": "60b43f3c-ef9e-4cbb-97fd-2ad262c660ba",
+            "color_name": "Preto",
+            "params": [],
+            "customizations": []
+          }
+        ],
+        "file_url": "https://app3.brinde.me/api/webhook-assets/presentes_especiais/order/537c4238-f904-45af-8885-d97d1bcac108?expires=1791916445&signature=a34ba54b99ff8339c12a530cf959858ab8b3e31903d00c4e2756540ea55d8b06",
+        "nfs": [],
+        "bankslips": []
+      }
+    ],
+    "pagination": {
+      "total": 2,
+      "per_page": 3,
+      "current_page": 1,
+      "last_page": 1,
+      "next_page_url": null,
+      "prev_page_url": null
+    }
+  },
+  "links": {
+    "first": "https://api.brinde.me/order?page=1",
+    "last": "https://api.brinde.me/order?page=1",
+    "prev": null,
+    "next": null
+  },
+  "meta": {
+    "current_page": 1,
+    "from": 1,
+    "last_page": 1,
+    "links": [
+      {
+        "url": null,
+        "label": "&laquo; Anterior",
+        "active": false
+      },
+      {
+        "url": "https://api.brinde.me/order?page=1",
+        "label": "1",
+        "active": true
+      },
+      {
+        "url": null,
+        "label": "Próximo &raquo;",
+        "active": false
+      }
+    ],
+    "path": "https://api.brinde.me/order",
+    "per_page": 3,
+    "to": 2,
+    "total": 2
+  }
+}

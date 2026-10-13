@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { BrindeMeClient } from "../integrations/brindeme/client.js";
-import { MockBrindeMeClient, translateApiError } from "../integrations/brindeme/mockClient.js";
+import { translateApiError } from "../integrations/brindeme/errors.js";
 import type { ConversationState } from "../agent/state.js";
 import { isTokenValid } from "../agent/state.js";
 
@@ -28,31 +28,29 @@ export async function criarOrcamentoHandler(
     return { erro: "token_expirado", mensagem: "O resumo expirou (15 min). Gere um novo com preparar_orcamento." };
   }
 
-  // Idempotency: check if this token was already used
-  if (client instanceof MockBrindeMeClient) {
-    const existing = client.getBudgetByToken(input.token_confirmacao);
-    if (existing) {
-      return {
-        status: "ja_criado",
-        codigo: existing.code,
-        status_orcamento: existing.status_name,
-        mensagem: "Orçamento já criado anteriormente com este token.",
-      };
-    }
+  // Idempotência: o token já foi usado nesta conversa?
+  const jaCriado = state.orcamentoTokens[input.token_confirmacao];
+  if (jaCriado) {
+    return {
+      status: "ja_criado",
+      codigo: jaCriado,
+      mensagem: "Orçamento já criado anteriormente com este token.",
+    };
   }
 
   try {
     const body = state.orcamentoPendente.body;
-    const budget = await client.createBudget(body);
+    // TESTADO em 12/10/2026: a API IGNORA o header Idempotency-Key — duas
+    // chamadas com a mesma chave criaram os orçamentos 26 e 27. A guarda acima
+    // (state.orcamentoTokens) é a ÚNICA proteção contra duplicata. O header
+    // continua sendo enviado caso a loja passe a suportá-lo.
+    const budget = await client.createBudget(body, { idempotencyKey: input.token_confirmacao });
 
-    // Register token→budget for idempotency
-    if (client instanceof MockBrindeMeClient) {
-      client.setBudgetToken(input.token_confirmacao, budget.id);
-    }
-
+    state.orcamentoTokens[input.token_confirmacao] = budget.code;
     state.orcamentos.push(budget.code);
+    // GET /budget/{id} só aceita o UUID; o cliente só conhece o código.
+    state.orcamentoIds[budget.code] = budget.id;
     state.orcamentoPendente = undefined;
-    state.falhasConsecutivas = 0;
 
     return {
       status: "criado",
@@ -61,16 +59,8 @@ export async function criarOrcamentoHandler(
       mensagem: "Orçamento criado! Nossa equipe vai preparar o mockup e entrar em contato em breve.",
     };
   } catch (err) {
-    // criar_orcamento NEVER auto-retries
-    const translated = translateApiError(err);
-    state.falhasConsecutivas += 1;
-    return {
-      erro: translated.erro,
-      tentar_novamente: false,
-      instrucao:
-        state.falhasConsecutivas >= 2
-          ? "transferir"
-          : "informar_instabilidade",
-    };
+    // criar_orcamento NUNCA faz retry automático: o pedido pode ter sido criado
+    // do outro lado mesmo com a resposta falhando.
+    return { erro: { ...translateApiError(err), tentar_novamente: false } };
   }
 }

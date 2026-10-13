@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { v4 as uuidv4 } from "uuid";
 import type { BrindeMeClient } from "../integrations/brindeme/client.js";
-import { translateApiError } from "../integrations/brindeme/mockClient.js";
+import { translateApiError } from "../integrations/brindeme/errors.js";
+import { arredondar } from "../integrations/brindeme/mappers.js";
 import type { ConversationState } from "../agent/state.js";
 import type { OrcamentoPendente } from "../agent/state.js";
 
@@ -25,66 +26,72 @@ export async function prepararOrcamentoHandler(
   client: BrindeMeClient
 ) {
   try {
-    const products = await client.listProducts({ per_page: 100 });
-
     const itensSumario = [];
     let totalEstimado = 0;
 
+    // Cache por produto: vários itens podem vir do mesmo produto.
+    const cache = new Map<string, Awaited<ReturnType<typeof client.getProduct>>>();
+
     for (const item of input.itens) {
-      let found: { productName: string; color: string; price: number } | null = null;
-      let minQty = 1;
-
-      for (const p of products.data) {
-        const sub = p.subproducts.find((s) => s.id === item.subproduto_id);
-        if (sub) {
-          if (!sub.status) {
-            return {
-              erro: "subproduto_inativo",
-              subproduto_id: item.subproduto_id,
-              mensagem: `O subproduto "${sub.color}" de "${p.name}" está inativo.`,
-            };
-          }
-          if (sub.stock < item.quantidade) {
-            return {
-              erro: "estoque_insuficiente",
-              subproduto_id: item.subproduto_id,
-              estoque_disponivel: sub.stock,
-              quantidade_solicitada: item.quantidade,
-            };
-          }
-          if (item.quantidade < p.min_quantity) {
-            return {
-              erro: "abaixo_do_minimo",
-              subproduto_id: item.subproduto_id,
-              min_quantity: p.min_quantity,
-              quantidade_solicitada: item.quantidade,
-            };
-          }
-          minQty = p.min_quantity;
-          const range = sub.prices.find(
-            (r) => item.quantidade >= r.min && item.quantidade <= r.max
-          );
-          const price = range?.price ?? p.price;
-          found = { productName: p.name, color: sub.color, price };
-          break;
-        }
-      }
-
-      if (!found) {
+      // A listagem não traz subprodutos, então não dá para varrer o catálogo:
+      // o produto de origem vem do mapa preenchido por buscar/detalhar.
+      const produtoId = state.subprodutoParaProduto[item.subproduto_id];
+      if (!produtoId) {
         return {
-          erro: "subproduto_nao_encontrado",
+          erro: "subproduto_desconhecido",
           subproduto_id: item.subproduto_id,
+          instrucao:
+            "Chame detalhar_produto para esse produto antes de preparar o orçamento.",
         };
       }
 
-      const subtotal = found.price * item.quantidade;
-      totalEstimado += subtotal;
+      let p = cache.get(produtoId);
+      if (!p) {
+        p = await client.getProduct(produtoId);
+        cache.set(produtoId, p);
+      }
+
+      const sub = p.subproducts.find((x) => x.id === item.subproduto_id);
+      if (!sub) {
+        return { erro: "subproduto_nao_encontrado", subproduto_id: item.subproduto_id };
+      }
+      if (!sub.status) {
+        return {
+          erro: "subproduto_inativo",
+          subproduto_id: item.subproduto_id,
+          mensagem: `O subproduto "${sub.color}" de "${p.name}" está inativo.`,
+        };
+      }
+      if (sub.stock < item.quantidade) {
+        return {
+          erro: "estoque_insuficiente",
+          subproduto_id: item.subproduto_id,
+          estoque_disponivel: sub.stock,
+          quantidade_solicitada: item.quantidade,
+        };
+      }
+      if (item.quantidade < p.min_quantity) {
+        return {
+          erro: "abaixo_do_minimo",
+          subproduto_id: item.subproduto_id,
+          min_quantity: p.min_quantity,
+          quantidade_solicitada: item.quantidade,
+        };
+      }
+
+      const range = sub.prices.find(
+        (r) => item.quantidade >= r.min && item.quantidade <= r.max
+      );
+      const price = range?.price ?? p.price;
+
+      const subtotal = arredondar(price * item.quantidade);
+      totalEstimado = arredondar(totalEstimado + subtotal);
       itensSumario.push({
         subproduto_id: item.subproduto_id,
-        cor: found.color,
-        nome_produto: found.productName,
+        cor: sub.color,
+        nome_produto: p.name,
         quantidade: item.quantidade,
-        preco_unitario: found.price,
+        preco_unitario: price,
         subtotal,
       });
     }

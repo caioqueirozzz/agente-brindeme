@@ -1,0 +1,266 @@
+{
+  "data": {
+    "items": [
+      {
+        "id": "c07fa6bd-4ec5-493d-bd99-bfd66771a02d",
+        "code": 21,
+        "customer_purchase_order": null,
+        "payment_term": null,
+        "payment_form": null,
+        "utm_content": null,
+        "utm_medium": null,
+        "utm_source": null,
+        "utm_campaign": null,
+        "status": {
+          "id": "9fbc9a44-09d4-495a-bb77-bb0223d6958d",
+          "name": "Fulana de Tal",
+          "color": "#FFEA00"
+        },
+        "type": "PJ",
+        "company": {
+          "id": "08001f28-3de8-4d6c-9aea-c6d459a83cdb",
+          "code": 1396,
+          "trade_name": "EMPRESA EXEMPLO",
+          "cnpj": "00.000.000/0001-00"
+        },
+        "customer": {
+          "id": "9ce39af3-b37d-479a-8718-e029fde08114",
+          "code": 425,
+          "name": "Fulana de Tal",
+          "email": "contato@exemplo.test",
+          "phone": "(83) 90000-0000",
+          "companies": [
+            {
+              "id": "08001f28-3de8-4d6c-9aea-c6d459a83cdb",
+              "company_name": null,
+              "trade_name": "EMPRESA EXEMPLO",
+              "cnpj": "00.000.000/0001-00"
+            }
+          ]
+        },
+        "billing_company": {
+          "id": "b5b60d2a-5710-4f9a-8b18-fd0922783267",
+          "company_name": "EMPRESA EXEMPLO LTDA",
+          "trade_name": "EMPRESA EXEMPLO",
+          "cnpj": "00.000.000/0001-00"
+        },
+        "shipping_company": null,
+        "shipping_customer": null,
+        "admin": null,
+        "shipping_type": null,
+        "shipping_time": null,
+        "shipping_consult": true,
+        "shipping_address": null,
+        "shipping_fee": 0,
+        "subtotal": 1357490,
+        "total": 1357490,
+        "origin": "Site",
+        "comments": null,
+        "admin_comments": "<p>Comentario interno de exemplo.</p>",
+        "created_at": "2026-10-02T19:00:17-03:00",
+        "items": [
+          {
+            "id": "a05dcf35-46a8-400b-bd61-ca6c396c6acc",
+            "subproduct_id": "27a3a6bc-2e68-48f6-8621-4906f096f1f8",
+            "quantity": 62,
+            "price": 5886,
+            "cost": 2580,
+            "comments": null,
+            "product_mock_image_url": null,
+            "subproduct": {
+              "id": "27a3a6bc-2e68-48f6-8621-4906f096f1f8",
+              "color": {
+                "id": "60b43f3c-ef9e-4cbb-97fd-2ad262c660ba",
+                "name": "Fulana de Tal",
+                "type": "image",
+                "hexadecimal": null,
+                "image_url": "https://cdn.brinde.me/shared/colors/small/30133345dfe5dae931ef329fb94a5c04.webp"
+              },
+              "sku": "18538-PRE",
+              "name": "Fulana de Tal",
+              "image_url": "https://cdn.brinde.me/shared/products/small/kit-necessaires-6-pecas-7b96b788.webp",
+              "product": {
+                "id": "df29cc4c-1311-4bed-966a-72b96b358434",
+                "name": "Fulana de Tal",
+                "sku": "18538",
+                "ncm": "4202.92",
+                "tech_description": "<b>Tamanho total aproximado (CxL):</b>  Necessaire 1<br/><b>Peso aproximado(g):</b>  193",
+                "description": "Kit necessaire com 6 peças confeccionadas em nylon. O cojunto de necessaires possui tamanhos diferenciados, sendo 3 unidades com: alça para transporte, zíperes com pegadores emborrachados, parte frontal com malha de nylon e plaquinha emborrachada para personalização; possui também 3 unidades de necessaires em nylon inteiramente lisas."
+              }
+            },
+            "params": [],
+            "customizations": []
+          },
+          {
+            "id": "b2108a37-f301-47e9-819e-8475be864125",
+            "subproduct_id": "e5e11c60-ddf2-43f7-9b12-eb467eaeaa06",
+            "quantity": 62,
+            "price": 3231,
+            "cost": 1355,
+            "comments": null,
+            "product_mock_image_url": null,
+            "subproduct": {
+              "id": "e5e11c60-ddf2-43f7-9b12-eb467eaeaa06",
+              "color": {
+                "id": "60b43f3c-ef9e-4cbb-97fd-2ad262c660ba",
+                "name": "Fulana de Tal",
+                "type": "image",
+                "hexadecimal": null,
+                "image_url": "https://cdn.brinde.me/shared/colors/small/30133345dfe5dae931ef329fb94a5c04.webp"
+              },
+              "sku": "07077-PRE",
+              "name": "Fulana de Tal",
+              "image_url": "https://cdn.brinde.me/shared/products/small/kit-necessaire-duas-pecas-4d2cf451.webp",
+              "product": {
+                "id": "52008260-605a-4c77-bff2-eba71386f78e",
+                "name": "Fulana de Tal",
+                "sku": "07077",
+                "ncm": "4202.92",
+                "tech_description": "<b>Altura:</b>  N.1<br/><b>Largura:</b>  N.1<br/><b>Profundidade:</b>  N.1<br/><b>Tamanho total aproximado (CxL):</b>  N.2<br/><b>Peso aproximado(g):</b>  113",
+                "description": "Conjunto de dois nécessaires em tamanhos diferentes. O modelo maior é confeccionado em PVC impermeável, traz detalhes em couro sintético, alça lateral prática e fechamento em zíper. Já o menor, produzido em PU impermeável, possui acabamento quadriculado e fechamento em zíper."
+              }
+            },
+            "params": [],
+            "customizations": []
+          },
+          {
+            "id": "0648ef52-ec8f-4c06-bf9c-6f1f4b46cf2e",
+            "subproduct_id": "0b10ee27-86b6-4bdd-83d6-a1dce4313752",
+            "quantity": 62,
+            "price": 3728,
+            "cost": 1530,
+            "comments": null,
+            "product_mock_image_url": null,
+            "subproduct": {
+              "id": "0b10ee27-86b6-4bdd-83d6-a1dce4313752",
+              "color": {
+                "id": "60b43f3c-ef9e-4cbb-97fd-2ad262c660ba",
+                "name": "Fulana de Tal",
+                "type": "image",
+                "hexadecimal": null,
+                "image_url": "https://cdn.brinde.me/shared/colors/small/30133345dfe5dae931ef329fb94a5c04.webp"
+              },
+              "sku": "08272-PRE",
+              "name": "Fulana de Tal",
+              "image_url": "https://cdn.brinde.me/shared/products/small/necessaire-pu-8-a65b0e93.webp",
+              "product": {
+                "id": "baa402e3-d9b9-423d-9782-1ccce69bab42",
+                "name": "Fulana de Tal",
+                "sku": "08272",
+                "ncm": "4202.92",
+                "tech_description": "<b>Altura:</b>  11 cm<br/><b>Largura:</b>  22,5 cm<br/><b>Profundidade:</b>  9,5 cm<br/><b>Peso aproximado(g):</b>  108",
+                "description": "Nécessaire em poliuretano (PU) impermeável com abertura em 180 graus inspirada no formato de concha. O compartimento interno conta com dois bolsos laterais abertos e um, localizado na parte central, com fechamento em zíper. Possui alça para transporte."
+              }
+            },
+            "params": [],
+            "customizations": []
+          },
+          {
+            "id": "823abdd9-c6c0-4a51-90f1-827f081f568b",
+            "subproduct_id": "3e74d008-32c2-4f9d-9eef-6a3e43abecfc",
+            "quantity": 62,
+            "price": 4525,
+            "cost": 1950,
+            "comments": null,
+            "product_mock_image_url": null,
+            "subproduct": {
+              "id": "3e74d008-32c2-4f9d-9eef-6a3e43abecfc",
+              "color": {
+                "id": "60b43f3c-ef9e-4cbb-97fd-2ad262c660ba",
+                "name": "Fulana de Tal",
+                "type": "image",
+                "hexadecimal": null,
+                "image_url": "https://cdn.brinde.me/shared/colors/small/30133345dfe5dae931ef329fb94a5c04.webp"
+              },
+              "sku": "08273-PRE",
+              "name": "Fulana de Tal",
+              "image_url": "https://cdn.brinde.me/shared/products/small/necessaire-pu-9-402da09d.webp",
+              "product": {
+                "id": "cc80f98a-737a-4f95-b3cc-cb4429a3ae86",
+                "name": "Fulana de Tal",
+                "sku": "08273",
+                "ncm": "4202.92",
+                "tech_description": "<b>Altura:</b>  13 cm<br/><b>Largura:</b>  23 cm<br/><b>Profundidade:</b>  12 cm<br/><b>Peso aproximado(g):</b>  130",
+                "description": "Nécessaire confeccionado em poliuretano (PU) impermeável com abertura em 180 graus que remete ao formato de uma concha. Possui amplo compartimento interno com dois bolsos laterais abertos e um central com fechamento em zíper. Contém uma alça para transporte."
+              }
+            },
+            "params": [],
+            "customizations": []
+          },
+          {
+            "id": "6f3c6d26-6112-4616-aca6-919c28214b9b",
+            "subproduct_id": "395658e6-5413-40d5-95de-bab25bb3bd2c",
+            "quantity": 62,
+            "price": 4525,
+            "cost": 1950,
+            "comments": null,
+            "product_mock_image_url": null,
+            "subproduct": {
+              "id": "395658e6-5413-40d5-95de-bab25bb3bd2c",
+              "color": {
+                "id": "67c97a6f-a5c9-4855-b60f-a040155fdad9",
+                "name": "Fulana de Tal",
+                "type": "image",
+                "hexadecimal": null,
+                "image_url": "https://cdn.brinde.me/shared/colors/small/af047c9ca0c11e738b26f982e276c570.webp"
+              },
+              "sku": "02405-MAR",
+              "name": "Fulana de Tal",
+              "image_url": "https://cdn.brinde.me/shared/products/small/necessaire-de-couro-sintetico-1-f560b71a.webp",
+              "product": {
+                "id": "27e5c13f-08ce-4f4b-b08e-9bccf3ba2a0e",
+                "name": "Fulana de Tal",
+                "sku": "02405",
+                "ncm": "4202.92",
+                "tech_description": "<b>Altura:</b>  10 cm<br/><b>Largura:</b>  21 cm<br/><b>Profundidade:</b>  6 cm<br/><b>Peso aproximado(g):</b>  136",
+                "description": "Nécessaire com zíper e couro sintético. Possui abertura larga, 3 bolsos, 3 compartimentos para organização dos itens, alça superior e área de personalização em couro sintético."
+              }
+            },
+            "params": [],
+            "customizations": []
+          }
+        ]
+      }
+    ],
+    "pagination": {
+      "total": 12,
+      "per_page": 100,
+      "current_page": 1,
+      "last_page": 1,
+      "next_page_url": null,
+      "prev_page_url": null
+    }
+  },
+  "links": {
+    "first": "https://api.brinde.me/budget?page=1",
+    "last": "https://api.brinde.me/budget?page=1",
+    "prev": null,
+    "next": null
+  },
+  "meta": {
+    "current_page": 1,
+    "from": 1,
+    "last_page": 1,
+    "links": [
+      {
+        "url": null,
+        "label": "&laquo; Anterior",
+        "active": false
+      },
+      {
+        "url": "https://api.brinde.me/budget?page=1",
+        "label": "1",
+        "active": true
+      },
+      {
+        "url": null,
+        "label": "Próximo &raquo;",
+        "active": false
+      }
+    ],
+    "path": "https://api.brinde.me/budget",
+    "per_page": 100,
+    "to": 12,
+    "total": 12
+  }
+}
