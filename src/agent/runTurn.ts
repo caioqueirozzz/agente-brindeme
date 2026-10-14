@@ -19,7 +19,7 @@ const __dir = dirname(fileURLToPath(import.meta.url));
 /** Falhas de API seguidas antes de instruir transferência (decisão técnica #6 do README). */
 const FALHAS_PARA_TRANSFERIR = 2;
 
-function loadSystemPrompt(state: ConversationState, faq: string): string {
+function loadSystemPrompt(state: ConversationState): string {
   const template = readFileSync(join(__dir, "prompt/system.md"), "utf-8");
   const stateForPrompt = {
     modo: state.modo,
@@ -36,13 +36,7 @@ function loadSystemPrompt(state: ConversationState, faq: string): string {
   return template
     .replace("{{ASSISTANT_NAME}}", config.assistantName)
     .replace(/\{\{STORE_NAME\}\}/g, config.storeName)
-    .replace("{{FAQ}}", faq)
     .replace("{{ESTADO}}", JSON.stringify(stateForPrompt, null, 2));
-}
-
-function loadFaq(): string {
-  return readFileSync(join(__dir, "../knowledge/faq.md"), "utf-8")
-    .replace(/\{\{STORE_NAME\}\}/g, config.storeName);
 }
 
 export interface TurnResult {
@@ -66,8 +60,7 @@ export async function runTurn(
     return { response: null, toolsCalled: [], transferred: false };
   }
 
-  const faq = loadFaq();
-  const systemPrompt = loadSystemPrompt(state, faq);
+  const systemPrompt = loadSystemPrompt(state);
 
   const llmTools = tools.map((t) => ({
     name: t.name,
@@ -88,6 +81,8 @@ export async function runTurn(
 
   const toolsCalled: Array<{ name: string; inputSummary: string }> = [];
   let transferred = false;
+  /** Itens da base de conhecimento usados neste turno (auditoria da Fase 3). */
+  const kbItens = new Set<string>();
 
   // Agentic loop
   let continueLoop = true;
@@ -170,6 +165,18 @@ export async function runTurn(
           error,
         });
 
+        if (toolName === "consultar_conhecimento") {
+          const o = output as { resultado?: string; itens?: Array<{ id: string }> };
+          const ids = o.itens?.map((i) => i.id) ?? [];
+          for (const id of ids) kbItens.add(id);
+          logger.log({
+            type: "kb_consulta",
+            pergunta: String((toolInput as { pergunta?: unknown })?.pergunta ?? ""),
+            itens: ids,
+            resultado: o.resultado === "encontrado" ? "encontrado" : "lacuna",
+          });
+        }
+
         if (toolName === "transferir_humano") {
           transferred = true;
         }
@@ -192,6 +199,7 @@ export async function runTurn(
         content: text,
         input_tokens: response.usage.input_tokens,
         output_tokens: response.usage.output_tokens,
+        ...(kbItens.size > 0 ? { kb_itens: [...kbItens] } : {}),
       });
 
       addMessage(state, "assistant", text);

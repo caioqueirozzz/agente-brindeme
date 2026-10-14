@@ -1,0 +1,6 @@
+{
+  "_instrucoes": "Tabela de etiquetas de ocasião, mantida pela loja (a API da Brinde.me não tem esse campo). Três formas de etiquetar, todas opcionais e somadas: 'porProduto' (chave = id do produto), 'porSku' (chave = sku do produto) e 'porCategoria' (chave = nome ou descrição da categoria, como aparece na plataforma). Os valores são ids de ocasião de ocasioes.json. Mudanças valem na próxima conversa, sem nova sincronização. Exemplo: \"porCategoria\": { \"Canecas\": [\"natal\", \"corporativo\"] }.",
+  "porProduto": {},
+  "porSku": {},
+  "porCategoria": {}
+}

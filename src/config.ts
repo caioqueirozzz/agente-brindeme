@@ -29,4 +29,20 @@ export const config = {
     timeoutMs: int(process.env.BRINDEME_TIMEOUT_MS, 10_000),
     maxRetries: int(process.env.BRINDEME_MAX_RETRIES, 2),
   },
+
+  conhecimento: {
+    /**
+     * Só item `aprovado` chega ao cliente. Ligue apenas em desenvolvimento para
+     * conversar com a base ainda em rascunho; item com [PLACEHOLDER] nunca é
+     * servido, mesmo com a chave ligada.
+     */
+    incluirRascunhos: (process.env.KB_INCLUIR_RASCUNHOS ?? "false") === "true",
+  },
+
+  catalogo: {
+    /** Chamadas simultâneas a GET /product/{id} durante a sincronização. */
+    concorrencia: int(process.env.CATALOGO_CONCORRENCIA, 5),
+    /** Idade máxima de um produto no índice antes de ser relido, mesmo sem mudança em updated_at. */
+    maxIdadeHoras: int(process.env.CATALOGO_MAX_IDADE_HORAS, 6),
+  },
 };

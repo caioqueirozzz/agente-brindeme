@@ -4,6 +4,13 @@ import { join } from "path";
 import { HttpBrindeMeClient } from "../src/integrations/brindeme/httpClient.js";
 import { MemoryApiLogger } from "../src/integrations/brindeme/apiLogger.js";
 import { detalharProdutoHandler } from "../src/tools/detalharProduto.js";
+import {
+  buscarProdutosHandler,
+  setProductIndexStore,
+  setOccasionTagStore,
+} from "../src/tools/buscarProdutos.js";
+import { MemoryProductIndexStore, sincronizarCatalogo } from "../src/catalogo/indice.js";
+import { MemoryOccasionTagStore } from "../src/catalogo/ocasioes.js";
 import { createInitialState } from "../src/agent/state.js";
 
 /**
@@ -200,63 +207,72 @@ describe("contrato — nenhum dado sensível vaza para o modelo", () => {
   });
 });
 
-describe("contrato — buscar_produtos hidrata o detalhe antes de filtrar", () => {
+describe("contrato — catálogo: listagem real → índice → recomendação", () => {
   afterEach(() => { vi.unstubAllGlobals(); });
 
-  it("NÃO reporta falta de estoque só porque a listagem não traz subprodutos", async () => {
+  /** Responde a listagem com a fixture e cada GET /product/{id} com o detalhe real, já com o id pedido. */
+  function stubApi(contador?: { detalhes: number }) {
     const lista = fixture("product-list.json");
-    const detalhe = fixture("product-detail.json");
-    let chamadasDetalhe = 0;
-
+    const detalhe = fixture("product-detail.json") as { data: Record<string, unknown> };
     vi.stubGlobal("fetch", async (url: string) => {
-      const u = String(url);
-      if (/\/product\/[^?]+/.test(u)) {
-        chamadasDetalhe++;
-        return new Response(JSON.stringify(detalhe), { status: 200 });
+      const m = /\/product\/([^?/]+)/.exec(String(url));
+      if (m) {
+        if (contador) contador.detalhes++;
+        return new Response(JSON.stringify({ data: { ...detalhe.data, id: m[1] } }), { status: 200 });
       }
       return new Response(JSON.stringify(lista), { status: 200 });
     });
-
-    const c = new HttpBrindeMeClient({
+    return new HttpBrindeMeClient({
       baseUrl: "https://api.brinde.me",
       token: "fixture",
       apiLogger: new MemoryApiLogger(),
     });
+  }
 
-    const { buscarProdutosHandler } = await import("../src/tools/buscarProdutos.js");
+  it("a listagem real traz updated_at — base da sincronização incremental", async () => {
+    const c = stubApi();
+    for (const p of (await c.listProducts()).data) {
+      expect(p.updated_at).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    }
+  });
+
+  it("NÃO reporta falta de estoque só porque a listagem não traz subprodutos", async () => {
+    const contador = { detalhes: 0 };
+    const c = stubApi(contador);
+    const store = new MemoryProductIndexStore();
+    await sincronizarCatalogo(c, store);
+    setProductIndexStore(store);
+    setOccasionTagStore(new MemoryOccasionTagStore());
+
     const r = (await buscarProdutosHandler(
       { consulta: "caneta", quantidade: 100 },
       createInitialState("5583999990000"),
       c
-    )) as { resultado: string; produtos?: Array<{ cores_disponiveis: string[]; sku: string }> };
+    )) as {
+      resultado: string;
+      produtos?: Array<{ cores_disponiveis: string[]; sku: string; preco_unitario_na_quantidade: number }>;
+    };
 
-    // Antes da correção isto vinha "nenhum_produto_encontrado — sem estoque suficiente",
-    // porque getTotalStock somava subprodutos que a listagem nunca devolve.
     expect(r.resultado).toBe("produtos_encontrados");
-    expect(chamadasDetalhe).toBeGreaterThan(0);
+    // o detalhe foi lido na sincronização E conferido de novo na recomendação
+    expect(contador.detalhes).toBeGreaterThan(2);
     expect(r.produtos?.[0].cores_disponiveis.length).toBeGreaterThan(0);
     expect(r.produtos?.[0].sku).toBeTruthy();
+    // preço real em centavos (68) convertido para reais
+    expect(r.produtos?.[0].preco_unitario_na_quantidade).toBeLessThan(10);
   });
 
-  it("avisa que a cobertura é parcial — 100 de milhares, até a Fase 3", async () => {
-    const lista = fixture("product-list.json");
-    const detalhe = fixture("product-detail.json");
-    vi.stubGlobal("fetch", async (url: string) =>
-      /\/product\/[^?]+/.test(String(url))
-        ? new Response(JSON.stringify(detalhe), { status: 200 })
-        : new Response(JSON.stringify(lista), { status: 200 })
+  it("o registro do índice guarda só o necessário para recomendar", async () => {
+    const store = new MemoryProductIndexStore();
+    await sincronizarCatalogo(stubApi(), store);
+    const [registro] = store.carregar().produtos;
+    expect(Object.keys(registro).sort()).toEqual(
+      [
+        "ausencias", "atualizado_em", "categorias", "codigo", "descricao", "destaque", "id",
+        "imagem_url", "etiquetas_embutidas", "nome", "personalizacoes", "quantidade_minima",
+        "sincronizado_em", "sku", "slug", "subprodutos",
+      ].sort()
     );
-    const c = new HttpBrindeMeClient({
-      baseUrl: "https://api.brinde.me",
-      token: "fixture",
-      apiLogger: new MemoryApiLogger(),
-    });
-    const { buscarProdutosHandler } = await import("../src/tools/buscarProdutos.js");
-    const r = (await buscarProdutosHandler(
-      { consulta: "caneta" },
-      createInitialState("5583999990000"),
-      c
-    )) as { cobertura_parcial: boolean };
-    expect(r.cobertura_parcial).toBe(true);
+    expect(JSON.stringify(registro)).not.toMatch(/"cost"|cpf|bankslip/i);
   });
 });

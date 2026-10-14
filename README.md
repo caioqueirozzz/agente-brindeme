@@ -85,7 +85,7 @@ Com `BRINDEME_MODE=http`, o comando `/falha` do chat não funciona — injeção
 
 ## Arquitetura
 
-O agente recebe uma mensagem do usuário em `runTurn`, que monta o prompt de sistema (identidade + FAQ + estado estruturado), constrói o histórico de mensagens e entra em um loop com o LLM (Anthropic). Quando o modelo emite `tool_use`, o handler correspondente é executado usando o `BrindeMeClient` (mock nesta fase); o resultado volta ao LLM como `tool_result`, e o loop continua até `stop_reason = end_turn`. O estado da conversa (`ConversationState`) é atualizado diretamente pelos handlers e persiste em memória. Logs são gravados em JSONL por conversa em `logs/`, com CPF, e-mail e telefone mascarados. Ferramentas dependem apenas da interface `BrindeMeClient` — a Fase 2 só precisa adicionar `HttpBrindeMeClient`.
+O agente recebe uma mensagem do usuário em `runTurn`, que monta o prompt de sistema (identidade + regras + estado estruturado — a FAQ saiu do prompt e virou a ferramenta `consultar_conhecimento`), constrói o histórico de mensagens e entra em um loop com o LLM (Anthropic). Quando o modelo emite `tool_use`, o handler correspondente é executado usando o `BrindeMeClient` (mock nesta fase); o resultado volta ao LLM como `tool_result`, e o loop continua até `stop_reason = end_turn`. O estado da conversa (`ConversationState`) é atualizado diretamente pelos handlers e persiste em memória. Logs são gravados em JSONL por conversa em `logs/`, com CPF, e-mail e telefone mascarados. Ferramentas dependem apenas da interface `BrindeMeClient` — a Fase 2 só precisa adicionar `HttpBrindeMeClient`.
 
 ---
 
@@ -100,13 +100,21 @@ O agente recebe uma mensagem do usuário em `runTurn`, que monta o prompt de sis
 | 5 | Idempotência pelo token no `ConversationState` + header `Idempotency-Key` | Vale para mock e HTTP; antes dependia de `instanceof MockBrindeMeClient` e o cliente real perderia a proteção em silêncio |
 | 6 | `falhasConsecutivas` contado em `runTurn`, não nas tools | As tools capturam o erro internamente; contar no loop faz a regra "2 falhas → transferir" valer para todas as 8 ferramentas |
 | 7 | `modo = "humano"` faz short-circuit antes do LLM | `runTurn` retorna `null`; CLI exibe mensagem de pausa |
-| 8 | `tags_ocasiao` nos mocks (não vem da API) | Placeholder para busca semântica da Fase 3; tabela própria no Supabase |
+| 8 | `tags_ocasiao` nos mocks (não vem da API) | Na Fase 3 vira só "etiqueta embutida"; a fonte real é a tabela da loja (`etiquetas-ocasiao.json`, decisão 20) |
 | 9 | Preços como `number` (reais) nos mocks | Unidade real (texto ou centavos) a confirmar na Fase 2 |
 | 10 | `translateApiError` em `errors.ts`, fora do mock | As tools dependem do tradutor em produção também |
 | 11 | Retry exponencial só em GET; `createBudget` sem retry | POST repetido duplicaria orçamento — melhor falhar e deixar o agente decidir |
 | 12 | Esquema de auth e caminhos dos endpoints configuráveis | A spec da loja ainda não confirmou o formato; trocar é mudar `.env` ou a constante `ENDPOINTS` |
 | 13 | Tabela de preços por subproduto, não por produto | 3 dos 8 produtos do mock têm preço diferente por cor; a busca anuncia o menor ("a partir de") e o detalhe devolve a tabela de cada cor |
 | 14 | Teto de consultas de pedido por conversa | O caminho "telefone não bate → pede e-mail" era gratuito e permitia varrer códigos: a resposta distinguia código real de inexistente |
+| 15 | Base de conhecimento em `base/<categoria>.json`, com `status` aprovado/rascunho, dono e `revisar_em` | Planejamento: item curto, com dono e data de revisão; só aprovado entra |
+| 16 | Item com `[PLACEHOLDER]` nunca é servido, nem com `KB_INCLUIR_RASCUNHOS=true`; o esquema recusa item *aprovado* com placeholder | O risco real é o agente repetir "[X] dias" ou um valor fictício; falha fechada no código, não no prompt |
+| 17 | Busca por BM25 em português (sem acento, radical leve, sinônimos) com **corte de cobertura** | Sem provedor de embeddings definido. A cobertura impede responder com um item que só casa uma palavra solta; abaixo do corte é lacuna e transfere |
+| 18 | O estoque é conferido **por cor**: uma cor precisa cobrir a quantidade inteira | A spec não diz como a plataforma faixa o preço de um pedido dividido em cores; não sugerir é mais seguro que sugerir um preço que o orçamento contradiz. *Confirmar com a loja* |
+| 19 | O índice só escolhe candidatos; estoque e preço vão ao cliente depois de `GET /product/{id}` e das mesmas regras rodando sobre o dado fresco | Planejamento: "estoque e preço final sempre reconferidos". Produto não verificável não é sugerido |
+| 20 | Etiquetas de ocasião em tabela separada (por produto, SKU ou categoria), lida a cada conversa | A API não tem o campo; a loja edita sem esperar a sincronização |
+| 21 | Sincronização do catálogo: listagem falha → nada é gravado; produto some da listagem → sai só após 2 sincronizações completas; inativo sai na hora | Paginação sem ordenação fixa pode pular itens; um catálogo parcial nunca substitui um bom |
+| 22 | Reconferência na API em lotes de 4, no máximo 12 por pergunta; falha em *todas* é falha de API, não "não temos" | Evita dizer ao cliente que não há produto quando é a API que caiu, e mantém a contagem de falhas da Fase 2 |
 
 ---
 
@@ -139,7 +147,7 @@ npm run test:orcamento             # exercita POST /budget (CRIA ORÇAMENTO REAL
 - **Valores monetários em centavos** (`price: 377` = R$ 3,77)
 - **Quatro envelopes de resposta diferentes** entre os endpoints
 - **`GET /order/{id}` só aceita UUID** — daí o job de sincronização
-- **Não existe busca por texto em `/product`** — o índice de catálogo é Fase 3, como o planejamento previu
+- **Não existe busca por texto em `/product`** — o índice de catálogo é a Fase 3 (`npm run sync:catalogo`), como o planejamento previu
 - Itens de orçamento expõem `cost` (custo da loja) — nunca mapeado
 
 ### Tratamento de falhas
@@ -152,6 +160,57 @@ npm run test:orcamento             # exercita POST /budget (CRIA ORÇAMENTO REAL
 | 412 | Registra o corpo completo + alerta | Transferência |
 | 422 | Devolve o campo inválido | Pedido de correção |
 | 3 falhas seguidas | **Disjuntor** abre por 2 min | Transferência |
+
+## Estado do conhecimento e da recomendação — Fase 3
+
+Guia para a equipe da loja: **[docs/base-de-conhecimento.md](docs/base-de-conhecimento.md)**
+
+| Entregável da Fase 3 | Status |
+|---|---|
+| Base de conhecimento inicial preenchida **e aprovada** por categoria | ⚠️ Preenchida: 17 itens nas 7 categorias. **Nenhum aprovado** — aprovar é ato da loja (`npm run kb:validar` mostra o que falta e com quem) |
+| Job de sincronização do catálogo e índice de busca | ✅ `npm run sync:catalogo` |
+| Tabela de etiquetas de ocasião mantida pela loja | ⚠️ Mecanismo pronto; a tabela está **vazia** — a loja etiqueta |
+| `buscar_produtos` com testes de recomendação | ✅ |
+| *Pronto quando*: 30 pedidos da loja, sugestões dentro de mínimo/estoque/orçamento **e** adequadas | ⚠️ Verificação automática pronta (`npm run avaliar:recomendacao`) com 30 pedidos *de exemplo*; falta a loja trocar por pedidos reais e marcar a planilha |
+
+### O que ficou pronto
+
+- **Ferramenta `consultar_conhecimento`**: responde dúvidas gerais só com item aprovado; sem resposta na base, registra a **lacuna** (`data/lacunas.jsonl`, mascarada) e devolve `instrucao: "transferir"` com `motivo_sugerido: "lacuna_conhecimento"`. O log do turno guarda os `id`s usados (`kb_consulta`, `kb_itens` em `response_sent`).
+- **Índice do catálogo** (`data/produtos-index.json`): nome, descrição, categorias, cores com estoque, faixas de preço, mínimo, imagem principal e personalizações. Incremental por `updated_at`; ver decisão 21 para as regras de segurança.
+- **Recomendação em 5 passos** (`src/catalogo/recomendar.ts`): filtros rígidos → ordem por similaridade, ocasião e destaque → até 3 opções com preço da faixa e total → reconferência na API → sem resultado: explica e propõe o ajuste mais próximo (aumentar quantidade, reduzir quantidade ou subir o valor), **verificado pelas mesmas regras**.
+- `buscar_produtos` ganhou `orcamento_total` (exige `quantidade`) e passa a devolver `total_estimado`. Sem quantidade, devolve `preco_a_partir_de` na quantidade mínima, com aviso.
+- Prompt: FAQ removida; regras de coleta (uma pergunta por vez, quantidade antes de preço), apresentação (máx. 3, só dados da ferramenta) e a regra de chamar `transferir_humano` quando o retorno trouxer `instrucao: "transferir"` (o ajuste sugerido para o cenário 11 abaixo).
+
+### Comandos
+
+```bash
+npm run sync:catalogo                  # catálogo → índice (rodar de hora em hora)
+npm run sync:catalogo -- --forcar      # relê o detalhe de todos os produtos ativos
+npm run kb:validar                     # estado da base por categoria e responsável
+npm run kb:validar -- --exigir-aprovacao   # falha se houver item não aprovado (gate de release)
+npm run kb:lacunas                     # perguntas que a base não soube responder
+npm run avaliar:recomendacao           # confere os pedidos na API e gera a planilha da equipe
+```
+
+No modo `mock` o chat monta o índice sozinho. Com `BRINDEME_MODE=http` ele **não** sincroniza sozinho (são milhares de produtos): rode `npm run sync:catalogo` antes; sem índice, `buscar_produtos` falha de forma explícita e o agente transfere.
+
+### Como foi verificado — e o que não foi
+
+- 347 testes (142 antes da fase), incluindo: regras de mínimo/estoque/faixa/orçamento; sincronização (paginação, incremental, falha de listagem, falha de detalhe, remoção); revalidação (estoque que acabou, preço que mudou, 404, API fora); ajustes propostos *reaplicados ao pedido* para provar que fecham; e os 30 pedidos contra um catálogo sintético de 400 produtos, com um **verificador independente** (`src/catalogo/verificacao.ts`) que recalcula tudo do produto cru, sem reusar a lógica sob teste.
+- Verificação por mutação: 10 quebras deliberadas das regras de segurança (ignorar mínimo, estoque por cor, revalidação, falha de listagem, servir rascunho/placeholder, corte de cobertura...) — todas derrubaram testes.
+- Desempenho medido em 6.535 produtos sintéticos: ~15–40 ms por busca (a primeira de cada carga do índice, ~350 ms, monta o BM25).
+- **Não foi rodado contra a API real nem com o modelo**: não há `BRINDEME_TOKEN` nem `ANTHROPIC_API_KEY` neste ambiente. O formato real do catálogo é coberto pelas fixtures gravadas na Fase 2 (`tests/contrato.test.ts`); os 3 cenários de eval novos (16–18) e o comportamento do prompt **ainda não foram executados**.
+
+### Correção feita no caminho
+
+O mascaramento de telefone nos logs (Fase 2) só cobria números de 13–15 dígitos (com `55`). `83999990000` e `(83) 99999-0000`, do jeito que o cliente digita, passavam em claro — e agora a fala do cliente também vai para o registro de lacunas. Corrigido em `src/logging/logger.ts`; o teste antigo copiava as funções inline em vez de importar o módulo real, então não protegia nada — agora importa `mascararTexto`.
+
+### Limitações conhecidas
+
+- **Sem embeddings.** O plano prevê busca por significado; não há provedor de embeddings escolhido (a Anthropic não oferece). A busca usa sinônimos (`src/busca/sinonimos.ts`) e as etiquetas de ocasião. "Algo para professores" funciona *se* a loja etiquetar. Para embeddings (Supabase `pgvector`, na Fase 5), basta somar um termo de similaridade ao `relevancia()` de `recomendar.ts`.
+- **A data em que o cliente precisa não filtra produto** (depende do prazo de produção, ainda não aprovado). Fica no estado da conversa e a resposta de prazo vem da base.
+- **Cor única**: ver decisão 18. Quem pede 400 unidades e tem duas cores com 300 e 200 em estoque recebe "sem estoque suficiente" e o ajuste "reduzir para 300", não uma sugestão misturada.
+- O índice é um arquivo JSON (padrão da Fase 2). Com 6.535 produtos tem alguns MB e é lido inteiro na memória; a troca por Supabase está prevista para a Fase 5 pela interface `ProductIndexStore`.
 
 ## Lacunas da API a confirmar na Fase 2
 
@@ -167,7 +226,10 @@ npm run test:orcamento             # exercita POST /budget (CRIA ORÇAMENTO REAL
 ## O que a loja precisa aprovar (antes da Fase 4)
 
 - [ ] **Persona** — nome, tom e frases de saudação do assistente
-- [ ] **FAQ** — todos os valores marcados como `[PLACEHOLDER]` em `src/knowledge/faq.md`
+- [ ] **Base de conhecimento** — preencher os `[PLACEHOLDER]` e aprovar os itens em `src/knowledge/base/` (cada categoria com o seu aprovador; ver `npm run kb:validar`)
+- [ ] **Etiquetas de ocasião** — preencher `src/knowledge/etiquetas-ocasiao.json` (por categoria, SKU ou produto)
+- [ ] **Estoque por cor** — confirmar com a loja: o pedido dividido em várias cores pode ser faixado pelo total ou por linha? (decisão 18)
+- [ ] **30 pedidos reais de recomendação** — substituir `evals/recomendacao/pedidos.json` e marcar a planilha de `npm run avaliar:recomendacao`
 - [ ] **Matriz de intenções** — confirmar fluxos de reclamação, devolução e garantia
 - [ ] **Responsáveis** — definir regra de atribuição de admin além do "primeiro da lista"
 - [ ] **Horário de atendimento humano** — para o agente informar corretamente quando não há atendente disponível
@@ -180,8 +242,8 @@ Os evals requerem `ANTHROPIC_API_KEY`. Execute `npm run evals` para ver o relat�
 
 ### Cenários que tendem a falhar e ajustes sugeridos
 
-**Cenário 11 (API em 500 duas vezes → transferir):** O comportamento depende de o modelo interpretar `instrucao: "transferir"` no retorno da ferramenta e chamar `transferir_humano` voluntariamente. Ajuste sugerido: adicionar ao prompt uma instrução explícita — *"Quando o retorno de uma ferramenta incluir `instrucao: 'transferir'`, chame imediatamente `transferir_humano` com `motivo: 'falha_sistema'`."*
+**Cenário 11 (API em 500 duas vezes → transferir):** O comportamento depende de o modelo interpretar `instrucao: "transferir"` no retorno da ferramenta e chamar `transferir_humano` voluntariamente. Ajuste aplicado na Fase 3 (o prompt agora manda chamar `transferir_humano` imediatamente quando o retorno trouxer `instrucao: "transferir"`, com o `motivo_sugerido`).
 
-**Cenário 14 (Prazo não aprovado):** O modelo pode citar os valores fictícios do rascunho da FAQ sem os colchetes. Ajuste sugerido: remover completamente os valores de prazo da FAQ e substituir por *"[A confirmar com a loja — não informe prazos ao cliente sem aprovação]"*.
+**Cenário 14 (Prazo não aprovado):** resolvido na Fase 3 por construção — o prazo só chega ao modelo se existir item *aprovado* na base (hoje não existe: vira lacuna e transfere). O prompt não carrega mais texto de FAQ.
 
-**Cenário 4 (Preço sem quantidade):** Em contextos onde o produto já está definido pelo histórico, o modelo pode responder com a faixa de preço sem pedir a quantidade. Ajuste sugerido: adicionar ao prompt — *"Quando o cliente perguntar preço, sempre pergunte a quantidade antes de dar o valor, pois o preço varia por faixa."*
+**Cenário 4 (Preço sem quantidade):** Em contextos onde o produto já está definido pelo histórico, o modelo pode responder com a faixa de preço sem pedir a quantidade. Ajuste aplicado na Fase 3 (seção "Como recomendar produtos" do prompt: quantidade antes de preço). Cenário 17 cobre.

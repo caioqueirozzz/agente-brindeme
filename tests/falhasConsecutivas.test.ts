@@ -2,6 +2,10 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { runTurn } from "../src/agent/runTurn.js";
 import { createInitialState } from "../src/agent/state.js";
 import { semearMapaSubprodutos } from "./helpers/mapaSubprodutos.js";
+import { usarIndiceDoMock } from "./helpers/catalogo.js";
+import { readFileSync } from "fs";
+import { join } from "path";
+import type { Product } from "../src/integrations/brindeme/types.js";
 import { MockBrindeMeClient } from "../src/integrations/brindeme/mockClient.js";
 import { Logger } from "../src/logging/logger.js";
 import type { LLMProvider, LLMMessage, LLMResponse } from "../src/llm/types.js";
@@ -48,20 +52,37 @@ function ultimosToolResults(seen: LLMMessage[][]): Array<Record<string, unknown>
     .map((b) => JSON.parse(b.content ?? "{}") as Record<string, unknown>);
 }
 
+/**
+ * buscar_produtos confere cada candidato em GET /product/{id}. "A API caiu"
+ * significa que TODAS as conferências de uma busca falham; uma só falha é
+ * absorvida (o produto não verificado simplesmente não é sugerido). Na busca
+ * por "natal" os candidatos são os produtos ativos, com estoque e etiquetados.
+ */
+const CONFERENCIAS_POR_BUSCA_NATAL = (
+  JSON.parse(readFileSync(join(process.cwd(), "mocks/products.json"), "utf-8")) as Product[]
+).filter(
+  (p) => p.status && p.tags_ocasiao?.includes("natal") && p.subproducts.some((s) => s.status && s.stock > 0)
+).length;
+
 describe("contagem centralizada de falhas de API", () => {
   let client: MockBrindeMeClient;
   let state: ReturnType<typeof createInitialState>;
   let logger: Logger;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     client = new MockBrindeMeClient();
     state = createInitialState("5583999990000");
     semearMapaSubprodutos(state);
     logger = new Logger("test-falhas");
+    await usarIndiceDoMock();
+  });
+
+  it("os mocks têm candidatos de natal para a busca (premissa dos testes abaixo)", () => {
+    expect(CONFERENCIAS_POR_BUSCA_NATAL).toBeGreaterThan(1);
   });
 
   it("conta falha de tool que engole o erro internamente (buscar_produtos)", async () => {
-    client.injectFault({ type: "500", remaining: 1 });
+    client.injectFault({ type: "500", remaining: CONFERENCIAS_POR_BUSCA_NATAL });
     const llm = new ScriptedLLM([
       toolUse("buscar_produtos", { consulta: "natal" }),
       endTurn("tive um problema"),
@@ -75,7 +96,7 @@ describe("contagem centralizada de falhas de API", () => {
   });
 
   it("injeta instrucao=transferir na SEGUNDA falha seguida", async () => {
-    client.injectFault({ type: "500", remaining: 2 });
+    client.injectFault({ type: "500", remaining: CONFERENCIAS_POR_BUSCA_NATAL * 2 });
     const llm = new ScriptedLLM([
       toolUse("buscar_produtos", { consulta: "natal" }),
       toolUse("buscar_produtos", { consulta: "natal" }),
@@ -91,7 +112,7 @@ describe("contagem centralizada de falhas de API", () => {
   });
 
   it("não injeta instrucao na primeira falha", async () => {
-    client.injectFault({ type: "500", remaining: 1 });
+    client.injectFault({ type: "500", remaining: CONFERENCIAS_POR_BUSCA_NATAL });
     const llm = new ScriptedLLM([
       toolUse("buscar_produtos", { consulta: "natal" }),
       endTurn("instabilidade"),
@@ -104,7 +125,7 @@ describe("contagem centralizada de falhas de API", () => {
   });
 
   it("zera o contador quando a tool volta a funcionar", async () => {
-    client.injectFault({ type: "500", remaining: 1 });
+    client.injectFault({ type: "500", remaining: CONFERENCIAS_POR_BUSCA_NATAL });
     const llm = new ScriptedLLM([
       toolUse("buscar_produtos", { consulta: "natal" }),
       toolUse("buscar_produtos", { consulta: "natal" }),
@@ -137,18 +158,18 @@ describe("contagem centralizada de falhas de API", () => {
   });
 
   it("falhas se acumulam entre turnos diferentes", async () => {
-    client.injectFault({ type: "500", remaining: 1 });
+    client.injectFault({ type: "500", remaining: CONFERENCIAS_POR_BUSCA_NATAL });
     await runTurn(
       "oi",
       state,
-      new ScriptedLLM([toolUse("buscar_produtos", { consulta: "x" }), endTurn("erro")]),
+      new ScriptedLLM([toolUse("buscar_produtos", { consulta: "natal" }), endTurn("erro")]),
       client,
       logger
     );
     expect(state.falhasConsecutivas).toBe(1);
 
-    client.injectFault({ type: "500", remaining: 1 });
-    const llm2 = new ScriptedLLM([toolUse("buscar_produtos", { consulta: "x" }), endTurn("erro")]);
+    client.injectFault({ type: "500", remaining: CONFERENCIAS_POR_BUSCA_NATAL });
+    const llm2 = new ScriptedLLM([toolUse("buscar_produtos", { consulta: "natal" }), endTurn("erro")]);
     await runTurn("e agora?", state, llm2, client, logger);
 
     expect(state.falhasConsecutivas).toBe(2);

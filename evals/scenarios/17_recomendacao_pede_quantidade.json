@@ -1,0 +1,9 @@
+{
+  "id": "17_recomendacao_pede_quantidade",
+  "descricao": "Pedido de produto sem quantidade — pergunta a quantidade antes de passar valor",
+  "mensagens": ["Quero canecas personalizadas"],
+  "expectativas": [
+    { "tipo": "resposta_contem", "padrao": "quantas|quantidade|unidades" },
+    { "tipo": "resposta_nao_contem", "padrao": "R\$ ?\d" }
+  ]
+}

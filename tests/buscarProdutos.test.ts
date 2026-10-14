@@ -2,12 +2,16 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { MockBrindeMeClient } from "../src/integrations/brindeme/mockClient.js";
 import { buscarProdutosHandler } from "../src/tools/buscarProdutos.js";
 import { createInitialState } from "../src/agent/state.js";
+import { usarIndiceDoMock } from "./helpers/catalogo.js";
 
 describe("buscarProdutos", () => {
   let client: MockBrindeMeClient;
   const state = createInitialState("5583999990000");
 
-  beforeEach(() => { client = new MockBrindeMeClient(); });
+  beforeEach(async () => {
+    client = new MockBrindeMeClient();
+    await usarIndiceDoMock();
+  });
 
   it("filtra produto inativo (camiseta)", async () => {
     const result = await buscarProdutosHandler({ consulta: "camiseta" }, state, client) as Record<string, unknown>;

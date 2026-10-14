@@ -1,0 +1,69 @@
+{
+  "categoria": "processo-comercial",
+  "itens": [
+    {
+      "id": "processo-passo-a-passo",
+      "titulo": "Como funciona o pedido, do início à produção",
+      "conteudo": "Funciona assim: 1) você escolhe o produto e a quantidade; 2) envia a arte; 3) nossa equipe aplica a arte e gera o mockup (prévia do produto personalizado); 4) você aprova o mockup e o orçamento; 5) faz o pagamento; 6) a produção começa. O mockup e a aprovação final ficam com a equipe da loja.",
+      "palavras_chave": [
+        "como funciona",
+        "passo a passo",
+        "etapas",
+        "processo",
+        "comprar",
+        "fazer pedido",
+        "fluxo"
+      ],
+      "perguntas_exemplo": [
+        "Como funciona para comprar?",
+        "Qual o passo a passo do pedido?"
+      ],
+      "status": "rascunho",
+      "revisar_em": "2027-04-14",
+      "nota_interna": "Ordem conforme o planejamento (produto → arte → mockup → aprovar orçamento → pagar → produção). Comercial: confirmar a ordem."
+    },
+    {
+      "id": "limites-do-atendimento-virtual",
+      "titulo": "O que o atendimento virtual faz e não faz",
+      "conteudo": "O atendimento virtual ajuda a escolher produtos, consultar preços de tabela e abrir orçamentos. Ele não recebe pagamento, não confirma pedido nem aprova orçamento: essas etapas são da equipe da loja.",
+      "palavras_chave": [
+        "assistente",
+        "robo",
+        "atendente virtual",
+        "ia",
+        "bot",
+        "voce e uma pessoa",
+        "humano",
+        "pagamento pelo whatsapp"
+      ],
+      "perguntas_exemplo": [
+        "Você é um robô?",
+        "Posso pagar por aqui?"
+      ],
+      "status": "rascunho",
+      "revisar_em": "2027-04-14",
+      "nota_interna": "Vem do rascunho da FAQ (Fase 1)."
+    },
+    {
+      "id": "pedido-minimo",
+      "titulo": "Quantidade mínima por produto",
+      "conteudo": "Cada produto tem uma quantidade mínima, que aparece na consulta do produto. Não produzimos abaixo desse mínimo.",
+      "palavras_chave": [
+        "minimo",
+        "quantidade minima",
+        "pouca quantidade",
+        "unidade avulsa",
+        "uma unidade",
+        "poucas unidades",
+        "pedido minimo"
+      ],
+      "perguntas_exemplo": [
+        "Qual o pedido mínimo?",
+        "Dá para fazer só 10 unidades?"
+      ],
+      "status": "rascunho",
+      "revisar_em": "2027-04-14",
+      "nota_interna": "Vem do rascunho da FAQ (Fase 1). O mínimo de cada produto vem sempre da API."
+    }
+  ]
+}
