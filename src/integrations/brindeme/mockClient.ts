@@ -69,12 +69,14 @@ export class MockBrindeMeClient implements BrindeMeClient {
     this.checkFault();
     const allProducts = loadJson<Product[]>("products.json");
     const perPage = params?.per_page ?? 20;
-    const data = allProducts.slice(0, perPage);
+    const page = params?.page ?? 1;
+    const data = allProducts.slice((page - 1) * perPage, page * perPage);
     return {
       data,
       total: allProducts.length,
       per_page: perPage,
-      current_page: 1,
+      current_page: page,
+      last_page: Math.max(1, Math.ceil(allProducts.length / perPage)),
     };
   }
 

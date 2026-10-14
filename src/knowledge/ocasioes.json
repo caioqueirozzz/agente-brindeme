@@ -1,0 +1,61 @@
+{
+  "_instrucoes": "Ocasiões que o agente reconhece na fala do cliente. 'id' é o nome canônico usado nas etiquetas (etiquetas-ocasiao.json); 'aliases' são as formas como o cliente escreve. Sem acento, em minúsculas. Para uma ocasião nova, basta acrescentar aqui e etiquetar os produtos.",
+  "ocasioes": {
+    "natal": {
+      "rotulo": "Natal",
+      "aliases": ["natal", "natalino", "natalina", "fim de ano", "amigo secreto", "amigo oculto", "confraternizacao"]
+    },
+    "dia-das-maes": {
+      "rotulo": "Dia das Mães",
+      "aliases": ["dia das maes", "dia da mae"]
+    },
+    "dia-dos-pais": {
+      "rotulo": "Dia dos Pais",
+      "aliases": ["dia dos pais", "dia do pai"]
+    },
+    "dia-dos-professores": {
+      "rotulo": "Dia dos Professores",
+      "aliases": ["dia dos professores", "dia do professor", "professor", "professora", "professores", "professoras"]
+    },
+    "dia-das-criancas": {
+      "rotulo": "Dia das Crianças",
+      "aliases": ["dia das criancas", "dia da crianca", "infantil"]
+    },
+    "formatura": {
+      "rotulo": "Formatura",
+      "aliases": ["formatura", "formaturas", "formando", "formandos", "colacao de grau"]
+    },
+    "aniversario": {
+      "rotulo": "Aniversário",
+      "aliases": ["aniversario", "aniversarios", "niver"]
+    },
+    "corporativo": {
+      "rotulo": "Corporativo",
+      "aliases": ["corporativo", "corporativa", "corporativos", "empresa", "empresas", "empresarial", "colaboradores", "funcionarios"]
+    },
+    "eventos": {
+      "rotulo": "Eventos",
+      "aliases": ["evento", "eventos", "feira", "feiras", "congresso", "convencao", "seminario", "workshop"]
+    },
+    "onboarding": {
+      "rotulo": "Onboarding",
+      "aliases": ["onboarding", "boas vindas", "integracao", "novos colaboradores", "novo colaborador", "kit de boas vindas"]
+    },
+    "volta-as-aulas": {
+      "rotulo": "Volta às aulas",
+      "aliases": ["volta as aulas", "volta a escola", "inicio das aulas", "escolar"]
+    },
+    "sustentabilidade": {
+      "rotulo": "Sustentabilidade",
+      "aliases": ["sustentavel", "sustentaveis", "sustentabilidade", "ecologico", "ecologica", "ecologicos", "eco"]
+    },
+    "esportivo": {
+      "rotulo": "Esportivo",
+      "aliases": ["esporte", "esportes", "esportivo", "esportiva", "academia", "corrida"]
+    },
+    "executivo": {
+      "rotulo": "Executivo",
+      "aliases": ["executivo", "executiva", "executivos"]
+    }
+  }
+}

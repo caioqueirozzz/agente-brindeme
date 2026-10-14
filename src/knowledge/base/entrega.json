@@ -1,0 +1,34 @@
+{
+  "categoria": "entrega",
+  "itens": [
+    {
+      "id": "regioes-e-modalidades-de-entrega",
+      "titulo": "Regiões atendidas, modalidades e retirada",
+      "conteudo": "Entregamos para todo o Brasil, por Correios (PAC e Sedex) e transportadoras. O frete é calculado por CEP e peso depois que o pedido é finalizado. Também há retirada na loja, mediante agendamento.",
+      "palavras_chave": [
+        "entrega",
+        "entregam",
+        "frete",
+        "envio",
+        "enviar",
+        "correios",
+        "sedex",
+        "pac",
+        "transportadora",
+        "retirada",
+        "retirar",
+        "brasil",
+        "cep",
+        "regiao",
+        "todo o brasil"
+      ],
+      "perguntas_exemplo": [
+        "Vocês entregam em todo o Brasil?",
+        "Dá para retirar na loja?"
+      ],
+      "status": "rascunho",
+      "revisar_em": "2027-04-14",
+      "nota_interna": "Do rascunho da FAQ (Fase 1). Logística: confirmar regiões, modalidades e retirada. Frete e prazo de um caso específico seguem para a equipe."
+    }
+  ]
+}

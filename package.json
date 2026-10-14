@@ -11,7 +11,11 @@
     "typecheck": "tsc --noEmit",
     "check:api": "tsx scripts/checkApi.ts",
     "sync:pedidos": "tsx scripts/syncPedidos.ts",
-    "test:orcamento": "tsx scripts/testCriarOrcamento.ts"
+    "test:orcamento": "tsx scripts/testCriarOrcamento.ts",
+    "sync:catalogo": "tsx scripts/syncCatalogo.ts",
+    "kb:validar": "tsx scripts/validarBase.ts",
+    "kb:lacunas": "tsx scripts/lacunas.ts",
+    "avaliar:recomendacao": "tsx scripts/avaliarRecomendacao.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.36.0",

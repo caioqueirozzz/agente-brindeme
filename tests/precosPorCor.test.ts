@@ -3,6 +3,7 @@ import { MockBrindeMeClient } from "../src/integrations/brindeme/mockClient.js";
 import { detalharProdutoHandler } from "../src/tools/detalharProduto.js";
 import { buscarProdutosHandler } from "../src/tools/buscarProdutos.js";
 import { createInitialState } from "../src/agent/state.js";
+import { usarIndiceDoMock } from "./helpers/catalogo.js";
 import { readFileSync } from "fs";
 import { join } from "path";
 import type { Product } from "../src/integrations/brindeme/types.js";
@@ -27,9 +28,10 @@ describe("preços por cor", () => {
   let client: MockBrindeMeClient;
   let state: ReturnType<typeof createInitialState>;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     client = new MockBrindeMeClient();
     state = createInitialState("5583999990000");
+    await usarIndiceDoMock();
   });
 
   it("os mocks realmente têm produto com preço variando por cor", () => {

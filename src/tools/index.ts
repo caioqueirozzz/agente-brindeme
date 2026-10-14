@@ -2,6 +2,7 @@ import { zodToJsonSchema } from "zod-to-json-schema";
 import type { BrindeMeClient } from "../integrations/brindeme/client.js";
 import type { ConversationState } from "../agent/state.js";
 
+import { consultarConhecimentoSchema, consultarConhecimentoHandler } from "./consultarConhecimento.js";
 import { buscarProdutosSchema, buscarProdutosHandler } from "./buscarProdutos.js";
 import { detalharProdutoSchema, detalharProdutoHandler } from "./detalharProduto.js";
 import { prepararOrcamentoSchema, prepararOrcamentoHandler } from "./prepararOrcamento.js";
@@ -20,9 +21,16 @@ export interface ToolDefinition {
 
 export const tools: ToolDefinition[] = [
   {
+    name: "consultar_conhecimento",
+    description:
+      "Consulta a base de conhecimento aprovada da loja: como funciona o pedido, formatos de arte, prazos, entrega, formas de pagamento, trocas e defeitos, horário e endereço. Use para qualquer dúvida geral sobre a loja. Se a base não cobrir a pergunta, o retorno manda transferir — nunca responda política, prazo ou condição de memória.",
+    inputSchema: zodToJsonSchema(consultarConhecimentoSchema, { target: "openApi3" }),
+    handler: consultarConhecimentoHandler as ToolDefinition["handler"],
+  },
+  {
     name: "buscar_produtos",
     description:
-      "Busca produtos disponíveis na loja por palavras-chave, ocasião, quantidade e preço máximo. Use sempre que o cliente pedir recomendação ou sugestão de produto. Nunca responda preço ou estoque de memória.",
+      "Recomenda até 3 produtos da loja a partir do que o cliente procura (palavras-chave, ocasião), da quantidade e do valor (por unidade ou total). Só devolve produtos que respeitam quantidade mínima, estoque e valor, com preço da faixa de quantidade e total estimado, conferidos na plataforma. Use sempre que o cliente pedir recomendação ou sugestão. Nunca cite produto, preço ou estoque que não tenha vindo desta ferramenta ou de detalhar_produto.",
     inputSchema: zodToJsonSchema(buscarProdutosSchema, { target: "openApi3" }),
     handler: buscarProdutosHandler as ToolDefinition["handler"],
   },

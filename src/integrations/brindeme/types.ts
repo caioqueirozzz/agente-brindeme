@@ -26,6 +26,8 @@ export interface Customization {
 export interface Category {
   id: string;
   name: string;
+  /** A API real devolve o rótulo legível também em `description` (ex.: "Canetas"). */
+  description?: string;
 }
 
 export interface Product {
@@ -45,8 +47,13 @@ export interface Product {
   images: ProductImage[];
   customizations: Customization[];
   subproducts: Subproduct[];
-  /** NOT from the API — used locally until Fase 3 adds semantic search */
+  /**
+   * NOT from the API. Só os mocks trazem; na API real as etiquetas de ocasião
+   * vêm da tabela mantida pela loja (src/knowledge/etiquetas-ocasiao.json).
+   */
   tags_ocasiao?: string[];
+  /** ISO. Base da sincronização incremental do índice de catálogo (Fase 3). */
+  updated_at?: string;
   /**
    * false quando o produto veio de GET /product (listagem), que não traz
    * subproducts, min_quantity, images, categories nem customizations.

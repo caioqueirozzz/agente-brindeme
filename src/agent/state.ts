@@ -49,6 +49,8 @@ export interface ConversationState {
     ocasiao?: string;
     quantidade?: number;
     precoMaxUnitario?: number;
+    /** Valor total que o cliente quer gastar (reais). */
+    orcamentoTotal?: number;
     dataLimite?: string;
   };
   produtosDiscutidos: string[];

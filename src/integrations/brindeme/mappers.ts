@@ -118,7 +118,11 @@ export function mapImages(raw: unknown): ProductImage[] {
 }
 
 function mapCategories(raw: unknown): Category[] {
-  return asArray(raw).map((c) => ({ id: str(c.id), name: str(c.name) }));
+  return asArray(raw).map((c) => ({
+    id: str(c.id),
+    name: str(c.name),
+    description: strOrUndef(c.description),
+  }));
 }
 
 function mapCustomizations(raw: unknown): Customization[] {
@@ -160,6 +164,7 @@ export function mapProduct(raw: Json): Product {
           : [],
     customizations: mapCustomizations(raw.customizations),
     subproducts: asArray(raw.subproducts).map(mapSubproduct),
+    updated_at: strOrUndef(raw.updated_at),
     detalhe_carregado: temDetalhe,
   };
 }

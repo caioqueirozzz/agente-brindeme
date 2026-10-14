@@ -1,0 +1,47 @@
+{
+  "categoria": "trocas-defeitos",
+  "itens": [
+    {
+      "id": "defeito-de-producao",
+      "titulo": "Defeito de produção",
+      "conteudo": "Em caso de defeito de produção, entre em contato em até [PRAZO_RECLAMACAO_DIAS] dias depois de receber o pedido, enviando uma foto do produto.",
+      "palavras_chave": [
+        "defeito",
+        "quebrado",
+        "errado",
+        "reclamacao",
+        "troca",
+        "trocar",
+        "devolucao",
+        "garantia",
+        "veio com problema"
+      ],
+      "perguntas_exemplo": [
+        "Meu pedido veio com defeito, e agora?"
+      ],
+      "status": "rascunho",
+      "revisar_em": "2027-04-14",
+      "nota_interna": "Gerência: informar o prazo. Reclamação em andamento sempre vai para atendente humano."
+    },
+    {
+      "id": "troca-por-arrependimento",
+      "titulo": "Troca por arrependimento",
+      "conteudo": "Produtos personalizados não têm troca por arrependimento, conforme o CDC.",
+      "palavras_chave": [
+        "arrependimento",
+        "desistir",
+        "cancelar",
+        "devolver",
+        "nao quero mais",
+        "cdc"
+      ],
+      "perguntas_exemplo": [
+        "Posso devolver se não gostar?",
+        "Posso cancelar o pedido?"
+      ],
+      "status": "rascunho",
+      "revisar_em": "2027-04-14",
+      "nota_interna": "Do rascunho da FAQ (Fase 1). Gerência: confirmar a política e a base legal antes de aprovar; cancelamento de pedido em andamento vai para a equipe."
+    }
+  ]
+}

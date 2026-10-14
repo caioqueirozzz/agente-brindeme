@@ -12,6 +12,7 @@ export const MOTIVOS = [
   "falha_sistema",
   "nao_entendido",
   "arte_problematica",
+  "lacuna_conhecimento",
   "outro",
 ] as const;
 
