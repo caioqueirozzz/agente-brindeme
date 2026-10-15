@@ -59,13 +59,17 @@ function maskSensitive(obj: unknown): unknown {
 export class Logger {
   private logFile: string;
 
-  constructor(conversaId: string) {
+  constructor(
+    conversaId: string,
+    private readonly contexto: Record<string, string> = {}
+  ) {
     this.logFile = join(logsDir, `${conversaId}.jsonl`);
   }
 
   log(event: LogEvent): void {
     const entry = {
       timestamp: new Date().toISOString(),
+      ...this.contexto,
       ...maskSensitive(event) as object,
     };
     try {

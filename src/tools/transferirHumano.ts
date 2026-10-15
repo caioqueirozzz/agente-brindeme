@@ -24,12 +24,48 @@ export const transferirHumanoSchema = z.object({
 
 export type TransferirHumanoInput = z.infer<typeof transferirHumanoSchema>;
 
+export type MotivoTransferencia = (typeof MOTIVOS)[number];
+
+export const MENSAGEM_TRANSFERENCIA =
+  "Vou te conectar com um atendente agora. Em instantes alguém da nossa equipe entrará em contato! 😊";
+
+export interface ResumoTransferencia {
+  conversaId: string;
+  telefone_cliente: string;
+  cliente: ConversationState["cliente"];
+  motivo: MotivoTransferencia;
+  prioridade: "normal" | "alta";
+  observacao?: string;
+  produtos_discutidos: string[];
+  orcamentos_na_conversa: string[];
+  artes_registradas: string[];
+  necessidade: ConversationState["necessidade"];
+  ultimas_mensagens: string;
+  responsavel: { id: string; nome: string };
+  transferido_em: string;
+}
+
+/** listAdmins só escolhe o nome do responsável: com a API lenta, a transferência não espera por ele. */
+const PRAZO_ADMINS_MS = 5_000;
+
 export async function transferirHumanoHandler(
   input: TransferirHumanoInput,
   state: ConversationState,
   client: BrindeMeClient
 ) {
-  const admins = await client.listAdmins();
+  // A transferência por falha de sistema acontece justamente com a API fora: listAdmins não pode derrubá-la.
+  let admins: Awaited<ReturnType<BrindeMeClient["listAdmins"]>> = [];
+  let prazo: ReturnType<typeof setTimeout> | undefined;
+  try {
+    admins = await Promise.race([
+      client.listAdmins(),
+      new Promise<typeof admins>((resolve) => (prazo = setTimeout(() => resolve([]), PRAZO_ADMINS_MS))),
+    ]);
+  } catch {
+    admins = [];
+  } finally {
+    clearTimeout(prazo);
+  }
 
   // Pick the admin linked to a budget if possible
   let adminResponsavel = admins[0];
@@ -42,7 +78,7 @@ export async function transferirHumanoHandler(
     .map((m) => `[${m.role}]: ${m.content}`)
     .join("\n");
 
-  const resumo = {
+  const resumo: ResumoTransferencia = {
     conversaId: state.conversaId,
     telefone_cliente: maskPhone(state.telefone),
     cliente: state.cliente,
@@ -66,8 +102,7 @@ export async function transferirHumanoHandler(
   return {
     status: "transferido",
     resumo_para_atendente: resumo,
-    mensagem_cliente:
-      "Vou te conectar com um atendente agora. Em instantes alguém da nossa equipe entrará em contato! 😊",
+    mensagem_cliente: MENSAGEM_TRANSFERENCIA,
   };
 }
 

@@ -72,7 +72,7 @@ export const tools: ToolDefinition[] = [
   {
     name: "registrar_arte",
     description:
-      "Registra a arte enviada pelo cliente (simula recebimento de arquivo no terminal via /arte). Valida a extensão do arquivo.",
+      "Registra a arte que o cliente enviou. Pelo WhatsApp o arquivo aparece como [ARQUIVO recebido: <nome> (...)]; passe esse <nome> em descricao_arquivo. Valida o formato.",
     inputSchema: zodToJsonSchema(registrarArteSchema, { target: "openApi3" }),
     handler: registrarArteHandler as ToolDefinition["handler"],
   },

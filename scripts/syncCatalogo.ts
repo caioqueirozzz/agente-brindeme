@@ -6,7 +6,7 @@
  *   npm run sync:catalogo -- --concorrencia 3
  *
  * Lê GET /product página por página e GET /product/{id} dos produtos ativos que
- * mudaram, e grava data/produtos-index.json. Somente leitura na API.
+ * mudaram, e grava data/produtos-index.json (no mock, data/produtos-index-mock.json). Somente leitura na API.
  *
  * Pensado para rodar de hora em hora (cron / agendador). Só relê o detalhe de
  * quem mudou (updated_at) ou passou da idade máxima; estoque e preço que o
@@ -14,7 +14,8 @@
  */
 import "dotenv/config";
 import { createBrindeMeClient } from "../src/integrations/brindeme/factory.js";
-import { FileProductIndexStore, sincronizarCatalogo } from "../src/catalogo/indice.js";
+import { relative } from "path";
+import { arquivoIndicePadrao, FileProductIndexStore, sincronizarCatalogo } from "../src/catalogo/indice.js";
 import { config } from "../src/config.js";
 
 const GREEN = "\x1b[32m";
@@ -69,7 +70,7 @@ async function main() {
   console.log(
     `${GRAY}  detalhe lido: ${r.lidosNoDetalhe} · reaproveitados: ${r.reaproveitados} · novos: ${r.novos} · removidos: ${r.removidos}${RESET}`
   );
-  console.log(`${GRAY}  índice: data/produtos-index.json · ${segundos}s${RESET}`);
+  console.log(`${GRAY}  índice: ${relative(process.cwd(), arquivoIndicePadrao(config.brindeMe.mode))} · ${segundos}s${RESET}`);
 
   if (!r.completo) {
     console.log(

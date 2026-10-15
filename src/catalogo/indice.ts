@@ -27,6 +27,7 @@ import type { BrindeMeClient } from "../integrations/brindeme/client.js";
 import type { Product } from "../integrations/brindeme/types.js";
 import { removerHtml } from "../busca/texto.js";
 import { arredondar } from "../integrations/brindeme/mappers.js";
+import { config } from "../config.js";
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 
@@ -98,11 +99,16 @@ export interface ProductIndexStore {
   salvar(indice: IndiceCatalogo): void;
 }
 
+/** O mock grava produtos de teste: nunca no mesmo arquivo do catálogo real. */
+export function arquivoIndicePadrao(modo: "mock" | "http"): string {
+  return join(__dir, "../../data", modo === "http" ? "produtos-index.json" : "produtos-index-mock.json");
+}
+
 export class FileProductIndexStore implements ProductIndexStore {
   private cache: IndiceCatalogo | null = null;
   private assinatura = "";
 
-  constructor(private readonly file = join(__dir, "../../data/produtos-index.json")) {}
+  constructor(private readonly file = arquivoIndicePadrao(config.brindeMe.mode)) {}
 
   private assinar(): string {
     if (!existsSync(this.file)) return "ausente";

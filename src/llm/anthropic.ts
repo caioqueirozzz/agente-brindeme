@@ -14,18 +14,22 @@ export class AnthropicProvider implements LLMProvider {
     messages: LLMMessage[];
     tools: LLMTool[];
     model: string;
+    signal?: AbortSignal;
   }): Promise<LLMResponse> {
-    const response = await this.client.messages.create({
-      model: params.model,
-      max_tokens: 4096,
-      system: params.system,
-      messages: params.messages as Anthropic.MessageParam[],
-      tools: params.tools.map((t) => ({
-        name: t.name,
-        description: t.description,
-        input_schema: t.input_schema as Anthropic.Tool["input_schema"],
-      })),
-    });
+    const response = await this.client.messages.create(
+      {
+        model: params.model,
+        max_tokens: 4096,
+        system: params.system,
+        messages: params.messages as Anthropic.MessageParam[],
+        tools: params.tools.map((t) => ({
+          name: t.name,
+          description: t.description,
+          input_schema: t.input_schema as Anthropic.Tool["input_schema"],
+        })),
+      },
+      { signal: params.signal }
+    );
 
     return {
       id: response.id,

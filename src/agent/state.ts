@@ -13,6 +13,13 @@ export interface ArteRegistrada {
   cores?: string;
 }
 
+export interface ArquivoRecebido {
+  nome: string;
+  caminho: string;
+  mime: string;
+  bytes: number;
+}
+
 export interface OrcamentoPendente {
   token: string;
   expiraEm: string;
@@ -40,6 +47,8 @@ export interface ConversationState {
   conversaId: string;
   telefone: string;
   modo: "ia" | "humano";
+  /** "whatsapp": arte só a partir de arquivo que chegou de verdade. Ausente no CLI e nos evals locais. */
+  canal?: "whatsapp";
   cliente: {
     tipo?: "PF" | "PJ";
     nome?: string;
@@ -61,6 +70,8 @@ export interface ConversationState {
    */
   subprodutoParaProduto: Record<string, string>;
   artes: ArteRegistrada[];
+  /** Arquivos que chegaram pelo WhatsApp (gravados pela ponte). Ausente em estados salvos antes da Fase 4. */
+  arquivosRecebidos?: ArquivoRecebido[];
   orcamentoPendente?: OrcamentoPendente;
   orcamentos: string[];
   /**
@@ -87,6 +98,7 @@ export function createInitialState(telefone: string): ConversationState {
     produtosDiscutidos: [],
     subprodutoParaProduto: {},
     artes: [],
+    arquivosRecebidos: [],
     orcamentos: [],
     orcamentoIds: {},
     orcamentoTokens: {},
