@@ -6,6 +6,6 @@
     { "tipo": "chamou_ferramenta", "ferramenta": "consultar_conhecimento" },
     { "tipo": "chamou_ferramenta", "ferramenta": "transferir_humano" },
     { "tipo": "transferiu_com_motivo", "motivo": "lacuna_conhecimento" },
-    { "tipo": "resposta_nao_contem", "padrao": "\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}" }
+    { "tipo": "resposta_nao_contem", "padrao": "\\d{2}\\.\\d{3}\\.\\d{3}/\\d{4}-\\d{2}" }
   ]
 }
