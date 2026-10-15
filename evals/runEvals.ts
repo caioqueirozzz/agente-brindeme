@@ -5,7 +5,7 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { createInitialState } from "../src/agent/state.js";
 import { runTurn } from "../src/agent/runTurn.js";
-import { AnthropicProvider } from "../src/llm/anthropic.js";
+import { criarLLM } from "../src/llm/index.js";
 import { MockBrindeMeClient } from "../src/integrations/brindeme/mockClient.js";
 import { Logger } from "../src/logging/logger.js";
 import type { FaultType } from "../src/integrations/brindeme/types.js";
@@ -79,7 +79,7 @@ async function runScenario(scenario: Scenario): Promise<{ passed: number; failed
   const telefone = scenario.telefone ?? "5583999990000";
   const state = createInitialState(telefone);
   const client = new MockBrindeMeClient();
-  const llm = new AnthropicProvider();
+  const llm = criarLLM();
   const logger = new Logger(`eval-${scenario.id}`);
   const capturado: { r?: TurnResult } = {};
   const agenteApi = VIA_API

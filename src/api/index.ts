@@ -4,7 +4,7 @@ import { criarServidorAgente } from "../contrato/servidorHttp.js";
 import { RepositorioConversas } from "../conversas/repositorio.js";
 import { FileProductIndexStore, sincronizarCatalogo } from "../catalogo/indice.js";
 import { createBrindeMeClient } from "../integrations/brindeme/factory.js";
-import { AnthropicProvider } from "../llm/anthropic.js";
+import { criarLLM } from "../llm/index.js";
 import { avisarConhecimentoECatalogo } from "../partida.js";
 import { AgenteDefinitivo } from "./agenteDefinitivo.js";
 
@@ -15,6 +15,13 @@ async function main(): Promise<void> {
   const prazos = conferirPrazos(config.agente.tetoMs, config.whatsapp.agenteTimeoutMs);
   if (prazos) {
     console.error(prazos);
+    process.exit(1);
+  }
+  let llm;
+  try {
+    llm = criarLLM();
+  } catch (err) {
+    console.error(err instanceof Error ? err.message : err);
     process.exit(1);
   }
   const client = createBrindeMeClient();
@@ -49,7 +56,7 @@ async function main(): Promise<void> {
   const log = (e: Record<string, unknown>) => console.error(JSON.stringify(e));
   const agente = new AgenteDefinitivo({
     repo: new RepositorioConversas(config.agente.conversasDir, log),
-    llm: new AnthropicProvider(),
+    llm,
     client,
     tetoMs: config.agente.tetoMs,
     respostasPorHora: config.agente.respostasPorHora,

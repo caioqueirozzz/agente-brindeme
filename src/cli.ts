@@ -2,7 +2,7 @@ import "dotenv/config";
 import * as readline from "readline";
 import { createInitialState } from "./agent/state.js";
 import { runTurn } from "./agent/runTurn.js";
-import { AnthropicProvider } from "./llm/anthropic.js";
+import { criarLLM } from "./llm/index.js";
 import { MockBrindeMeClient } from "./integrations/brindeme/mockClient.js";
 import { createBrindeMeClient } from "./integrations/brindeme/factory.js";
 import { Logger } from "./logging/logger.js";
@@ -28,7 +28,7 @@ function parseArgs(): { telefone: string } {
 async function main() {
   const { telefone } = parseArgs();
   const client = createBrindeMeClient();
-  const llm = new AnthropicProvider();
+  const llm = criarLLM();
   let state = createInitialState(telefone);
   let logger = new Logger(state.conversaId);
 

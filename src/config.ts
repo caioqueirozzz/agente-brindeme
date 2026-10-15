@@ -21,8 +21,11 @@ export function conferirPrazos(tetoMs: number, agenteTimeoutMs: number): string 
 }
 
 export const config = {
-  anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? "",
-  llmModel: process.env.LLM_MODEL ?? "claude-sonnet-4-5",
+  openaiApiKey: process.env.OPENAI_API_KEY ?? "",
+  /** Sem padrão de propósito: o id do modelo da OpenAI vem do .env. */
+  llmModel: process.env.LLM_MODEL ?? "",
+  /** reasoning_effort da OpenAI; vazio = padrão do modelo. */
+  llmRaciocinio: process.env.LLM_REASONING ?? "",
   assistantName: process.env.ASSISTANT_NAME ?? "Lia",
   storeName: process.env.STORE_NAME ?? "Presentes Especiais",
 

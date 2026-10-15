@@ -519,6 +519,34 @@ describe("Ponte — riscos abertos fechados na rodada 3", () => {
   });
 });
 
+describe("Ponte — concorrência entre conversas", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-10-14T12:00:00Z"));
+  });
+  afterEach(() => {
+    vi.clearAllTimers();
+    vi.useRealTimers();
+  });
+
+  it("lote de um telefone parado no agente não atrasa a entrega para outro telefone", async () => {
+    const LENTO = "5583888880000";
+    const { canal, agente, ponte } = montar();
+    const liberar = segurar(agente);
+    await ponte.receber(canal.mensagem({ chatId: `${LENTO}@c.us`, texto: "demora" }));
+    await vi.advanceTimersByTimeAsync(5_100);
+    expect(agente.lotes.map((p) => p.telefone)).toEqual([LENTO]);
+
+    await ponte.receber(canal.mensagem({ chatId: CHAT, texto: "rápido" }));
+    await vi.advanceTimersByTimeAsync(15_000);
+    expect(canal.enviadas).toEqual([{ chatId: CHAT, texto: "olá" }]);
+
+    liberar();
+    await vi.runAllTimersAsync();
+    expect(canal.enviadas.map((e) => e.chatId)).toEqual([CHAT, `${LENTO}@c.us`]);
+  });
+});
+
 describe("Ponte — revisão final do Pacote B", () => {
   beforeEach(() => {
     vi.useFakeTimers();

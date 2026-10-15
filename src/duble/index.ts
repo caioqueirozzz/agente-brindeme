@@ -3,7 +3,7 @@ import { config } from "../config.js";
 import type { Agente } from "../contrato/agente.js";
 import { criarServidorAgente } from "../contrato/servidorHttp.js";
 import { createBrindeMeClient } from "../integrations/brindeme/factory.js";
-import { AnthropicProvider } from "../llm/anthropic.js";
+import { criarLLM } from "../llm/index.js";
 import { avisarConhecimentoECatalogo } from "../partida.js";
 import { AgenteDireto } from "./direto.js";
 import { AgenteEco } from "./eco.js";
@@ -22,7 +22,7 @@ async function main(): Promise<void> {
     const client = createBrindeMeClient();
     console.log(`API da loja: ${config.brindeMe.mode} · escrita de orçamento: ${config.brindeMe.escritaOrcamento}`);
     await avisarConhecimentoECatalogo(client);
-    agente = new AgenteDireto(new AnthropicProvider(), client);
+    agente = new AgenteDireto(criarLLM(), client);
   } else {
     console.error(`--modo inválido: ${modo} (use eco ou direto)`);
     process.exit(1);

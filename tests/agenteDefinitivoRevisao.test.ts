@@ -320,4 +320,26 @@ describe("AgenteDefinitivo — revisão final", () => {
     }
     expect(repo.carregar(TEL).estado.historico.length).toBeLessThanOrEqual(200);
   });
+
+  it("dois telefones ao mesmo tempo: o modelo lento de um não segura a resposta do outro", async () => {
+    const LENTO = "5583888880000";
+    let liberarLento!: (r: LLMResponse) => void;
+    const llm: LLMProvider = {
+      chat: (p) => {
+        const ultima = p.messages[p.messages.length - 1];
+        if (typeof ultima.content === "string" && ultima.content.includes("demora")) {
+          return new Promise<LLMResponse>((r) => (liberarLento = r));
+        }
+        return Promise.resolve(endTurn("pronto"));
+      },
+    };
+    const { agente } = montar(llm);
+    const lento = agente.processarLote({ ...pedido(["a1"], "demora"), telefone: LENTO });
+    await vi.waitFor(() => expect(liberarLento).toBeTypeOf("function"));
+
+    expect(await agente.processarLote(pedido(["b1"], "rápido"))).toEqual({ respostas: ["pronto"], modo: "ia" });
+
+    liberarLento(endTurn("enfim"));
+    expect(await lento).toEqual({ respostas: ["enfim"], modo: "ia" });
+  });
 });
