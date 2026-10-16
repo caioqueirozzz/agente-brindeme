@@ -5,6 +5,6 @@
   "expectativas": [
     { "tipo": "chamou_ferramenta", "ferramenta": "buscar_produtos" },
     { "tipo": "resposta_nao_contem", "padrao": "Camiseta" },
-    { "tipo": "resposta_contem", "padrao": "valor|orçamento|preço|R\$" }
+    { "tipo": "resposta_contem", "padrao": "valor|orçamento|preço|R\\$" }
   ]
 }

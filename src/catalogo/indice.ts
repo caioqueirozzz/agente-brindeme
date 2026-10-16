@@ -27,6 +27,7 @@ import type { BrindeMeClient } from "../integrations/brindeme/client.js";
 import type { Product } from "../integrations/brindeme/types.js";
 import { removerHtml } from "../busca/texto.js";
 import { arredondar } from "../integrations/brindeme/mappers.js";
+import { config } from "../config.js";
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 
@@ -98,11 +99,16 @@ export interface ProductIndexStore {
   salvar(indice: IndiceCatalogo): void;
 }
 
+/** O mock grava produtos de teste: nunca no mesmo arquivo do catálogo real. */
+export function arquivoIndicePadrao(modo: "mock" | "http"): string {
+  return join(__dir, "../../data", modo === "http" ? "produtos-index.json" : "produtos-index-mock.json");
+}
+
 export class FileProductIndexStore implements ProductIndexStore {
   private cache: IndiceCatalogo | null = null;
   private assinatura = "";
 
-  constructor(private readonly file = join(__dir, "../../data/produtos-index.json")) {}
+  constructor(private readonly file = arquivoIndicePadrao(config.brindeMe.mode)) {}
 
   private assinar(): string {
     if (!existsSync(this.file)) return "ausente";
@@ -226,6 +232,9 @@ export interface ResultadoSyncCatalogo {
   removidos: number;
   /** Detalhe que falhou; o registro anterior (se havia) foi mantido. */
   falhas: Array<{ id: string; erro: string }>;
+  /** A listagem foi até a última página (só então a remoção por ausência vale). */
+  listagemCompleta: boolean;
+  /** Listagem completa e nenhum detalhe falhou. */
   completo: boolean;
 }
 
@@ -348,10 +357,11 @@ export async function sincronizarCatalogo(
     else resultado.set(id, { ...anterior, ausencias });
   }
 
+  const completo = terminou && falhas.length === 0;
   store.salvar({
     versao: VERSAO_INDICE,
     sincronizado_em: agora.toISOString(),
-    completo: terminou,
+    completo,
     produtos: [...resultado.values()],
   });
 
@@ -364,6 +374,7 @@ export async function sincronizarCatalogo(
     novos,
     removidos,
     falhas,
-    completo: terminou,
+    listagemCompleta: terminou,
+    completo,
   };
 }

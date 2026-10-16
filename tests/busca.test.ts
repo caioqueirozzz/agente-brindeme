@@ -38,6 +38,11 @@ describe("texto", () => {
     expect(tokenizar("brinde de caneca")).toContain("brinde");
   });
 
+  it("'produtos para natal' busca natal: produto e item também são genéricos (eval 11)", () => {
+    expect(tokenizar("produtos para Natal", { semGenericasDeProduto: true })).toEqual(["natal"]);
+    expect(tokenizar("itens de escritório", { semGenericasDeProduto: true })).toEqual([radical("escritorio")]);
+  });
+
   it("removerHtml limpa as tags que a API manda", () => {
     expect(removerHtml("<b>Altura:</b>  13,3 cm<br/>Peso&nbsp;5g")).toBe("Altura: 13,3 cm Peso 5g");
   });

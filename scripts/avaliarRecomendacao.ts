@@ -55,7 +55,7 @@ async function main() {
   const arquivo = resolve(argumento("arquivo") ?? join(__dir, "../evals/recomendacao/pedidos.json"));
   const pedidos: PedidoJson[] = JSON.parse(readFileSync(arquivo, "utf-8")).pedidos;
 
-  const client = createBrindeMeClient();
+  const client = createBrindeMeClient({ reqPorMinuto: config.catalogo.reqPorMinuto });
   const index = new FileProductIndexStore();
   const tags = new FileOccasionTagStore();
   const indice = index.carregar();

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { BrindeMeClient } from "../integrations/brindeme/client.js";
-import { translateApiError } from "../integrations/brindeme/errors.js";
+import { ApiError, translateApiError } from "../integrations/brindeme/errors.js";
 import type { ConversationState } from "../agent/state.js";
 
 export const detalharProdutoSchema = z.object({
@@ -68,6 +68,13 @@ export async function detalharProdutoHandler(
       personalizacoes: p.customizations.map((c) => `${c.type}: ${c.description}`),
     };
   } catch (err) {
+    // Id inventado pelo modelo não é a API fora do ar: não conta para a transferência por falha.
+    if (err instanceof ApiError && err.status === 404) {
+      return {
+        resultado: "produto_nao_encontrado" as const,
+        instrucao_ao_agente: "Esse produto_id não existe. Ache o produto com buscar_produtos e use o id que ele devolver; nunca invente id.",
+      };
+    }
     return { erro: translateApiError(err) };
   }
 }

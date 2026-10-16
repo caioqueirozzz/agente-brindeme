@@ -39,7 +39,7 @@ const GENERICAS_DE_PRODUTO = new Set([
   "brinde", "brindes", "presente", "presentes", "lembranca", "lembrancas",
   "lembrancinha", "lembrancinhas", "mimo", "mimos", "personalizado", "personalizada",
   "personalizados", "personalizadas", "pessoa", "pessoas", "unidade", "unidades", "un",
-  "reais", "real", "valor", "preco",
+  "reais", "real", "valor", "preco", "produto", "produtos", "item", "itens",
 ]);
 
 /**

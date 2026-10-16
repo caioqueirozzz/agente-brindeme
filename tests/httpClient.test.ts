@@ -225,3 +225,79 @@ describe("validarAcesso", () => {
     expect((r as { motivo: string }).motivo).toMatch(/base URL|caminho/);
   });
 });
+
+describe("HttpBrindeMeClient — limite de 60 req/min da API", () => {
+  beforeEach(() => { calls = []; });
+  afterEach(() => { vi.unstubAllGlobals(); });
+
+  /** Relógio que não espera de verdade: anota cada espera e avança o tempo. */
+  function relogioFalso() {
+    let t = 1_000_000;
+    const esperas: number[] = [];
+    return {
+      esperas,
+      relogio: { agora: () => t, dormir: async (ms: number) => { esperas.push(ms); t += ms; } },
+    };
+  }
+
+  function stubComHeaders(respostas: Array<{ status: number; headers?: Record<string, string> }>, instantes: number[] = [], agora = () => 0) {
+    const fila = [...respostas];
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      instantes.push(agora());
+      calls.push({ url: String(url), method: init.method ?? "GET", headers: init.headers as Record<string, string> });
+      const r = fila.shift() ?? { status: 200 };
+      return new Response(JSON.stringify(r.status === 200 ? { data: { id: "p1", name: "X", status: true } } : { message: "Too Many Attempts." }), {
+        status: r.status,
+        headers: { "Content-Type": "application/json", ...r.headers },
+      });
+    });
+  }
+
+  it("429 com Retry-After: espera o que a API pediu e tenta de novo", async () => {
+    stubComHeaders([{ status: 429, headers: { "Retry-After": "6" } }, { status: 200 }]);
+    const { relogio, esperas } = relogioFalso();
+    await client({ relogio }).getProduct("p1");
+    expect(calls).toHaveLength(2);
+    expect(esperas).toEqual([6000]);
+  });
+
+  it("Retry-After em formato de data também vale", async () => {
+    const { relogio, esperas } = relogioFalso();
+    const daqui3s = new Date(relogio.agora() + 3000).toUTCString();
+    stubComHeaders([{ status: 429, headers: { "Retry-After": daqui3s } }, { status: 200 }]);
+    await client({ relogio }).getProduct("p1");
+    expect(esperas).toEqual([3000]);
+  });
+
+  it("Retry-After acima do teto: não segura a conversa, devolve o 429 na hora", async () => {
+    stubComHeaders([{ status: 429, headers: { "Retry-After": "60" } }]);
+    const { relogio, esperas } = relogioFalso();
+    await expect(client({ relogio, maxEsperaRetryMs: 10_000 }).getProduct("p1")).rejects.toMatchObject({ status: 429 });
+    expect(calls).toHaveLength(1);
+    expect(esperas).toEqual([]);
+  });
+
+  it("com reqPorMinuto, espaça as chamadas mesmo em paralelo", async () => {
+    vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
+    try {
+      const inicio = Date.now();
+      const instantes: number[] = [];
+      stubComHeaders([], instantes, () => Date.now() - inicio);
+      const c = client({ reqPorMinuto: 30 });
+      const todas = Promise.all([c.getProduct("a"), c.getProduct("b"), c.getProduct("c")]);
+      await vi.advanceTimersByTimeAsync(5000);
+      await todas;
+      expect(instantes).toEqual([0, 2000, 4000]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("sem reqPorMinuto (cliente das conversas), não espera nada", async () => {
+    stubComHeaders([]);
+    const { relogio, esperas } = relogioFalso();
+    const c = client({ relogio });
+    await Promise.all([c.getProduct("a"), c.getProduct("b")]);
+    expect(esperas).toEqual([]);
+  });
+});

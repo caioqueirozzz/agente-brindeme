@@ -7,14 +7,14 @@ Protótipo de agente IA de atendimento para loja de brindes personalizados. Esta
 ### Pré-requisitos
 
 - Node.js 20+
-- Chave da API Anthropic
+- Chave da API da OpenAI (`OPENAI_API_KEY`) e o id do modelo (`LLM_MODEL`)
 
 ### Instalação
 
 ```bash
 npm install
 cp .env.example .env
-# edite .env e preencha ANTHROPIC_API_KEY
+# edite .env e preencha OPENAI_API_KEY e LLM_MODEL
 ```
 
 ### Chat no terminal
@@ -45,7 +45,7 @@ npm test
 
 ### Avaliação de comportamento (evals)
 
-Requer `ANTHROPIC_API_KEY` configurada:
+Requer `OPENAI_API_KEY` e `LLM_MODEL` configurados (chamam o modelo pago):
 
 ```bash
 npm run evals
@@ -85,7 +85,7 @@ Com `BRINDEME_MODE=http`, o comando `/falha` do chat não funciona — injeção
 
 ## Arquitetura
 
-O agente recebe uma mensagem do usuário em `runTurn`, que monta o prompt de sistema (identidade + regras + estado estruturado — a FAQ saiu do prompt e virou a ferramenta `consultar_conhecimento`), constrói o histórico de mensagens e entra em um loop com o LLM (Anthropic). Quando o modelo emite `tool_use`, o handler correspondente é executado usando o `BrindeMeClient` (mock nesta fase); o resultado volta ao LLM como `tool_result`, e o loop continua até `stop_reason = end_turn`. O estado da conversa (`ConversationState`) é atualizado diretamente pelos handlers e persiste em memória. Logs são gravados em JSONL por conversa em `logs/`, com CPF, e-mail e telefone mascarados. Ferramentas dependem apenas da interface `BrindeMeClient` — a Fase 2 só precisa adicionar `HttpBrindeMeClient`.
+O agente recebe uma mensagem do usuário em `runTurn`, que monta o prompt de sistema (identidade + regras + estado estruturado — a FAQ saiu do prompt e virou a ferramenta `consultar_conhecimento`), constrói o histórico de mensagens e entra em um loop com o LLM (OpenAI, via `src/llm/openai.ts`, que traduz o formato de blocos `tool_use`/`tool_result` para o da Chat Completions). Quando o modelo emite `tool_use`, o handler correspondente é executado usando o `BrindeMeClient` (mock nesta fase); o resultado volta ao LLM como `tool_result`, e o loop continua até `stop_reason = end_turn`. O estado da conversa (`ConversationState`) é atualizado diretamente pelos handlers e persiste em memória. Logs são gravados em JSONL por conversa em `logs/`, com CPF, e-mail e telefone mascarados. Ferramentas dependem apenas da interface `BrindeMeClient` — a Fase 2 só precisa adicionar `HttpBrindeMeClient`.
 
 ---
 
@@ -199,7 +199,7 @@ No modo `mock` o chat monta o índice sozinho. Com `BRINDEME_MODE=http` ele **n�
 - 347 testes (142 antes da fase), incluindo: regras de mínimo/estoque/faixa/orçamento; sincronização (paginação, incremental, falha de listagem, falha de detalhe, remoção); revalidação (estoque que acabou, preço que mudou, 404, API fora); ajustes propostos *reaplicados ao pedido* para provar que fecham; e os 30 pedidos contra um catálogo sintético de 400 produtos, com um **verificador independente** (`src/catalogo/verificacao.ts`) que recalcula tudo do produto cru, sem reusar a lógica sob teste.
 - Verificação por mutação: 10 quebras deliberadas das regras de segurança (ignorar mínimo, estoque por cor, revalidação, falha de listagem, servir rascunho/placeholder, corte de cobertura...) — todas derrubaram testes.
 - Desempenho medido em 6.535 produtos sintéticos: ~15–40 ms por busca (a primeira de cada carga do índice, ~350 ms, monta o BM25).
-- **Não foi rodado contra a API real nem com o modelo**: não há `BRINDEME_TOKEN` nem `ANTHROPIC_API_KEY` neste ambiente. O formato real do catálogo é coberto pelas fixtures gravadas na Fase 2 (`tests/contrato.test.ts`); os 3 cenários de eval novos (16–18) e o comportamento do prompt **ainda não foram executados**.
+- **Não foi rodado contra a API real nem com o modelo**: não há `BRINDEME_TOKEN` nem chave do modelo neste ambiente. O formato real do catálogo é coberto pelas fixtures gravadas na Fase 2 (`tests/contrato.test.ts`); os 3 cenários de eval novos (16–18) e o comportamento do prompt **ainda não foram executados**.
 
 ### Correção feita no caminho
 
@@ -207,7 +207,7 @@ O mascaramento de telefone nos logs (Fase 2) só cobria números de 13–15 díg
 
 ### Limitações conhecidas
 
-- **Sem embeddings.** O plano prevê busca por significado; não há provedor de embeddings escolhido (a Anthropic não oferece). A busca usa sinônimos (`src/busca/sinonimos.ts`) e as etiquetas de ocasião. "Algo para professores" funciona *se* a loja etiquetar. Para embeddings (Supabase `pgvector`, na Fase 5), basta somar um termo de similaridade ao `relevancia()` de `recomendar.ts`.
+- **Sem embeddings.** O plano prevê busca por significado; não há provedor de embeddings escolhido (com a troca para a OpenAI em 15/10, a própria OpenAI passa a ser candidata). A busca usa sinônimos (`src/busca/sinonimos.ts`) e as etiquetas de ocasião. "Algo para professores" funciona *se* a loja etiquetar. Para embeddings (Supabase `pgvector`, na Fase 5), basta somar um termo de similaridade ao `relevancia()` de `recomendar.ts`.
 - **A data em que o cliente precisa não filtra produto** (depende do prazo de produção, ainda não aprovado). Fica no estado da conversa e a resposta de prazo vem da base.
 - **Cor única**: ver decisão 18. Quem pede 400 unidades e tem duas cores com 300 e 200 em estoque recebe "sem estoque suficiente" e o ajuste "reduzir para 300", não uma sugestão misturada.
 - O índice é um arquivo JSON (padrão da Fase 2). Com 6.535 produtos tem alguns MB e é lido inteiro na memória; a troca por Supabase está prevista para a Fase 5 pela interface `ProductIndexStore`.
@@ -238,7 +238,7 @@ O mascaramento de telefone nos logs (Fase 2) só cobria números de 13–15 díg
 
 ## Resultado dos evals
 
-Os evals requerem `ANTHROPIC_API_KEY`. Execute `npm run evals` para ver o relatório completo. Resultados esperados e ajustes sugeridos no prompt:
+Os evals requerem `OPENAI_API_KEY` e `LLM_MODEL`. Execute `npm run evals` para ver o relatório completo. Resultados esperados e ajustes sugeridos no prompt:
 
 ### Cenários que tendem a falhar e ajustes sugeridos
 

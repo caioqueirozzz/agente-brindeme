@@ -61,15 +61,11 @@ describe("buscar_produtos (ferramenta)", () => {
     });
   });
 
-  it("sem quantidade: preço 'a partir de' no mínimo, e avisa para perguntar", async () => {
+  it("sem quantidade: nenhum preço chega ao modelo, só o mínimo, e manda perguntar (eval 17)", async () => {
     const r = await buscar({ consulta: "caneca" });
-    expect(r.aviso).toMatch(/Pergunte a quantidade/);
-    expect(r.produtos[0]).toMatchObject({
-      preco_unitario_na_quantidade: null,
-      preco_a_partir_de: 18.9,
-      a_partir_da_quantidade: 25,
-    });
-    expect(r.produtos[0].total_estimado).toBeUndefined();
+    expect(r.aviso).toMatch(/pergunte a quantidade/i);
+    expect(r.produtos[0]).toMatchObject({ nome: "Caneca de Porcelana", min_quantity: 25 });
+    expect(JSON.stringify(r.produtos)).not.toMatch(/preco|total_estimado|18\.9/);
   });
 
   it("não expõe ids de subproduto, estoque nem dado interno ao modelo", async () => {

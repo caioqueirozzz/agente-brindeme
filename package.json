@@ -5,6 +5,10 @@
   "type": "module",
   "scripts": {
     "chat": "tsx src/cli.ts",
+    "agente": "tsx src/api/index.ts",
+    "agente:duble": "tsx src/duble/index.ts",
+    "whatsapp": "tsx scripts/whatsapp.ts",
+    "whatsapp:ponte": "tsx src/whatsapp/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "evals": "tsx evals/runEvals.ts",
@@ -18,14 +22,17 @@
     "avaliar:recomendacao": "tsx scripts/avaliarRecomendacao.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.36.0",
     "dotenv": "^16.4.5",
+    "openai": "7.23.0",
+    "qrcode-terminal": "0.12.0",
     "uuid": "^10.0.0",
+    "whatsapp-web.js": "1.34.7",
     "zod": "^3.23.8",
     "zod-to-json-schema": "^3.23.2"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
+    "@types/qrcode-terminal": "0.12.2",
     "@types/uuid": "^10.0.0",
     "tsx": "^4.15.7",
     "typescript": "^5.5.2",

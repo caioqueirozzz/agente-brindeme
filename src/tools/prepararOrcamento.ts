@@ -9,7 +9,6 @@ import type { OrcamentoPendente } from "../agent/state.js";
 export const prepararOrcamentoSchema = z.object({
   tipo: z.enum(["PF", "PJ"]).describe("Tipo de pessoa: PF (física) ou PJ (jurídica)"),
   nome: z.string().min(2).describe("Nome completo do cliente ou razão social"),
-  telefone: z.string().describe("Telefone com DDD e código do país (ex: 5583999990000)"),
   email: z.string().email().describe("E-mail válido do cliente"),
   itens: z.array(z.object({
     subproduto_id: z.string(),
@@ -36,6 +35,20 @@ export async function prepararOrcamentoHandler(
       // A listagem não traz subprodutos, então não dá para varrer o catálogo:
       // o produto de origem vem do mapa preenchido por buscar/detalhar.
       const produtoId = state.subprodutoParaProduto[item.subproduto_id];
+      // buscar_produtos só mostra o id do produto; o modelo às vezes manda esse no lugar da cor.
+      if (!produtoId && state.produtosDiscutidos.includes(item.subproduto_id)) {
+        const produto = await client.getProduct(item.subproduto_id);
+        for (const s of produto.subproducts) state.subprodutoParaProduto[s.id] = produto.id;
+        return {
+          erro: "informe_a_cor",
+          produto: produto.name,
+          opcoes: produto.subproducts
+            .filter((s) => s.status && s.stock > 0)
+            .map((s) => ({ subproduto_id: s.id, cor: s.color, estoque: s.stock })),
+          instrucao:
+            "Esse id é do produto, não da cor. Use o subproduto_id da cor que o cliente pediu (se ele não disse, pergunte) e chame preparar_orcamento de novo.",
+        };
+      }
       if (!produtoId) {
         return {
           erro: "subproduto_desconhecido",
@@ -108,7 +121,7 @@ export async function prepararOrcamentoHandler(
         tipo: input.tipo,
         nome: input.nome,
         email: input.email,
-        telefone: input.telefone,
+        telefone: state.telefone,
         itens: itensSumario,
         total_estimado: totalEstimado,
         observacoes: input.observacoes,
@@ -117,7 +130,8 @@ export async function prepararOrcamentoHandler(
       body: {
         type: input.tipo,
         customer_name: input.nome,
-        customer_phone: input.telefone,
+        // Do número da conversa: o cliente não abre orçamento no nome de outro telefone.
+        customer_phone: state.telefone,
         customer_email: input.email,
         items: input.itens.map((i) => ({ subproduct_id: i.subproduto_id, quantity: i.quantidade })),
         comments: buildComments(input.observacoes, arte_refs),

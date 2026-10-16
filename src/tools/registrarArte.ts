@@ -19,6 +19,24 @@ export async function registrarArteHandler(
   state: ConversationState,
   _client: BrindeMeClient
 ) {
+  const nomeProcurado = input.descricao_arquivo.trim().toLowerCase();
+  const recebido = state.arquivosRecebidos?.find((a) => a.nome.toLowerCase() === nomeProcurado);
+  if (recebido) {
+    // Turno repetido depois de falha chama a ferramenta de novo: mesma arte, mesma referência.
+    const existente = state.artes.find((a) => a.arquivo === recebido.caminho && a.posicao === input.posicao);
+    const ref = existente?.ref ?? `arte-${uuidv4().slice(0, 8)}`;
+    if (!existente) state.artes.push({ ref, arquivo: recebido.caminho, posicao: input.posicao, cores: input.cores });
+    return {
+      status: "arte_registrada",
+      arte_ref: ref,
+      arquivo: recebido.nome,
+      tamanho_kb: Math.max(1, Math.round(recebido.bytes / 1024)),
+      posicao: input.posicao ?? "não especificada",
+      cores: input.cores ?? "não especificadas",
+      mensagem: "Arte registrada! Vou incluir essa referência no orçamento para a equipe.",
+    };
+  }
+
   const ext = extname(input.descricao_arquivo).toLowerCase();
 
   if (!ALLOWED_EXTENSIONS.includes(ext)) {
@@ -26,6 +44,14 @@ export async function registrarArteHandler(
       erro: "formato_nao_aceito",
       formatos_aceitos: ALLOWED_EXTENSIONS.join(", "),
       mensagem: `Formato "${ext || "sem extensão"}" não aceito. Por favor, envie a arte em: ${ALLOWED_EXTENSIONS.join(", ")}.`,
+    };
+  }
+
+  if (state.canal === "whatsapp") {
+    return {
+      erro: "arquivo_nao_recebido",
+      arquivos_recebidos: (state.arquivosRecebidos ?? []).map((a) => a.nome),
+      mensagem: `Esse arquivo não chegou nesta conversa. Peça para o cliente enviar a arte de novo, em ${ALLOWED_EXTENSIONS.join(", ")}.`,
     };
   }
 
