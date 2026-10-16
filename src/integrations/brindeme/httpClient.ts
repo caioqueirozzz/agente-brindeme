@@ -37,7 +37,19 @@ export interface HttpClientOptions {
   maxRetries?: number;
   apiLogger?: ApiLogger;
   circuitBreaker?: CircuitBreaker;
+  /** Espaça as chamadas deste cliente; vazio = sem limite. A API corta em 60/min por chave. */
+  reqPorMinuto?: number;
+  /** Retry-After acima disto devolve o 429 na hora em vez de segurar a conversa. */
+  maxEsperaRetryMs?: number;
+  relogio?: Relogio;
 }
+
+export interface Relogio {
+  agora(): number;
+  dormir(ms: number): Promise<void>;
+}
+
+const relogioReal: Relogio = { agora: () => Date.now(), dormir: (ms) => sleep(ms) };
 
 /**
  * Caminhos dos endpoints, conferidos contra a spec OpenAPI em
@@ -63,6 +75,10 @@ export class HttpBrindeMeClient implements BrindeMeClient {
   private readonly timeoutMs: number;
   private readonly maxRetries: number;
   private readonly apiLogger: ApiLogger;
+  private readonly intervaloMs: number;
+  private readonly maxEsperaRetryMs: number;
+  private readonly relogio: Relogio;
+  private proximaVez = 0;
   readonly circuito: CircuitBreaker;
 
   constructor(options?: Partial<HttpClientOptions>) {
@@ -81,6 +97,19 @@ export class HttpBrindeMeClient implements BrindeMeClient {
     this.apiLogger =
       options?.apiLogger ?? (config.brindeMe.logarChamadas ? new FileApiLogger() : new MemoryApiLogger());
     this.circuito = options?.circuitBreaker ?? new CircuitBreaker();
+    const rpm = options?.reqPorMinuto ?? 0;
+    this.intervaloMs = rpm > 0 ? 60_000 / rpm : 0;
+    this.maxEsperaRetryMs = options?.maxEsperaRetryMs ?? config.brindeMe.maxEsperaRetryMs;
+    this.relogio = options?.relogio ?? relogioReal;
+  }
+
+  /** Reserva a vez antes de esperar: chamadas paralelas ficam enfileiradas, não juntas. */
+  private async aguardarVez(): Promise<void> {
+    if (this.intervaloMs === 0) return;
+    const agora = this.relogio.agora();
+    const vez = Math.max(agora, this.proximaVez);
+    this.proximaVez = vez + this.intervaloMs;
+    if (vez > agora) await this.relogio.dormir(vez - agora);
   }
 
   private authHeaders(): Record<string, string> {
@@ -108,6 +137,7 @@ export class HttpBrindeMeClient implements BrindeMeClient {
     extraHeaders?: Record<string, string>,
     attempt = 0
   ): Promise<unknown> {
+    await this.aguardarVez();
     const inicio = Date.now();
     const registrar = (status: number | undefined, error?: string) =>
       this.apiLogger.log({
@@ -160,7 +190,11 @@ export class HttpBrindeMeClient implements BrindeMeClient {
     if (!response.ok) {
       // 412 sem descrição na spec: grava o corpo completo para diagnóstico.
       registrar(response.status, response.status === 412 ? `412 body=${text.slice(0, 1000)}` : "http");
-      throw new ApiError(response.status, (parsed as object) ?? { message: response.statusText });
+      throw new ApiError(
+        response.status,
+        (parsed as object) ?? { message: response.statusText },
+        lerRetryAfter(response.headers.get("retry-after"), this.relogio.agora())
+      );
     }
     registrar(response.status);
     return parsed;
@@ -196,7 +230,9 @@ export class HttpBrindeMeClient implements BrindeMeClient {
 
         // Não insiste se o disjuntor abriu no meio das tentativas.
         if (this.circuito.estado === "aberto") throw err;
-        await sleep(2 ** attempt * 250);
+        const pedida = err instanceof ApiError ? err.retryAfterMs : undefined;
+        if (pedida !== undefined && pedida > this.maxEsperaRetryMs) throw err;
+        await this.relogio.dormir(pedida ?? 2 ** attempt * 250);
       }
     }
     throw lastErr;
@@ -299,6 +335,15 @@ export class HttpBrindeMeClient implements BrindeMeClient {
       return { ok: false, motivo: String(err) };
     }
   }
+}
+
+/** Retry-After vem em segundos ou como data HTTP. */
+function lerRetryAfter(valor: string | null, agora: number): number | undefined {
+  if (!valor) return undefined;
+  const segundos = Number(valor);
+  if (Number.isFinite(segundos)) return Math.max(0, segundos * 1000);
+  const data = Date.parse(valor);
+  return Number.isNaN(data) ? undefined : Math.max(0, data - agora);
 }
 
 function sleep(ms: number): Promise<void> {

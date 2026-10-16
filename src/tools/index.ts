@@ -54,7 +54,7 @@ export const tools: ToolDefinition[] = [
   {
     name: "detalhar_produto",
     description:
-      "Retorna detalhes completos de um produto: subprodutos ativos, cores, estoque, tabela de preços por faixa e personalizações. Use quando o cliente pedir mais informações sobre um produto específico.",
+      "Retorna detalhes completos de um produto: subprodutos ativos, cores, estoque, tabela de preços por faixa e personalizações. Use quando o cliente pedir mais informações sobre um produto específico, com o id que veio de buscar_produtos.",
     inputSchema: schemaDaFerramenta(detalharProdutoSchema),
     handler: detalharProdutoHandler as ToolDefinition["handler"],
   },

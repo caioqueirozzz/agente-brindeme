@@ -26,6 +26,8 @@ export const config = {
   llmModel: process.env.LLM_MODEL ?? "",
   /** reasoning_effort da OpenAI; vazio = padrão do modelo. */
   llmRaciocinio: process.env.LLM_REASONING ?? "",
+  /** chat = /v1/chat/completions (validada nos evals) | responses = /v1/responses (raciocínio + ferramentas). */
+  llmApi: process.env.LLM_API ?? "chat",
   assistantName: process.env.ASSISTANT_NAME ?? "Lia",
   storeName: process.env.STORE_NAME ?? "Presentes Especiais",
 
@@ -46,6 +48,7 @@ export const config = {
     logarChamadas: (process.env.BRINDEME_LOG_CHAMADAS ?? "true") !== "false",
     timeoutMs: int(process.env.BRINDEME_TIMEOUT_MS, 10_000),
     maxRetries: int(process.env.BRINDEME_MAX_RETRIES, 2),
+    maxEsperaRetryMs: int(process.env.BRINDEME_MAX_ESPERA_RETRY_MS, 10_000),
     /** "simulada" devolve orçamento TESTE sem POST na loja; só "real" grava de verdade (vale com BRINDEME_MODE=http). */
     escritaOrcamento: (process.env.ORCAMENTO_ESCRITA === "real" ? "real" : "simulada") as "real" | "simulada",
     orcamentosTesteArquivo: process.env.ORCAMENTOS_TESTE_ARQUIVO ?? "data/orcamentos-teste.json",
@@ -64,7 +67,9 @@ export const config = {
     /** Chamadas simultâneas a GET /product/{id} durante a sincronização. */
     concorrencia: int(process.env.CATALOGO_CONCORRENCIA, 5),
     /** Idade máxima de um produto no índice antes de ser relido, mesmo sem mudança em updated_at. */
-    maxIdadeHoras: int(process.env.CATALOGO_MAX_IDADE_HORAS, 6),
+    maxIdadeHoras: int(process.env.CATALOGO_MAX_IDADE_HORAS, 24),
+    /** Ritmo do sync: metade da cota da API (60/min), a outra metade fica para as conversas. */
+    reqPorMinuto: int(process.env.CATALOGO_REQ_POR_MINUTO, 30),
   },
 
   agente: {

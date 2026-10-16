@@ -8,7 +8,9 @@ import { CircuitOpenError } from "./circuitBreaker.js";
 export class ApiError extends Error {
   constructor(
     public readonly status: number,
-    public readonly body: object
+    public readonly body: object,
+    /** Do header Retry-After (429/503), já em ms. */
+    public readonly retryAfterMs?: number
   ) {
     super(`HTTP ${status}`);
     this.name = "ApiError";

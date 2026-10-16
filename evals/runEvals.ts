@@ -9,10 +9,7 @@ import { criarLLM } from "../src/llm/index.js";
 import { MockBrindeMeClient } from "../src/integrations/brindeme/mockClient.js";
 import { Logger } from "../src/logging/logger.js";
 import type { FaultType } from "../src/integrations/brindeme/types.js";
-import { MemoryProductIndexStore, sincronizarCatalogo } from "../src/catalogo/indice.js";
-import { setProductIndexStore } from "../src/tools/buscarProdutos.js";
-import { setLacunaStore } from "../src/tools/consultarConhecimento.js";
-import { MemoryLacunaStore } from "../src/knowledge/lacunas.js";
+import { prepararAmbienteDosEvals } from "./ambiente.js";
 import type { TurnResult } from "../src/agent/runTurn.js";
 import { AgenteDefinitivo } from "../src/api/agenteDefinitivo.js";
 import { RepositorioConversas } from "../src/conversas/repositorio.js";
@@ -198,12 +195,7 @@ async function runScenario(scenario: Scenario): Promise<{ passed: number; failed
 }
 
 async function main() {
-  // Índice de catálogo em memória, montado dos mocks: os cenários não dependem do que está em data/.
-  const indice = new MemoryProductIndexStore();
-  await sincronizarCatalogo(new MockBrindeMeClient(), indice);
-  setProductIndexStore(indice);
-  // Lacunas dos cenários não vão para data/lacunas.jsonl (fila real da loja).
-  setLacunaStore(new MemoryLacunaStore());
+  await prepararAmbienteDosEvals();
 
   const scenariosDir = join(__dir, "scenarios");
   const files = readdirSync(scenariosDir)

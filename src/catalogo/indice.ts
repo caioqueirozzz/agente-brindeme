@@ -232,6 +232,9 @@ export interface ResultadoSyncCatalogo {
   removidos: number;
   /** Detalhe que falhou; o registro anterior (se havia) foi mantido. */
   falhas: Array<{ id: string; erro: string }>;
+  /** A listagem foi até a última página (só então a remoção por ausência vale). */
+  listagemCompleta: boolean;
+  /** Listagem completa e nenhum detalhe falhou. */
   completo: boolean;
 }
 
@@ -354,10 +357,11 @@ export async function sincronizarCatalogo(
     else resultado.set(id, { ...anterior, ausencias });
   }
 
+  const completo = terminou && falhas.length === 0;
   store.salvar({
     versao: VERSAO_INDICE,
     sincronizado_em: agora.toISOString(),
-    completo: terminou,
+    completo,
     produtos: [...resultado.values()],
   });
 
@@ -370,6 +374,7 @@ export async function sincronizarCatalogo(
     novos,
     removidos,
     falhas,
-    completo: terminou,
+    listagemCompleta: terminou,
+    completo,
   };
 }

@@ -125,7 +125,7 @@ function formatar(r: Recomendacao, input: BuscarProdutosInput, state: Conversati
           ? {}
           : {
               aviso:
-                "O cliente não informou a quantidade: o preço é 'a partir de', na quantidade mínima de cada produto. Pergunte a quantidade antes de passar valores como definitivos.",
+                "O cliente não informou a quantidade, e o preço muda por faixa: não passe valor nenhum. Apresente as opções e pergunte a quantidade; depois chame buscar_produtos de novo com ela.",
             }),
         produtos: r.itens.map(({ produto: p, oferta, ocasiaoConfere }) => ({
           id: p.id,
@@ -138,11 +138,7 @@ function formatar(r: Recomendacao, input: BuscarProdutosInput, state: Conversati
                 preco_unitario_na_quantidade: oferta.preco_unitario,
                 total_estimado: oferta.total_estimado,
               }
-            : {
-                preco_unitario_na_quantidade: null,
-                preco_a_partir_de: oferta.preco_unitario,
-                a_partir_da_quantidade: oferta.quantidade,
-              }),
+            : {}),
           cores_disponiveis: oferta.cores.map((c) => c.cor),
           ...(r.ocasioes.length ? { indicado_para_a_ocasiao: ocasiaoConfere } : {}),
         })),

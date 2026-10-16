@@ -35,6 +35,38 @@ describe("prepararOrcamento", () => {
     expect(result.resumo.total_estimado).toBe(945);
   });
 
+  it("telefone do orçamento é o da conversa, não o que o modelo mandar (#12)", async () => {
+    const ditadoPeloModelo = { ...validInput, telefone: "5511888887777" };
+    await prepararOrcamentoHandler(ditadoPeloModelo, state, client);
+    expect(state.orcamentoPendente?.body.customer_phone).toBe("5583999990000");
+    expect(state.orcamentoPendente?.resumo.telefone).toBe("5583999990000");
+  });
+
+  it("o modelo nem recebe o campo telefone para preencher", async () => {
+    const { tools } = await import("../src/tools/index.js");
+    const schema = tools.find((t) => t.name === "preparar_orcamento")!.inputSchema as { properties: object };
+    expect(Object.keys(schema.properties)).not.toContain("telefone");
+  });
+
+  it("id do produto no lugar do subproduto: devolve as cores com o id certo (eval 05)", async () => {
+    const limpo = createInitialState("5583999990000");
+    limpo.produtosDiscutidos.push("prod-001");
+    const r = (await prepararOrcamentoHandler(
+      { ...validInput, itens: [{ subproduto_id: "prod-001", quantidade: 50 }] },
+      limpo,
+      client
+    )) as { erro: string; opcoes: Array<{ subproduto_id: string; cor: string }>; instrucao: string };
+    expect(r.erro).toBe("informe_a_cor");
+    expect(r.opcoes).toContainEqual(expect.objectContaining({ subproduto_id: "sub-001-branco" }));
+    expect(r.instrucao).toMatch(/preparar_orcamento de novo/);
+    const segunda = await prepararOrcamentoHandler(
+      { ...validInput, itens: [{ subproduto_id: "sub-001-branco", quantidade: 50 }] },
+      limpo,
+      client
+    );
+    expect(segunda).toMatchObject({ status: "resumo_pronto" });
+  });
+
   it("guarda token no estado", async () => {
     await prepararOrcamentoHandler(validInput, state, client);
     expect(state.orcamentoPendente?.token).toBeTruthy();

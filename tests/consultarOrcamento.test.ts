@@ -22,7 +22,7 @@ describe("consultarOrcamento", () => {
     semearMapaSubprodutos(state);
 
     const prep = await prepararOrcamentoHandler(
-      { tipo: "PF", nome: "Test", telefone: "5583999990000", email: "test@test.com", itens: [{ subproduto_id: "sub-001-branco", quantidade: 50 }] },
+      { tipo: "PF", nome: "Test", email: "test@test.com", itens: [{ subproduto_id: "sub-001-branco", quantidade: 50 }] },
       state,
       client
     ) as { token_confirmacao: string };

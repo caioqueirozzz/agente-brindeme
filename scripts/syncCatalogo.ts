@@ -4,6 +4,7 @@
  *   npm run sync:catalogo                    # incremental
  *   npm run sync:catalogo -- --forcar        # relê o detalhe de todos os produtos ativos
  *   npm run sync:catalogo -- --concorrencia 3
+ *   npm run sync:catalogo -- --ritmo 55      # req/min; só com o agente desligado (a API corta em 60/min)
  *
  * Lê GET /product página por página e GET /product/{id} dos produtos ativos que
  * mudaram, e grava data/produtos-index.json (no mock, data/produtos-index-mock.json). Somente leitura na API.
@@ -36,13 +37,14 @@ async function main() {
   const forcar = process.argv.includes("--forcar");
   const concorrencia = numero("concorrencia", config.catalogo.concorrencia);
   const maxPaginas = numero("max-paginas", 300);
+  const ritmo = numero("ritmo", config.catalogo.reqPorMinuto);
 
   console.log(`${BOLD}Sincronização do catálogo — ${config.storeName}${RESET}`);
   console.log(
-    `${GRAY}  modo: ${config.brindeMe.mode} · concorrência: ${concorrencia}${forcar ? " · forçado" : ""}${RESET}\n`
+    `${GRAY}  modo: ${config.brindeMe.mode} · concorrência: ${concorrencia} · ritmo: ${ritmo} req/min${forcar ? " · forçado" : ""}${RESET}\n`
   );
 
-  const client = createBrindeMeClient();
+  const client = createBrindeMeClient({ reqPorMinuto: ritmo });
   const store = new FileProductIndexStore();
   const inicio = Date.now();
   let ultimaLinha = "";
@@ -72,7 +74,7 @@ async function main() {
   );
   console.log(`${GRAY}  índice: ${relative(process.cwd(), arquivoIndicePadrao(config.brindeMe.mode))} · ${segundos}s${RESET}`);
 
-  if (!r.completo) {
+  if (!r.listagemCompleta) {
     console.log(
       `${YELLOW}!${RESET} listagem cortada em ${maxPaginas} páginas: nada foi removido do índice. Aumente --max-paginas.`
     );
@@ -81,6 +83,7 @@ async function main() {
     console.log(`${YELLOW}!${RESET} ${r.falhas.length} produto(s) sem detalhe (registro anterior mantido):`);
     for (const f of r.falhas.slice(0, 10)) console.log(`${GRAY}    ${f.id}: ${f.erro}${RESET}`);
     if (r.falhas.length > 10) console.log(`${GRAY}    … e mais ${r.falhas.length - 10}${RESET}`);
+    console.log(`${YELLOW}!${RESET} índice marcado incompleto. Rode de novo: só os que faltaram são lidos.`);
   }
 }
 

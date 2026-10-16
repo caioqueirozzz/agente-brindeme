@@ -5,9 +5,9 @@ import { EscritaSimuladaClient } from "./escritaSimulada.js";
 import { config } from "../../config.js";
 
 /** Escolhe a implementação pelo BRINDEME_MODE. As tools não sabem qual é. */
-export function createBrindeMeClient(): BrindeMeClient {
+export function createBrindeMeClient(opcoes: { reqPorMinuto?: number } = {}): BrindeMeClient {
   if (config.brindeMe.mode !== "http") return new MockBrindeMeClient();
-  const http = new HttpBrindeMeClient();
+  const http = new HttpBrindeMeClient({ reqPorMinuto: opcoes.reqPorMinuto });
   return config.brindeMe.escritaOrcamento === "real"
     ? http
     : new EscritaSimuladaClient(http, config.brindeMe.orcamentosTesteArquivo);

@@ -35,7 +35,7 @@ async function main(): Promise<void> {
   }
 
   // Cliente próprio: falhas do sync abrem o disjuntor dele, não o das conversas.
-  const clienteDoSync = createBrindeMeClient();
+  const clienteDoSync = createBrindeMeClient({ reqPorMinuto: config.catalogo.reqPorMinuto });
   const sincronizar = () =>
     sincronizarCatalogo(clienteDoSync, store, {
       concorrencia: Math.min(config.catalogo.concorrencia, CONCORRENCIA_MAX_DO_SYNC),

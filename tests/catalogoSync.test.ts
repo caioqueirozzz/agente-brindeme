@@ -150,6 +150,9 @@ describe("sincronizarCatalogo", () => {
       const r = await sincronizarCatalogo(client, store, { agora: maisHoras(1) });
 
       expect(r.falhas.map((f) => f.id)).toEqual(["p1"]);
+      expect(r.listagemCompleta).toBe(true);
+      expect(r.completo).toBe(false);
+      expect(store.carregar().completo).toBe(false);
       expect(store.carregar().produtos.find((p) => p.id === "p1")).toEqual(anterior);
     });
 
@@ -214,6 +217,7 @@ describe("sincronizarCatalogo", () => {
 
       const r = await sincronizarCatalogo(client, store, { perPage: 10, maxPaginas: 1, agora: maisHoras(1) });
       expect(r.completo).toBe(false);
+      expect(r.listagemCompleta).toBe(false);
       expect(r.removidos).toBe(0);
       expect(store.carregar().produtos).toHaveLength(30);
       expect(store.carregar().completo).toBe(false);

@@ -13,7 +13,13 @@ import {
   exigeTransferenciaImediata,
 } from "../integrations/brindeme/errors.js";
 import { config } from "../config.js";
-import type { ResumoTransferencia } from "../tools/transferirHumano.js";
+import {
+  MENSAGEM_TRANSFERENCIA,
+  MOTIVOS,
+  transferirHumanoHandler,
+  type MotivoTransferencia,
+  type ResumoTransferencia,
+} from "../tools/transferirHumano.js";
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 
@@ -82,6 +88,14 @@ function loadSystemPrompt(state: ConversationState): string {
     orcamento_pendente_expirado: state.orcamentoPendente
       ? new Date() > new Date(state.orcamentoPendente.expiraEm)
       : undefined,
+    // Resultados de ferramenta não passam para o turno seguinte: sem isto o "pode criar" não tem token.
+    orcamento_pendente: state.orcamentoPendente
+      ? {
+          token_confirmacao: state.orcamentoPendente.token,
+          ja_criado: state.orcamentoTokens[state.orcamentoPendente.token] ?? null,
+          resumo: state.orcamentoPendente.resumo,
+        }
+      : undefined,
   };
 
   return template
@@ -141,6 +155,8 @@ export async function runTurn(
   const lacunas: string[] = [];
   /** Itens da base de conhecimento usados neste turno (auditoria da Fase 3). */
   const kbItens = new Set<string>();
+  /** Motivo da última ferramenta que mandou transferir; vale mesmo se o modelo não obedecer. */
+  let transferenciaPendente: MotivoTransferencia | undefined;
   const resultado = (response: string | null): TurnResult => ({
     response,
     toolsCalled,
@@ -234,6 +250,13 @@ export async function runTurn(
           state.falhasConsecutivas = 0;
         }
 
+        const ordem = output as { instrucao?: unknown; motivo_sugerido?: unknown } | null;
+        // Lacuna fica com o modelo: com a base quase vazia, forçar derrubaria quem só consultou de passagem.
+        if (ordem?.instrucao === "transferir" && ordem.motivo_sugerido !== "lacuna_conhecimento") {
+          const motivo = ordem.motivo_sugerido as MotivoTransferencia;
+          transferenciaPendente = MOTIVOS.includes(motivo) ? motivo : "outro";
+        }
+
         logger.log({
           type: "tool_call",
           name: toolName,
@@ -280,7 +303,23 @@ export async function runTurn(
     } else {
       // end_turn or max_tokens
       const textBlocks = response.content.filter((b) => b.type === "text");
-      const text = textBlocks.map((b) => b.text ?? "").join("\n").trim();
+      let text = textBlocks.map((b) => b.text ?? "").join("\n").trim();
+
+      if (transferenciaPendente && !transferred) {
+        const input = {
+          motivo: transferenciaPendente,
+          prioridade: "normal" as const,
+          observacao: "automática: o modelo ignorou a instrução",
+        };
+        toolsCalled.push({ name: "transferir_humano", inputSummary: JSON.stringify(input).slice(0, 120) });
+        const o = await transferirHumanoHandler(input, state, client);
+        logger.log({ type: "tool_call", name: "transferir_humano", input, output: o, duration_ms: 0 });
+        transferred = true;
+        transferencia = o.resumo_para_atendente;
+        opcoes.aoTransferir?.(transferencia, [...lacunas]);
+        opcoes.aoEfeito?.();
+        text = MENSAGEM_TRANSFERENCIA;
+      }
 
       logger.log({
         type: "response_sent",
