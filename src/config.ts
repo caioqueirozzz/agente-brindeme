@@ -79,6 +79,11 @@ export const config = {
     /** Precisa ficar FOLGA_PRAZOS_MS abaixo de AGENTE_TIMEOUT_MS da ponte (120s): ver conferirPrazos. */
     tetoMs: int(process.env.TURNO_TETO_MS, 90_000),
     respostasPorHora: int(process.env.RESPOSTAS_POR_HORA, 30),
+    /** Ferramentas desligadas no startup (requer restart para mudar; use #desligar para runtime). */
+    ferramentasDesligadas: (process.env.FERRAMENTAS_DESLIGADAS ?? "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean),
   },
 
   whatsapp: {

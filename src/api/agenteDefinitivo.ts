@@ -1,4 +1,6 @@
 import { ConversaDesconhecidaError, TurnoEmAndamentoError, type Agente } from "../contrato/agente.js";
+import { lerEstadoSistema, type EstadoSistema } from "../controle/estadoSistema.js";
+import { config } from "../config.js";
 import type {
   Evento,
   MensagemLote,
@@ -20,6 +22,8 @@ export const MSG_FALHA =
   "Tive um problema técnico agora. Já chamei alguém da nossa equipe para continuar com você por aqui. 🙏";
 export const MSG_LIMITE =
   "Recebemos muitas mensagens em pouco tempo. Uma pessoa da nossa equipe vai continuar com você por aqui. 🙏";
+export const MSG_SUSPENSAO =
+  "Estamos fora do ar temporariamente. A nossa equipe responde em breve. 🙏";
 export const FALHAS_DO_LOTE_PARA_TRANSFERIR = 2;
 /** Conversa parada há mais que isto sai da memória e volta do disco na próxima mensagem. */
 export const MEMORIA_PADRAO_MS = 30 * 60_000;
@@ -36,6 +40,8 @@ export interface DepsAgente {
   memoriaMs?: number;
   /** Para os evals: recebe o resultado bruto de cada turno. */
   aoTurno?: (resultado: TurnResult) => void;
+  /** Override para testes: evita ler data/estado-sistema.json do projeto. */
+  lerEstado?: () => EstadoSistema;
 }
 
 export class AgenteDefinitivo implements Agente {
@@ -49,6 +55,8 @@ export class AgenteDefinitivo implements Agente {
     const conversa = this.conversa(pedido.telefone);
     const guardado = conversa.turnos.find((t) => t.turnoId === pedido.turnoId);
     if (guardado) return vigente(conversa, guardado);
+    const sistema = (this.deps.lerEstado ?? lerEstadoSistema)();
+    if (sistema.suspenso) return { respostas: [MSG_SUSPENSAO], modo: "ia" };
     if (this.emAndamento.has(pedido.telefone)) throw new TurnoEmAndamentoError();
     const controle = new AbortController();
     this.emAndamento.set(pedido.telefone, controle);
@@ -140,6 +148,11 @@ export class AgenteDefinitivo implements Agente {
 
     const posicaoDaMensagem = estado.historico.length;
     const orcamentosAntes = estado.orcamentos.length;
+    const sistema = (this.deps.lerEstado ?? lerEstadoSistema)();
+    const ferramentasDesligadas = new Set([
+      ...config.agente.ferramentasDesligadas,
+      ...(sistema.ferramentasDesligadas ?? []),
+    ]);
     const teto = setTimeout(() => controle.abort(new TetoDoTurno()), this.deps.tetoMs);
     try {
       const r = await runTurn(texto, estado, this.deps.llm, this.deps.client, logger, {
@@ -148,6 +161,7 @@ export class AgenteDefinitivo implements Agente {
         aoTransferir: (resumo, lacunas) => {
           conversa.transferenciaPendente = { resumo, lacunas };
         },
+        ferramentasDesligadas: ferramentasDesligadas.size > 0 ? ferramentasDesligadas : undefined,
       });
       // Preenchida pelo aoTransferir durante o turno (o TS não vê a atribuição no callback).
       const transferencia = conversa.transferenciaPendente as TransferenciaPendente | undefined;

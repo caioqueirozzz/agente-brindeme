@@ -1,27 +1,92 @@
 import { LIMITE_TEXTO, type Evento, type Modo } from "../contrato/esquemas.js";
+import {
+  escreverEstadoSistema,
+  lerEstadoSistema,
+} from "../controle/estadoSistema.js";
 import type { ClienteAgente } from "./agenteHttp.js";
 import type { MensagemRecebida } from "./canal.js";
 import { CHAVE_EU, type Envio } from "./envio.js";
 import type { LogPonte } from "./log.js";
 import { normalizarTelefone } from "./telefone.js";
 
-export type Comando = { tipo: "devolver"; telefone: string; nota?: string } | { tipo: "desconhecido" };
+export type Comando =
+  | { tipo: "devolver"; telefone: string; nota?: string }
+  | { tipo: "suspender"; motivo?: string }
+  | { tipo: "retomar" }
+  | { tipo: "desligar"; ferramenta: string }
+  | { tipo: "religar"; ferramenta: string }
+  | { tipo: "desconhecido" };
 
 export const TEXTO_COMANDOS = [
   "Comandos do agente:",
   "#devolver <telefone com DDI, sem espaços> [nota] — devolve a conversa à IA",
   "Exemplo: #devolver 5583999990000 cliente já recebeu o boleto",
+  "#suspender [motivo] — pausa o agente para todos os clientes",
+  "#retomar — retoma o agente",
+  "#desligar <ferramenta> — desliga uma ferramenta (ex: #desligar criar_orcamento)",
+  "#religar <ferramenta> — religa uma ferramenta",
 ].join("\n");
 
 export function interpretarComando(texto: string): Comando | null {
   const t = texto.trim();
   if (!t.startsWith("#")) return null;
-  const m = /^#devolver\s+(\S+)(?:\s+([\s\S]+))?$/i.exec(t);
-  if (!m) return { tipo: "desconhecido" };
-  const telefone = normalizarTelefone(m[1]);
-  if (!/^[1-9]\d{11,14}$/.test(telefone)) return { tipo: "desconhecido" };
-  const nota = m[2]?.trim().slice(0, 500);
-  return nota ? { tipo: "devolver", telefone, nota } : { tipo: "devolver", telefone };
+
+  const mDev = /^#devolver\s+(\S+)(?:\s+([\s\S]+))?$/i.exec(t);
+  if (mDev) {
+    const telefone = normalizarTelefone(mDev[1]);
+    if (!/^[1-9]\d{11,14}$/.test(telefone)) return { tipo: "desconhecido" };
+    const nota = mDev[2]?.trim().slice(0, 500);
+    return nota ? { tipo: "devolver", telefone, nota } : { tipo: "devolver", telefone };
+  }
+
+  const mSusp = /^#suspender(?:\s+([\s\S]+))?$/i.exec(t);
+  if (mSusp) {
+    const motivo = mSusp[1]?.trim().slice(0, 200);
+    return motivo ? { tipo: "suspender", motivo } : { tipo: "suspender" };
+  }
+
+  if (/^#retomar$/i.test(t)) return { tipo: "retomar" };
+
+  const mDes = /^#desligar\s+(\S+)$/i.exec(t);
+  if (mDes) return { tipo: "desligar", ferramenta: mDes[1].toLowerCase() };
+
+  const mRel = /^#religar\s+(\S+)$/i.exec(t);
+  if (mRel) return { tipo: "religar", ferramenta: mRel[1].toLowerCase() };
+
+  return { tipo: "desconhecido" };
+}
+
+/** Permite sobrescrever nas operações de controle em testes sem tocar o disco. */
+export interface ControleAgente {
+  suspender(motivo?: string): void;
+  retomar(): void;
+  desligar(ferramenta: string): void;
+  religar(ferramenta: string): void;
+}
+
+function controleArquivo(): ControleAgente {
+  return {
+    suspender(motivo) {
+      const atual = lerEstadoSistema();
+      escreverEstadoSistema({ ...atual, suspenso: true, suspensoPor: motivo, suspensoEm: new Date().toISOString() });
+    },
+    retomar() {
+      const atual = lerEstadoSistema();
+      escreverEstadoSistema({ ...atual, suspenso: false, suspensoPor: undefined, suspensoEm: undefined });
+    },
+    desligar(ferramenta) {
+      const atual = lerEstadoSistema();
+      const desligadas = new Set(atual.ferramentasDesligadas ?? []);
+      desligadas.add(ferramenta);
+      escreverEstadoSistema({ ...atual, ferramentasDesligadas: [...desligadas] });
+    },
+    religar(ferramenta) {
+      const atual = lerEstadoSistema();
+      const desligadas = new Set(atual.ferramentasDesligadas ?? []);
+      desligadas.delete(ferramenta);
+      escreverEstadoSistema({ ...atual, ferramentasDesligadas: [...desligadas] });
+    },
+  };
 }
 
 export interface EstadoAtendimento {
@@ -41,15 +106,18 @@ export class Atendimento {
   private emCurso: Promise<void> | null = null;
   private readonly aoMudar: () => void;
 
+  private readonly controle: ControleAgente;
+
   constructor(
     private readonly agente: ClienteAgente,
     private readonly envio: Envio,
     private readonly log: LogPonte = () => {},
-    opcoes: { inicial?: Partial<EstadoAtendimento>; aoMudar?: () => void } = {}
+    opcoes: { inicial?: Partial<EstadoAtendimento>; aoMudar?: () => void; controle?: ControleAgente } = {}
   ) {
     this.modos = new Map(Object.entries(opcoes.inicial?.modos ?? {}));
     this.pendentes = [...(opcoes.inicial?.pendentes ?? [])];
     this.aoMudar = opcoes.aoMudar ?? (() => {});
+    this.controle = opcoes.controle ?? controleArquivo();
   }
 
   instantaneo(): EstadoAtendimento {
@@ -177,10 +245,37 @@ export class Atendimento {
   private async tratarComando(texto: string): Promise<void> {
     const comando = interpretarComando(texto);
     if (!comando) return;
-    if (comando.tipo === "desconhecido") {
-      await this.envio.paraMim(TEXTO_COMANDOS);
-      return;
+    switch (comando.tipo) {
+      case "devolver":
+        await this.devolver(comando.telefone, comando.nota);
+        break;
+      case "suspender":
+        this.controle.suspender(comando.motivo);
+        this.log({ type: "agente_suspenso", motivo: comando.motivo ?? "" });
+        await this.envio.paraMim(
+          `⏸️ Agente suspenso${comando.motivo ? ` — ${comando.motivo}` : ""}. Use #retomar para religar.`
+        );
+        break;
+      case "retomar":
+        this.controle.retomar();
+        this.log({ type: "agente_retomado" });
+        await this.envio.paraMim("▶️ Agente retomado. Voltando a responder os clientes.");
+        break;
+      case "desligar":
+        this.controle.desligar(comando.ferramenta);
+        this.log({ type: "ferramenta_desligada", ferramenta: comando.ferramenta });
+        await this.envio.paraMim(
+          `🔒 Ferramenta "${comando.ferramenta}" desligada. Use #religar ${comando.ferramenta} para religar.`
+        );
+        break;
+      case "religar":
+        this.controle.religar(comando.ferramenta);
+        this.log({ type: "ferramenta_religada", ferramenta: comando.ferramenta });
+        await this.envio.paraMim(`🔓 Ferramenta "${comando.ferramenta}" religada.`);
+        break;
+      case "desconhecido":
+        await this.envio.paraMim(TEXTO_COMANDOS);
+        break;
     }
-    await this.devolver(comando.telefone, comando.nota);
   }
 }

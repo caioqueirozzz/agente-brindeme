@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { Atendimento, interpretarComando, TEXTO_COMANDOS } from "../src/whatsapp/atendente.js";
+import { Atendimento, interpretarComando, TEXTO_COMANDOS, type ControleAgente } from "../src/whatsapp/atendente.js";
 import { Envio } from "../src/whatsapp/envio.js";
 import { WhatsAppFalso } from "./helpers/whatsappFalso.js";
 import { AgenteFalso } from "./helpers/agenteFalso.js";
@@ -37,6 +37,25 @@ describe("interpretarComando", () => {
     expect(interpretarComando("#devolver 083999990000")).toEqual({ tipo: "desconhecido" });
     expect(interpretarComando("#devolver 0558399990000")).toEqual({ tipo: "desconhecido" });
     expect(interpretarComando("#devolver 04183999990000")).toEqual({ tipo: "desconhecido" });
+  });
+
+  it("#suspender com e sem motivo", () => {
+    expect(interpretarComando("#suspender")).toEqual({ tipo: "suspender" });
+    expect(interpretarComando("#suspender manutenção")).toEqual({ tipo: "suspender", motivo: "manutenção" });
+    expect(interpretarComando("  #SUSPENDER  pausa geral  ")).toEqual({ tipo: "suspender", motivo: "pausa geral" });
+  });
+
+  it("#retomar", () => {
+    expect(interpretarComando("#retomar")).toEqual({ tipo: "retomar" });
+    expect(interpretarComando("  #RETOMAR  ")).toEqual({ tipo: "retomar" });
+  });
+
+  it("#desligar e #religar com ferramenta", () => {
+    expect(interpretarComando("#desligar criar_orcamento")).toEqual({ tipo: "desligar", ferramenta: "criar_orcamento" });
+    expect(interpretarComando("#religar criar_orcamento")).toEqual({ tipo: "religar", ferramenta: "criar_orcamento" });
+    // sem argumento → desconhecido
+    expect(interpretarComando("#desligar")).toEqual({ tipo: "desconhecido" });
+    expect(interpretarComando("#religar")).toEqual({ tipo: "desconhecido" });
   });
 });
 
@@ -213,5 +232,66 @@ describe("Atendimento", () => {
     expect(atendimento.instantaneo()).toEqual({ modos: { [TEL]: "humano" }, pendentes: [] });
     expect(mudancas.length).toBeGreaterThan(0);
     void canal;
+  });
+
+  it("#suspender: chama controle.suspender e confirma em Mensagem para mim", async () => {
+    const canal = new WhatsAppFalso();
+    const agente = new AgenteFalso();
+    const envio = new Envio(canal, 20);
+    const controle: ControleAgente = {
+      suspender: vi.fn(),
+      retomar: vi.fn(),
+      desligar: vi.fn(),
+      religar: vi.fn(),
+    };
+    const atendimento = new Atendimento(agente, envio, () => {}, { controle });
+
+    await atendimento.receberMinha(canal.mensagem({ chatId: canal.eu, texto: "#suspender manutenção", deMim: true, paraMim: true }));
+    await vi.runAllTimersAsync();
+
+    expect(controle.suspender).toHaveBeenCalledWith("manutenção");
+    const [paraMim] = canal.enviadas.filter((e) => e.chatId === canal.eu);
+    expect(paraMim?.texto).toContain("⏸️ Agente suspenso");
+  });
+
+  it("#retomar: chama controle.retomar e confirma", async () => {
+    const canal = new WhatsAppFalso();
+    const agente = new AgenteFalso();
+    const envio = new Envio(canal, 20);
+    const controle: ControleAgente = {
+      suspender: vi.fn(),
+      retomar: vi.fn(),
+      desligar: vi.fn(),
+      religar: vi.fn(),
+    };
+    const atendimento = new Atendimento(agente, envio, () => {}, { controle });
+
+    await atendimento.receberMinha(canal.mensagem({ chatId: canal.eu, texto: "#retomar", deMim: true, paraMim: true }));
+    await vi.runAllTimersAsync();
+
+    expect(controle.retomar).toHaveBeenCalledOnce();
+    const [paraMim] = canal.enviadas.filter((e) => e.chatId === canal.eu);
+    expect(paraMim?.texto).toContain("▶️ Agente retomado");
+  });
+
+  it("#desligar e #religar: chamam controle com a ferramenta certa", async () => {
+    const canal = new WhatsAppFalso();
+    const agente = new AgenteFalso();
+    const envio = new Envio(canal, 20);
+    const controle: ControleAgente = {
+      suspender: vi.fn(),
+      retomar: vi.fn(),
+      desligar: vi.fn(),
+      religar: vi.fn(),
+    };
+    const atendimento = new Atendimento(agente, envio, () => {}, { controle });
+
+    await atendimento.receberMinha(canal.mensagem({ chatId: canal.eu, texto: "#desligar criar_orcamento", deMim: true, paraMim: true }));
+    await vi.runAllTimersAsync();
+    expect(controle.desligar).toHaveBeenCalledWith("criar_orcamento");
+
+    await atendimento.receberMinha(canal.mensagem({ chatId: canal.eu, texto: "#religar criar_orcamento", deMim: true, paraMim: true }));
+    await vi.runAllTimersAsync();
+    expect(controle.religar).toHaveBeenCalledWith("criar_orcamento");
   });
 });

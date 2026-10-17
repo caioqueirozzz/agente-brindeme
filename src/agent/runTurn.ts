@@ -121,6 +121,8 @@ export interface OpcoesTurno {
   aoEfeito?: () => void;
   /** Chamado na transferência, antes de aoEfeito: quem chamou fica sabendo mesmo que o turno falhe depois. */
   aoTransferir?: (resumo: ResumoTransferencia, lacunas: string[]) => void;
+  /** Ferramentas cujo handler não deve ser chamado: respondem com ferramenta_desligada → transferência. */
+  ferramentasDesligadas?: Set<string>;
 }
 
 export async function runTurn(
@@ -208,7 +210,10 @@ export async function runTurn(
         let output: unknown;
         let error: string | undefined;
 
-        if (!toolDef) {
+        if (opcoes.ferramentasDesligadas?.has(toolName)) {
+          output = { erro: "ferramenta_desligada", instrucao: "transferir", motivo_sugerido: "falha_sistema" };
+          error = "ferramenta_desligada";
+        } else if (!toolDef) {
           output = { erro: "ferramenta_nao_encontrada" };
           error = "unknown_tool";
         } else {
