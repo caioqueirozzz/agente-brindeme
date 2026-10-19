@@ -33,6 +33,8 @@ export interface ToolDefinition {
   name: string;
   description: string;
   inputSchema: object;
+  /** Conferido em runTurn antes do handler: o modelo pode mandar campo errado, a mais ou fora do tipo. */
+  schema: ZodTypeAny;
   handler(input: unknown, state: ConversationState, client: BrindeMeClient): Promise<unknown>;
 }
 
@@ -42,6 +44,7 @@ export const tools: ToolDefinition[] = [
     description:
       "Consulta a base de conhecimento aprovada da loja: como funciona o pedido, formatos de arte, prazos, entrega, formas de pagamento, trocas e defeitos, horário e endereço. Use para qualquer dúvida geral sobre a loja. Se a base não cobrir a pergunta, o retorno manda transferir — nunca responda política, prazo ou condição de memória.",
     inputSchema: schemaDaFerramenta(consultarConhecimentoSchema),
+    schema: consultarConhecimentoSchema,
     handler: consultarConhecimentoHandler as ToolDefinition["handler"],
   },
   {
@@ -49,6 +52,7 @@ export const tools: ToolDefinition[] = [
     description:
       "Recomenda até 3 produtos da loja a partir do que o cliente procura (palavras-chave, ocasião), da quantidade e do valor (por unidade ou total). Só devolve produtos que respeitam quantidade mínima, estoque e valor, com preço da faixa de quantidade e total estimado, conferidos na plataforma. Use sempre que o cliente pedir recomendação ou sugestão. Nunca cite produto, preço ou estoque que não tenha vindo desta ferramenta ou de detalhar_produto.",
     inputSchema: schemaDaFerramenta(buscarProdutosSchema),
+    schema: buscarProdutosSchema,
     handler: buscarProdutosHandler as ToolDefinition["handler"],
   },
   {
@@ -56,6 +60,7 @@ export const tools: ToolDefinition[] = [
     description:
       "Retorna detalhes completos de um produto: subprodutos ativos, cores, estoque, tabela de preços por faixa e personalizações. Use quando o cliente pedir mais informações sobre um produto específico, com o id que veio de buscar_produtos.",
     inputSchema: schemaDaFerramenta(detalharProdutoSchema),
+    schema: detalharProdutoSchema,
     handler: detalharProdutoHandler as ToolDefinition["handler"],
   },
   {
@@ -63,6 +68,7 @@ export const tools: ToolDefinition[] = [
     description:
       "Valida os itens, calcula preços estimados e gera um resumo + token de confirmação. DEVE ser chamada antes de criar_orcamento. O cliente precisa ver o resumo e confirmar explicitamente antes da criação.",
     inputSchema: schemaDaFerramenta(prepararOrcamentoSchema),
+    schema: prepararOrcamentoSchema,
     handler: prepararOrcamentoHandler as ToolDefinition["handler"],
   },
   {
@@ -70,6 +76,7 @@ export const tools: ToolDefinition[] = [
     description:
       "Cria o orçamento na plataforma usando o token gerado por preparar_orcamento. Só chame após confirmação explícita do cliente. Idempotente: chamar duas vezes com o mesmo token retorna o mesmo orçamento.",
     inputSchema: schemaDaFerramenta(criarOrcamentoSchema),
+    schema: criarOrcamentoSchema,
     handler: criarOrcamentoHandler as ToolDefinition["handler"],
   },
   {
@@ -77,6 +84,7 @@ export const tools: ToolDefinition[] = [
     description:
       "Consulta o status de um orçamento pelo código. Só retorna orçamentos criados nesta conversa.",
     inputSchema: schemaDaFerramenta(consultarOrcamentoSchema),
+    schema: consultarOrcamentoSchema,
     handler: consultarOrcamentoHandler as ToolDefinition["handler"],
   },
   {
@@ -84,6 +92,7 @@ export const tools: ToolDefinition[] = [
     description:
       "Consulta status e prazo de entrega de um pedido. Valida o telefone do cliente; se não bater, solicita o e-mail. Nunca retorna dados sensíveis (CPF, e-mail, boleto, NF).",
     inputSchema: schemaDaFerramenta(consultarPedidoSchema),
+    schema: consultarPedidoSchema,
     handler: consultarPedidoHandler as ToolDefinition["handler"],
   },
   {
@@ -91,6 +100,7 @@ export const tools: ToolDefinition[] = [
     description:
       "Registra a arte que o cliente enviou. Pelo WhatsApp o arquivo aparece como [ARQUIVO recebido: <nome> (...)]; passe esse <nome> em descricao_arquivo. Valida o formato.",
     inputSchema: schemaDaFerramenta(registrarArteSchema),
+    schema: registrarArteSchema,
     handler: registrarArteHandler as ToolDefinition["handler"],
   },
   {
@@ -98,6 +108,7 @@ export const tools: ToolDefinition[] = [
     description:
       "Transfere o atendimento para um humano. Use quando: o cliente pedir atendente, houver reclamação, 2 falhas seguidas de ferramenta, desconto/pagamento/frete específico, arte problemática ou intenção não entendida após 2 tentativas.",
     inputSchema: schemaDaFerramenta(transferirHumanoSchema),
+    schema: transferirHumanoSchema,
     handler: transferirHumanoHandler as ToolDefinition["handler"],
   },
 ];

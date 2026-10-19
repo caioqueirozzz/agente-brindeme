@@ -1,4 +1,29 @@
-# Agente de Atendimento — Fase 1
+# Agente de Atendimento
+
+Agente IA de atendimento no WhatsApp para loja de brindes personalizados: recomenda produtos, prepara e cria orçamentos, consulta pedidos e transfere para uma pessoa quando precisa.
+
+## Piloto (Fase 6) — comece por aqui
+
+| Documento | Para quê |
+|---|---|
+| [docs/fase-6/relatorio-homologacao.md](docs/fase-6/relatorio-homologacao.md) | O que foi testado, as falhas corrigidas, o que falta e o parecer |
+| [docs/fase-6/roteiro-homologacao.md](docs/fase-6/roteiro-homologacao.md) | Roteiro de aceite (automatizado + chip) e critérios de go/no-go |
+| [docs/fase-6/manual-operacao.md](docs/fase-6/manual-operacao.md) | Ligar, acompanhar, comandos do chip, transferências, incidentes, LGPD |
+
+| Comando | O que faz |
+|---|---|
+| `npm run verificar:env -- --producao` | Confere a configuração antes de ligar (sai com 1 se houver erro) |
+| `npm run whatsapp` | Sobe agente + ponte do WhatsApp |
+| `npm run test:homologacao` | Suíte de homologação (fluxos, precisão, segurança, transferência) |
+| `npm run evals -- --via-api --rodadas 3 --relatorio <arq.json>` | Evals com o modelo real e critério de aprovação |
+| `npm run relatorio:piloto -- --desde AAAA-MM-DD` | Números do piloto a partir dos logs |
+| `npm run limpar:dados [-- --dias N] [--executar]` | Retenção de dados (só lista sem `--executar`) |
+
+As seções abaixo são o histórico das Fases 1 a 3.
+
+---
+
+## Fase 1 — protótipo
 
 Protótipo de agente IA de atendimento para loja de brindes personalizados. Esta fase valida o comportamento (intenções, ferramentas, transferências) com ferramentas simuladas e chat no terminal. Não há integração real com API, WhatsApp ou banco de dados.
 

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { MockBrindeMeClient } from "../src/integrations/brindeme/mockClient.js";
 import { prepararOrcamentoHandler } from "../src/tools/prepararOrcamento.js";
 import { criarOrcamentoHandler } from "../src/tools/criarOrcamento.js";
-import { createInitialState } from "../src/agent/state.js";
+import { addMessage, createInitialState } from "../src/agent/state.js";
 import { semearMapaSubprodutos } from "./helpers/mapaSubprodutos.js";
 
 const validPreparar = {
@@ -25,6 +25,7 @@ describe("criarOrcamento", () => {
 
   it("cria orçamento com token válido", async () => {
     const prep = await prepararOrcamentoHandler(validPreparar, state, client) as { token_confirmacao: string };
+    addMessage(state, "user", "pode criar");
     const result = await criarOrcamentoHandler({ token_confirmacao: prep.token_confirmacao }, state, client) as {
       status: string;
       codigo: string;
@@ -46,19 +47,34 @@ describe("criarOrcamento", () => {
 
   it("é idempotente: segunda chamada retorna mesmo orçamento", async () => {
     const prep = await prepararOrcamentoHandler(validPreparar, state, client) as { token_confirmacao: string };
+    addMessage(state, "user", "pode criar");
     const r1 = await criarOrcamentoHandler({ token_confirmacao: prep.token_confirmacao }, state, client) as { status: string; codigo: string };
 
-    // Restore token for second call (it was cleared after first creation)
-    state.orcamentoPendente = {
-      token: prep.token_confirmacao,
-      expiraEm: new Date(Date.now() + 60000).toISOString(),
-      resumo: {} as never,
-      body: {} as never,
-    };
-
+    // Sem pendência (já foi consumida): o "pode criar" repetido devolve o mesmo código, não sem_orcamento_pendente.
+    expect(state.orcamentoPendente).toBeUndefined();
+    addMessage(state, "user", "criou?");
     const r2 = await criarOrcamentoHandler({ token_confirmacao: prep.token_confirmacao }, state, client) as { status: string; codigo: string };
     expect(r2.status).toBe("ja_criado");
     expect(r2.codigo).toBe(r1.codigo);
+  });
+
+  it("[Fase 6] não cria no mesmo turno do resumo: o cliente ainda não confirmou", async () => {
+    addMessage(state, "user", "quero 50 canecas brancas");
+    const prep = await prepararOrcamentoHandler(validPreparar, state, client) as { token_confirmacao: string };
+    const r = await criarOrcamentoHandler({ token_confirmacao: prep.token_confirmacao }, state, client) as { erro: string };
+    expect(r.erro).toBe("aguardando_confirmacao");
+    expect(state.orcamentos).toHaveLength(0);
+    // A pendência continua: a confirmação na próxima mensagem cria.
+    addMessage(state, "user", "pode criar");
+    const ok = await criarOrcamentoHandler({ token_confirmacao: prep.token_confirmacao }, state, client) as { status: string };
+    expect(ok.status).toBe("criado");
+  });
+
+  it("[Fase 6] pendência salva antes da Fase 6 (sem marca) continua aceitando a confirmação", async () => {
+    const prep = await prepararOrcamentoHandler(validPreparar, state, client) as { token_confirmacao: string };
+    delete state.orcamentoPendente!.mensagemDoResumo;
+    const r = await criarOrcamentoHandler({ token_confirmacao: prep.token_confirmacao }, state, client) as { status: string };
+    expect(r.status).toBe("criado");
   });
 
   it("token expirado retorna erro", async () => {

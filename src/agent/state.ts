@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import { v4 as uuidv4 } from "uuid";
 
 export interface Mensagem {
@@ -23,6 +24,12 @@ export interface ArquivoRecebido {
 export interface OrcamentoPendente {
   token: string;
   expiraEm: string;
+  /**
+   * Última mensagem do cliente quando o resumo foi gerado (hash do texto, ver marcaUltimaMensagemCliente).
+   * criar_orcamento só vale depois de uma mensagem nova do cliente: a confirmação.
+   * Ausente em pendências salvas antes da Fase 6.
+   */
+  mensagemDoResumo?: string;
   resumo: {
     tipo: "PF" | "PJ";
     nome: string;
@@ -115,6 +122,17 @@ export function addMessage(
   content: string
 ): void {
   state.historico.push({ role, content, timestamp: new Date().toISOString() });
+}
+
+/**
+ * Identifica a última mensagem do cliente no histórico (ou "" se ainda não houver) pelo CONTEÚDO.
+ * Pelo timestamp não serve: o lote que falha e a ponte reenvia volta ao histórico com hora nova,
+ * e a nova tentativa passaria por confirmação sem o cliente ter visto o resumo.
+ * Efeito colateral aceito: confirmar com o mesmo texto exato da mensagem do resumo pede a confirmação de novo.
+ */
+export function marcaUltimaMensagemCliente(state: ConversationState): string {
+  const m = [...state.historico].reverse().find((x) => x.role === "user");
+  return m ? createHash("sha256").update(m.content.trim()).digest("hex").slice(0, 16) : "";
 }
 
 export function isTokenValid(state: ConversationState): boolean {

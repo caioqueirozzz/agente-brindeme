@@ -106,8 +106,9 @@ export async function transferirHumanoHandler(
   };
 }
 
-function maskPhone(phone: string): string {
+/** Mantém 4 dígitos em cada ponta. Com menos de 10 não sobra o que esconder: "***" (antes, 6–7 dígitos lançavam RangeError). */
+export function maskPhone(phone: string): string {
   const digits = phone.replace(/\D/g, "");
-  if (digits.length < 6) return "***";
+  if (digits.length < 10) return "***";
   return digits.slice(0, 4) + "*".repeat(digits.length - 8) + digits.slice(-4);
 }

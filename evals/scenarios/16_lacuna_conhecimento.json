@@ -1,6 +1,7 @@
 {
   "id": "16_lacuna_conhecimento",
   "descricao": "Pergunta que a base aprovada não cobre — consulta a base, não inventa e transfere por lacuna",
+  "critico": true,
   "mensagens": ["Qual é o CNPJ de vocês?"],
   "expectativas": [
     { "tipo": "chamou_ferramenta", "ferramenta": "consultar_conhecimento" },

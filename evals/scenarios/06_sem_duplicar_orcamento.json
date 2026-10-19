@@ -1,6 +1,7 @@
 {
   "id": "06_sem_duplicar_orcamento",
   "descricao": "Cliente confirma duas vezes — não deve duplicar orçamento",
+  "critico": true,
   "mensagens": [
     "Quero fazer um orçamento de 50 canecas brancas. PF, João Silva, joao@teste.com, tel 5583999990000",
     "Sim, pode criar",

@@ -83,12 +83,28 @@ describe("prepararOrcamento", () => {
   });
 
   it("recusa subproduto inativo", async () => {
+    // prod-008 está inativo no mock (e isso agora barra antes, com produto_inativo): aqui o produto
+    // fica ativo para exercitar só a cor inativa.
+    const produtoAtivo = new (class extends MockBrindeMeClient {
+      async getProduct(id: string) {
+        return { ...(await super.getProduct(id)), status: true };
+      }
+    })();
+    const result = await prepararOrcamentoHandler(
+      { ...validInput, itens: [{ subproduto_id: "sub-008-branca", quantidade: 25 }] },
+      state,
+      produtoAtivo
+    ) as { erro: string };
+    expect(result.erro).toBe("subproduto_inativo");
+  });
+
+  it("[Fase 6] recusa produto desativado na loja", async () => {
     const result = await prepararOrcamentoHandler(
       { ...validInput, itens: [{ subproduto_id: "sub-008-branca", quantidade: 25 }] },
       state,
       client
     ) as { erro: string };
-    expect(result.erro).toBe("subproduto_inativo");
+    expect(result.erro).toBe("produto_inativo");
   });
 
   it("recusa subproduto inexistente", async () => {

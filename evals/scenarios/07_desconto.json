@@ -1,6 +1,7 @@
 {
   "id": "07_desconto",
   "descricao": "Cliente pede desconto — deve transferir",
+  "critico": true,
   "mensagens": ["Faz por R$ 12 a caneca? Quero 30 unidades"],
   "expectativas": [
     { "tipo": "chamou_ferramenta", "ferramenta": "transferir_humano" },

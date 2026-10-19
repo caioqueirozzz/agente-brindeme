@@ -37,22 +37,38 @@ describe("kill switch — AgenteDefinitivo", () => {
   });
   afterEach(() => setBaseConhecimento(null));
 
-  it("suspenso: retorna MSG_SUSPENSAO sem salvar turno", async () => {
-    const { agente, repo } = montar(() => ({ suspenso: true }));
-    const p = pedido(TEL, ["ks1"]);
-    const r = await agente.processarLote(p);
-    expect(r).toEqual({ respostas: [MSG_SUSPENSAO], modo: "ia" });
-    // Não salva como turno: cliente pode tentar de novo quando retomar
-    expect(repo.carregar(TEL).turnos).toHaveLength(0);
+  it("[Fase 6] suspenso: avisa o cliente uma vez, chama o atendente e guarda a mensagem", async () => {
+    const { agente, repo } = montar(() => ({ suspenso: true, suspensoEm: "2026-10-19T10:00:00.000Z" }));
+    const r = await agente.processarLote(pedido(TEL, ["ks1"], "quero 50 canecas"));
+    expect(r.respostas).toEqual([MSG_SUSPENSAO]);
+    expect(r.modo).toBe("ia");
+    expect(r.avisoAtendente).toContain("Agente suspenso");
+    expect(r.avisoAtendente).toContain("quero 50 canecas");
+    const salva = repo.carregar(TEL);
+    // A mensagem não se perde: fica no histórico para o atendente e para a IA quando voltar.
+    expect(salva.estado.historico.map((m) => m.content)).toContain("quero 50 canecas");
+    expect(salva.turnos).toHaveLength(1);
   });
 
-  it("suspenso: não bloqueia TurnoEmAndamento (agente ativo recebe o check do suspend)", async () => {
-    const { agente } = montar(() => ({ suspenso: true }));
-    // Dois lotes diferentes, ambos recebem MSG_SUSPENSAO (sem 409)
+  it("[Fase 6] suspenso: a 2ª mensagem na mesma suspensão não repete o aviso; nova suspensão avisa de novo", async () => {
+    let estado = { suspenso: true, suspensoEm: "2026-10-19T10:00:00.000Z" };
+    const { agente } = montar(() => estado);
     const r1 = await agente.processarLote(pedido(TEL, ["ks2"]));
     const r2 = await agente.processarLote(pedido(TEL, ["ks3"]));
     expect(r1.respostas).toEqual([MSG_SUSPENSAO]);
-    expect(r2.respostas).toEqual([MSG_SUSPENSAO]);
+    expect(r2).toEqual({ respostas: [], modo: "ia" });
+    estado = { suspenso: true, suspensoEm: "2026-10-19T15:00:00.000Z" };
+    const r3 = await agente.processarLote(pedido(TEL, ["ks3b"]));
+    expect(r3.respostas).toEqual([MSG_SUSPENSAO]);
+  });
+
+  it("[Fase 6] suspenso e já com atendente: não manda aviso de fora do ar", async () => {
+    let estado = { suspenso: false };
+    const { agente } = montar(() => estado);
+    await agente.processarEvento({ tipo: "mensagem_atendente", telefone: TEL, id: "at1", texto: "oi, sou a Ana", timestamp: "2026-10-19T10:00:00.000Z" });
+    estado = { suspenso: true };
+    const r = await agente.processarLote(pedido(TEL, ["ks3c"]));
+    expect(r).toEqual({ respostas: [], modo: "humano" });
   });
 
   it("não suspenso: agente responde normalmente", async () => {

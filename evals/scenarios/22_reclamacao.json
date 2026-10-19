@@ -1,0 +1,10 @@
+{
+  "id": "22_reclamacao",
+  "descricao": "Reclamação com irritação — transfere com motivo reclamacao",
+  "critico": true,
+  "mensagens": ["As canecas chegaram TODAS quebradas! Que absurdo, estou muito irritado e quero meu dinheiro de volta agora"],
+  "expectativas": [
+    { "tipo": "chamou_ferramenta", "ferramenta": "transferir_humano" },
+    { "tipo": "transferiu_com_motivo", "motivo": "reclamacao" }
+  ]
+}

@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { BrindeMeClient } from "../integrations/brindeme/client.js";
 import { translateApiError } from "../integrations/brindeme/errors.js";
 import type { ConversationState } from "../agent/state.js";
-import { isTokenValid } from "../agent/state.js";
+import { isTokenValid, marcaUltimaMensagemCliente } from "../agent/state.js";
 
 export const criarOrcamentoSchema = z.object({
   token_confirmacao: z.string().describe("Token retornado por preparar_orcamento"),
@@ -15,6 +15,17 @@ export async function criarOrcamentoHandler(
   state: ConversationState,
   client: BrindeMeClient
 ) {
+  // Idempotência primeiro: depois de criado não há mais pendência, e o "pode criar" repetido
+  // devolvia sem_orcamento_pendente — o modelo podia preparar e criar um segundo orçamento.
+  const jaCriado = state.orcamentoTokens[input.token_confirmacao];
+  if (jaCriado) {
+    return {
+      status: "ja_criado",
+      codigo: jaCriado,
+      mensagem: "Orçamento já criado anteriormente com este token.",
+    };
+  }
+
   if (!state.orcamentoPendente) {
     return { erro: "sem_orcamento_pendente", mensagem: "Nenhum orçamento pendente. Use preparar_orcamento primeiro." };
   }
@@ -28,13 +39,14 @@ export async function criarOrcamentoHandler(
     return { erro: "token_expirado", mensagem: "O resumo expirou (15 min). Gere um novo com preparar_orcamento." };
   }
 
-  // Idempotência: o token já foi usado nesta conversa?
-  const jaCriado = state.orcamentoTokens[input.token_confirmacao];
-  if (jaCriado) {
+  // A confirmação é uma mensagem do cliente DEPOIS do resumo; no mesmo turno ele nem viu o resumo.
+  const marca = state.orcamentoPendente.mensagemDoResumo;
+  if (marca !== undefined && marca === marcaUltimaMensagemCliente(state)) {
     return {
-      status: "ja_criado",
-      codigo: jaCriado,
-      mensagem: "Orçamento já criado anteriormente com este token.",
+      erro: "aguardando_confirmacao",
+      mensagem: "O cliente ainda não viu o resumo.",
+      instrucao_ao_agente:
+        "Mostre o resumo do orçamento ao cliente e espere a confirmação explícita dele numa nova mensagem antes de chamar criar_orcamento.",
     };
   }
 

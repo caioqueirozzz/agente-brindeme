@@ -39,6 +39,8 @@ export interface Conversa {
   tomadas?: number;
   /** Transferência feita num turno que ainda não respondeu ao cliente (o processo pode ter caído no meio). */
   transferenciaPendente?: TransferenciaPendente;
+  /** suspensoEm da suspensão em que o cliente já recebeu o aviso de fora do ar (um aviso por suspensão). */
+  avisoSuspensao?: string;
 }
 
 const conversaSchema = z

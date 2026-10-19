@@ -209,16 +209,29 @@ export async function runTurn(
         const start = Date.now();
         let output: unknown;
         let error: string | undefined;
+        const entrada = toolDef?.schema.safeParse(toolInput ?? {});
 
         if (opcoes.ferramentasDesligadas?.has(toolName)) {
           output = { erro: "ferramenta_desligada", instrucao: "transferir", motivo_sugerido: "falha_sistema" };
           error = "ferramenta_desligada";
-        } else if (!toolDef) {
+        } else if (!toolDef || !entrada) {
           output = { erro: "ferramenta_nao_encontrada" };
           error = "unknown_tool";
+        } else if (!entrada.success) {
+          // Erro do modelo, não da loja: não conta como falha de API nem leva a transferir.
+          output = {
+            erro: "parametros_invalidos",
+            detalhes: entrada.error.issues
+              .slice(0, 5)
+              .map((i) => `${i.path.join(".") || "(entrada)"}: ${i.message}`),
+            instrucao_ao_agente:
+              "Corrija os parâmetros conforme o schema da ferramenta e chame de novo. Se faltar dado do cliente, pergunte a ele.",
+          };
+          error = "parametros_invalidos";
         } else {
           try {
-            const execucao = toolDef.handler(toolInput, state, client);
+            // Entrada já conferida: campo a mais (ex.: telefone inventado) não chega ao handler.
+            const execucao = toolDef.handler(entrada.data, state, client);
             output = EFEITOS[toolName] !== undefined ? await execucao : await esperarOuCancelar(execucao, opcoes.signal);
           } catch (err) {
             opcoes.signal?.throwIfAborted();

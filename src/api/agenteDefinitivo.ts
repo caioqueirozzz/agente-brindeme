@@ -55,9 +55,12 @@ export class AgenteDefinitivo implements Agente {
     const conversa = this.conversa(pedido.telefone);
     const guardado = conversa.turnos.find((t) => t.turnoId === pedido.turnoId);
     if (guardado) return vigente(conversa, guardado);
-    const sistema = (this.deps.lerEstado ?? lerEstadoSistema)();
-    if (sistema.suspenso) return { respostas: [MSG_SUSPENSAO], modo: "ia" };
     if (this.emAndamento.has(pedido.telefone)) throw new TurnoEmAndamentoError();
+    const sistema = (this.deps.lerEstado ?? lerEstadoSistema)();
+    // Em modo humano ou com transferência a concluir o caminho normal já não chama o modelo.
+    if (sistema.suspenso && conversa.estado.modo === "ia" && !conversa.transferenciaPendente) {
+      return this.responderSuspenso(conversa, pedido, sistema);
+    }
     const controle = new AbortController();
     this.emAndamento.set(pedido.telefone, controle);
     try {
@@ -206,6 +209,35 @@ export class AgenteDefinitivo implements Agente {
     } finally {
       clearTimeout(teto);
     }
+  }
+
+  /**
+   * Agente suspenso pelo #suspender. Antes a mensagem era descartada, o aviso saía a cada mensagem
+   * e ninguém era avisado, embora o texto prometa que a equipe responde. Agora a mensagem fica no
+   * histórico, o cliente recebe o aviso uma vez por suspensão e o atendente é chamado nessa mesma vez.
+   */
+  private responderSuspenso(conversa: Conversa, pedido: PedidoMensagens, sistema: EstadoSistema): RespostaMensagens {
+    const { estado } = conversa;
+    const novas = pedido.mensagens.filter((m) => !conversa.idsVistos.includes(m.id));
+    if (novas.length === 0) return { respostas: [], modo: estado.modo };
+    const texto = loteParaTexto(novas);
+    registrarArquivos(estado, novas);
+    addMessage(estado, "user", texto);
+    new Logger(estado.conversaId, { turnoId: pedido.turnoId }).log({ type: "state_change", change: "mensagem_com_agente_suspenso" });
+
+    const marca = sistema.suspensoEm ?? "suspenso";
+    if (conversa.avisoSuspensao === marca) return this.concluir(conversa, pedido, novas, { respostas: [], modo: "ia" });
+    conversa.avisoSuspensao = marca;
+    addMessage(estado, "assistant", MSG_SUSPENSAO);
+    return this.concluir(conversa, pedido, novas, {
+      respostas: [MSG_SUSPENSAO],
+      modo: "ia",
+      avisoAtendente: [
+        `⏸️ *Agente suspenso* — ${pedido.telefone} escreveu e recebeu o aviso de fora do ar.`,
+        `Mensagem: ${texto.slice(0, 300)}`,
+        "Responda pelo chip (ao escrever, você assume a conversa) ou use #retomar.",
+      ].join("\n"),
+    });
   }
 
   private excedeuLimite(conversa: Conversa): boolean {

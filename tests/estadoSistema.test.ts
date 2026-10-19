@@ -90,3 +90,19 @@ describe("escreverEstadoSistema", () => {
     expect(existsSync(arq)).toBe(true);
   });
 });
+
+describe("[Fase 6] ESTADO_SISTEMA_ARQUIVO", () => {
+  it("o caminho do .env é respeitado (antes era ignorado)", async () => {
+    const { arquivoEstadoSistema } = await import("../src/controle/estadoSistema.js");
+    const antes = process.env.ESTADO_SISTEMA_ARQUIVO;
+    try {
+      process.env.ESTADO_SISTEMA_ARQUIVO = "outro/estado.json";
+      expect(arquivoEstadoSistema().split("\\").join("/")).toMatch(/outro\/estado\.json$/);
+      delete process.env.ESTADO_SISTEMA_ARQUIVO;
+      expect(arquivoEstadoSistema().split("\\").join("/")).toMatch(/data\/estado-sistema\.json$/);
+    } finally {
+      if (antes === undefined) delete process.env.ESTADO_SISTEMA_ARQUIVO;
+      else process.env.ESTADO_SISTEMA_ARQUIVO = antes;
+    }
+  });
+});

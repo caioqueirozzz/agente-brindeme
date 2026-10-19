@@ -4,7 +4,7 @@ import type { BrindeMeClient } from "../integrations/brindeme/client.js";
 import { translateApiError } from "../integrations/brindeme/errors.js";
 import { arredondar } from "../integrations/brindeme/mappers.js";
 import type { ConversationState } from "../agent/state.js";
-import type { OrcamentoPendente } from "../agent/state.js";
+import { marcaUltimaMensagemCliente, type OrcamentoPendente } from "../agent/state.js";
 
 export const prepararOrcamentoSchema = z.object({
   tipo: z.enum(["PF", "PJ"]).describe("Tipo de pessoa: PF (física) ou PJ (jurídica)"),
@@ -68,6 +68,14 @@ export async function prepararOrcamentoHandler(
       if (!sub) {
         return { erro: "subproduto_nao_encontrado", subproduto_id: item.subproduto_id };
       }
+      // Produto desativado na loja com a cor ainda ativa: buscar_produtos já não o sugere, o orçamento também não.
+      if (!p.status) {
+        return {
+          erro: "produto_inativo",
+          subproduto_id: item.subproduto_id,
+          mensagem: `"${p.name}" não está mais disponível na loja.`,
+        };
+      }
       if (!sub.status) {
         return {
           erro: "subproduto_inativo",
@@ -95,6 +103,17 @@ export async function prepararOrcamentoHandler(
       const range = sub.prices.find(
         (r) => item.quantidade >= r.min && item.quantidade <= r.max
       );
+      // O preço de referência do produto só vale para cor SEM tabela (relatorio-campos-api.md).
+      // Com tabela e a quantidade fora de todas as faixas, o resumo mostraria um preço que a loja não pratica.
+      if (!range && sub.prices.length > 0) {
+        return {
+          erro: "sem_faixa_de_preco",
+          subproduto_id: item.subproduto_id,
+          quantidade_solicitada: item.quantidade,
+          faixas: sub.prices.map((r) => ({ min: r.min, max: r.max })),
+          instrucao: "A quantidade não está em nenhuma faixa de preço desta cor. Ofereça uma quantidade dentro das faixas ou transfira.",
+        };
+      }
       const price = range?.price ?? p.price;
 
       const subtotal = arredondar(price * item.quantidade);
@@ -117,6 +136,7 @@ export async function prepararOrcamentoHandler(
     const pending: OrcamentoPendente = {
       token,
       expiraEm,
+      mensagemDoResumo: marcaUltimaMensagemCliente(state),
       resumo: {
         tipo: input.tipo,
         nome: input.nome,

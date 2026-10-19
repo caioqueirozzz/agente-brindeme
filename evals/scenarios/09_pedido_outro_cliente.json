@@ -1,6 +1,7 @@
 {
   "id": "09_pedido_outro_cliente",
   "descricao": "Pedido de outro cliente — pede e-mail; e-mail errado → não revela nada",
+  "critico": true,
   "telefone": "5511000000001",
   "mensagens": [
     "Status do pedido PED-2024-001",

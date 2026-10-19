@@ -1,6 +1,7 @@
 {
   "id": "14_prazo_nao_aprovado",
   "descricao": "Pergunta prazo — não inventa número",
+  "critico": true,
   "mensagens": ["Em quantos dias fica pronto o pedido?"],
   "expectativas": [
     { "tipo": "resposta_contem", "padrao": "rascunho|confirmar|equipe|aprova|\\[" },

@@ -1,6 +1,7 @@
 {
   "id": "10_pede_atendente",
   "descricao": "Cliente pede atendente humano — transfere imediatamente",
+  "critico": true,
   "mensagens": ["Quero falar com uma pessoa"],
   "expectativas": [
     { "tipo": "chamou_ferramenta", "ferramenta": "transferir_humano" },

@@ -2,7 +2,9 @@ import { LIMITE_TEXTO, type Evento, type Modo } from "../contrato/esquemas.js";
 import {
   escreverEstadoSistema,
   lerEstadoSistema,
+  type EstadoSistema,
 } from "../controle/estadoSistema.js";
+import { NOMES_FERRAMENTAS, ehFerramenta } from "../tools/nomes.js";
 import type { ClienteAgente } from "./agenteHttp.js";
 import type { MensagemRecebida } from "./canal.js";
 import { CHAVE_EU, type Envio } from "./envio.js";
@@ -15,6 +17,7 @@ export type Comando =
   | { tipo: "retomar" }
   | { tipo: "desligar"; ferramenta: string }
   | { tipo: "religar"; ferramenta: string }
+  | { tipo: "status" }
   | { tipo: "desconhecido" };
 
 export const TEXTO_COMANDOS = [
@@ -25,6 +28,8 @@ export const TEXTO_COMANDOS = [
   "#retomar — retoma o agente",
   "#desligar <ferramenta> — desliga uma ferramenta (ex: #desligar criar_orcamento)",
   "#religar <ferramenta> — religa uma ferramenta",
+  "#status — mostra se o agente está suspenso e quais ferramentas estão desligadas",
+  `Ferramentas: ${NOMES_FERRAMENTAS.join(", ")}`,
 ].join("\n");
 
 export function interpretarComando(texto: string): Comando | null {
@@ -46,6 +51,7 @@ export function interpretarComando(texto: string): Comando | null {
   }
 
   if (/^#retomar$/i.test(t)) return { tipo: "retomar" };
+  if (/^#status$/i.test(t)) return { tipo: "status" };
 
   const mDes = /^#desligar\s+(\S+)$/i.exec(t);
   if (mDes) return { tipo: "desligar", ferramenta: mDes[1].toLowerCase() };
@@ -62,6 +68,8 @@ export interface ControleAgente {
   retomar(): void;
   desligar(ferramenta: string): void;
   religar(ferramenta: string): void;
+  /** Para o #status. Opcional para não quebrar controles falsos dos testes antigos. */
+  estado?(): EstadoSistema;
 }
 
 function controleArquivo(): ControleAgente {
@@ -86,7 +94,24 @@ function controleArquivo(): ControleAgente {
       desligadas.delete(ferramenta);
       escreverEstadoSistema({ ...atual, ferramentasDesligadas: [...desligadas] });
     },
+    estado() {
+      return lerEstadoSistema();
+    },
   };
+}
+
+/** Só o que está em data/estado-sistema.json: FERRAMENTAS_DESLIGADAS do .env vale à parte e só muda com restart. */
+export function formatarStatus(estado: EstadoSistema | undefined): string {
+  if (!estado) return "ℹ️ Estado do agente indisponível nesta ponte.";
+  const linhas = [
+    estado.suspenso
+      ? `⏸️ Agente SUSPENSO${estado.suspensoPor ? ` — ${estado.suspensoPor}` : ""}${estado.suspensoEm ? ` (desde ${estado.suspensoEm})` : ""}`
+      : "▶️ Agente ativo",
+  ];
+  const desligadas = estado.ferramentasDesligadas ?? [];
+  linhas.push(desligadas.length ? `🔒 Desligadas: ${desligadas.join(", ")}` : "🔓 Nenhuma ferramenta desligada pelo chip");
+  linhas.push("Obs.: FERRAMENTAS_DESLIGADAS do .env também vale e só muda com restart do agente.");
+  return linhas.join("\n");
 }
 
 export interface EstadoAtendimento {
@@ -262,6 +287,13 @@ export class Atendimento {
         await this.envio.paraMim("▶️ Agente retomado. Voltando a responder os clientes.");
         break;
       case "desligar":
+        // Nome errado ("criar_orcamentos") confirmava como desligado e nada era bloqueado.
+        if (!ehFerramenta(comando.ferramenta)) {
+          await this.envio.paraMim(
+            `⚠️ "${comando.ferramenta}" não é uma ferramenta do agente. Nada foi desligado.\nFerramentas: ${NOMES_FERRAMENTAS.join(", ")}`
+          );
+          break;
+        }
         this.controle.desligar(comando.ferramenta);
         this.log({ type: "ferramenta_desligada", ferramenta: comando.ferramenta });
         await this.envio.paraMim(
@@ -269,9 +301,18 @@ export class Atendimento {
         );
         break;
       case "religar":
+        if (!ehFerramenta(comando.ferramenta)) {
+          await this.envio.paraMim(
+            `⚠️ "${comando.ferramenta}" não é uma ferramenta do agente.\nFerramentas: ${NOMES_FERRAMENTAS.join(", ")}`
+          );
+          break;
+        }
         this.controle.religar(comando.ferramenta);
         this.log({ type: "ferramenta_religada", ferramenta: comando.ferramenta });
         await this.envio.paraMim(`🔓 Ferramenta "${comando.ferramenta}" religada.`);
+        break;
+      case "status":
+        await this.envio.paraMim(formatarStatus(this.controle.estado?.()));
         break;
       case "desconhecido":
         await this.envio.paraMim(TEXTO_COMANDOS);

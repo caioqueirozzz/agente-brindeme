@@ -3,7 +3,7 @@ import { MockBrindeMeClient } from "../src/integrations/brindeme/mockClient.js";
 import { prepararOrcamentoHandler } from "../src/tools/prepararOrcamento.js";
 import { criarOrcamentoHandler } from "../src/tools/criarOrcamento.js";
 import { consultarOrcamentoHandler } from "../src/tools/consultarOrcamento.js";
-import { createInitialState } from "../src/agent/state.js";
+import { addMessage, createInitialState } from "../src/agent/state.js";
 import { semearMapaSubprodutos } from "./helpers/mapaSubprodutos.js";
 
 describe("consultarOrcamento", () => {
@@ -26,6 +26,7 @@ describe("consultarOrcamento", () => {
       state,
       client
     ) as { token_confirmacao: string };
+    addMessage(state, "user", "pode criar");
 
     const criado = await criarOrcamentoHandler({ token_confirmacao: prep.token_confirmacao }, state, client) as { codigo: string };
 

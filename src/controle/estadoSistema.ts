@@ -1,9 +1,17 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
-import { dirname, join } from "path";
+import { dirname, join, resolve } from "path";
 import { fileURLToPath } from "url";
 
 const __dir = dirname(fileURLToPath(import.meta.url));
-const ARQUIVO_PADRAO = join(__dir, "../../data/estado-sistema.json");
+
+/**
+ * ESTADO_SISTEMA_ARQUIVO (documentada no .env.example) era ignorada: o caminho era sempre o padrão.
+ * Lida na hora da chamada, depois de o dotenv carregar; agente e ponte precisam apontar para o mesmo arquivo.
+ */
+export function arquivoEstadoSistema(): string {
+  const doEnv = process.env.ESTADO_SISTEMA_ARQUIVO?.trim();
+  return doEnv ? resolve(doEnv) : join(__dir, "../../data/estado-sistema.json");
+}
 
 const CACHE_MS = 30_000;
 
@@ -17,7 +25,7 @@ export interface EstadoSistema {
 
 let cache: { estado: EstadoSistema; lido: number } | null = null;
 
-export function lerEstadoSistema(arquivo = ARQUIVO_PADRAO): EstadoSistema {
+export function lerEstadoSistema(arquivo = arquivoEstadoSistema()): EstadoSistema {
   const agora = Date.now();
   if (cache && agora - cache.lido < CACHE_MS) return cache.estado;
   try {
@@ -42,7 +50,7 @@ export function lerEstadoSistema(arquivo = ARQUIVO_PADRAO): EstadoSistema {
   }
 }
 
-export function escreverEstadoSistema(estado: EstadoSistema, arquivo = ARQUIVO_PADRAO): void {
+export function escreverEstadoSistema(estado: EstadoSistema, arquivo = arquivoEstadoSistema()): void {
   mkdirSync(dirname(arquivo), { recursive: true });
   writeFileSync(arquivo, JSON.stringify(estado, null, 2), "utf-8");
   cache = { estado, lido: Date.now() };

@@ -1,7 +1,7 @@
 {
   "name": "agente-loja",
   "version": "1.0.0",
-  "description": "Agente de atendimento IA — Fase 1 (protótipo terminal)",
+  "description": "Agente de atendimento IA da loja — piloto (Fase 6)",
   "type": "module",
   "scripts": {
     "chat": "tsx src/cli.ts",
@@ -11,6 +11,7 @@
     "whatsapp:ponte": "tsx src/whatsapp/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:homologacao": "vitest run tests/homologacao",
     "evals": "tsx evals/runEvals.ts",
     "typecheck": "tsc --noEmit",
     "check:api": "tsx scripts/checkApi.ts",
@@ -19,7 +20,10 @@
     "sync:catalogo": "tsx scripts/syncCatalogo.ts",
     "kb:validar": "tsx scripts/validarBase.ts",
     "kb:lacunas": "tsx scripts/lacunas.ts",
-    "avaliar:recomendacao": "tsx scripts/avaliarRecomendacao.ts"
+    "avaliar:recomendacao": "tsx scripts/avaliarRecomendacao.ts",
+    "verificar:env": "tsx scripts/verificarEnv.ts",
+    "limpar:dados": "tsx scripts/limparDados.ts",
+    "relatorio:piloto": "tsx scripts/relatorioPiloto.ts"
   },
   "dependencies": {
     "dotenv": "^16.4.5",

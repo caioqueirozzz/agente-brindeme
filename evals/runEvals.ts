@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { mkdtempSync, readdirSync, readFileSync } from "fs";
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -38,6 +38,8 @@ interface Expectativa {
 interface Scenario {
   id: string;
   descricao: string;
+  /** Segurança, transferência ou "não inventar": na homologação precisa passar em TODAS as rodadas. */
+  critico?: boolean;
   telefone?: string;
   mensagens: string[];
   injetar_falha?: { tipo: FaultType; vezes: number };
@@ -52,6 +54,18 @@ const BOLD = "\x1b[1m";
 const RESET = "\x1b[0m";
 
 const VIA_API = process.argv.includes("--via-api");
+
+function argumento(flag: string): string | undefined {
+  const i = process.argv.indexOf(flag);
+  return i >= 0 ? process.argv[i + 1] : undefined;
+}
+/** --rodadas N: cada cenário roda N vezes (o modelo varia de rodada para rodada). */
+const RODADAS = Math.max(1, Number.parseInt(argumento("--rodadas") ?? "1", 10) || 1);
+/** --relatorio arquivo.json: grava o resultado para anexar à homologação. */
+const RELATORIO = argumento("--relatorio");
+/** Não crítico precisa passar em pelo menos esta fração das rodadas. */
+const FRACAO_MINIMA_NAO_CRITICO = 2 / 3;
+const VALORES_DE_FLAG = new Set([argumento("--rodadas"), argumento("--relatorio")].filter(Boolean));
 
 async function turnoPelaApi(
   agente: AgenteDefinitivo,
@@ -194,6 +208,20 @@ async function runScenario(scenario: Scenario): Promise<{ passed: number; failed
   };
 }
 
+interface ResultadoCenario {
+  id: string;
+  descricao: string;
+  critico: boolean;
+  rodadas: Array<{ passou: boolean; falhas: string[]; erro?: string }>;
+}
+
+function aprovado(r: ResultadoCenario): boolean {
+  const ok = r.rodadas.filter((x) => x.passou).length;
+  return r.critico ? ok === r.rodadas.length : ok >= Math.ceil(r.rodadas.length * FRACAO_MINIMA_NAO_CRITICO);
+}
+
+const semCor = (s: string) => s.replace(/\x1b\[[0-9;]*m/g, "");
+
 async function main() {
   await prepararAmbienteDosEvals();
 
@@ -204,39 +232,93 @@ async function main() {
 
   let totalPassed = 0;
   let totalFailed = 0;
+  const resultados: ResultadoCenario[] = [];
 
-  const specificScenario = process.argv.slice(2).find((a) => !a.startsWith("--"));
+  const specificScenario = process.argv.slice(2).find((a) => !a.startsWith("--") && !VALORES_DE_FLAG.has(a));
 
   console.log(`\n${BOLD}=== Evals — Agente de Atendimento ===${RESET}\n`);
   if (VIA_API) console.log(`${GRAY}Rodando pela API definitiva (AgenteDefinitivo), não pelo runTurn direto.${RESET}\n`);
+  if (RODADAS > 1) {
+    console.log(`${GRAY}${RODADAS} rodadas por cenário · crítico: todas · demais: ≥ ${Math.ceil(RODADAS * FRACAO_MINIMA_NAO_CRITICO)}${RESET}\n`);
+  }
 
   for (const file of files) {
     const scenario = JSON.parse(readFileSync(join(scenariosDir, file), "utf-8")) as Scenario;
     if (specificScenario && scenario.id !== specificScenario) continue;
+    const resultado: ResultadoCenario = { id: scenario.id, descricao: scenario.descricao, critico: !!scenario.critico, rodadas: [] };
+    resultados.push(resultado);
 
-    process.stdout.write(`${BOLD}${scenario.id}${RESET} — ${scenario.descricao}... `);
+    for (let rodada = 1; rodada <= RODADAS; rodada++) {
+      const rotulo = RODADAS > 1 ? ` [${rodada}/${RODADAS}]` : "";
+      const critico = scenario.critico ? `${YELLOW} (crítico)${RESET}` : "";
+      process.stdout.write(`${BOLD}${scenario.id}${RESET}${critico}${rotulo} — ${scenario.descricao}... `);
 
-    try {
-      const result = await runScenario(scenario);
-      totalPassed += result.passed;
-      totalFailed += result.failed;
+      try {
+        const result = await runScenario(scenario);
+        totalPassed += result.passed;
+        totalFailed += result.failed;
 
-      const status = result.failed === 0
-        ? `${GREEN}PASSOU${RESET}`
-        : `${RED}FALHOU (${result.failed}/${result.passed + result.failed})${RESET}`;
-      console.log(status);
-      for (const d of result.details) console.log(d);
-    } catch (err) {
-      console.log(`${RED}ERRO: ${err}${RESET}`);
-      totalFailed++;
+        const status = result.failed === 0
+          ? `${GREEN}PASSOU${RESET}`
+          : `${RED}FALHOU (${result.failed}/${result.passed + result.failed})${RESET}`;
+        console.log(status);
+        for (const d of result.details) console.log(d);
+        resultado.rodadas.push({
+          passou: result.failed === 0,
+          falhas: result.details.filter((d) => d.includes("✗")).map((d) => semCor(d).replace(/^\s*✗\s*/, "")),
+        });
+      } catch (err) {
+        console.log(`${RED}ERRO: ${err}${RESET}`);
+        totalFailed++;
+        resultado.rodadas.push({ passou: false, falhas: [], erro: String(err).slice(0, 300) });
+      }
+
+      console.log();
     }
-
-    console.log();
   }
 
   console.log(`${BOLD}Resultado:${RESET} ${GREEN}${totalPassed} passou(ram)${RESET} / ${RED}${totalFailed} falhou(ram)${RESET}`);
 
-  if (totalFailed > 0) process.exit(1);
+  const reprovados = resultados.filter((r) => !aprovado(r));
+  if (RODADAS > 1 || RELATORIO) {
+    console.log(`\n${BOLD}Critério de homologação${RESET}`);
+    for (const r of resultados) {
+      const ok = r.rodadas.filter((x) => x.passou).length;
+      const marca = aprovado(r) ? `${GREEN}✓` : `${RED}✗`;
+      console.log(`  ${marca}${RESET} ${r.id}${r.critico ? " (crítico)" : ""}: ${ok}/${r.rodadas.length}`);
+    }
+    console.log(
+      reprovados.length === 0
+        ? `\n${GREEN}${BOLD}APROVADO${RESET}`
+        : `\n${RED}${BOLD}REPROVADO${RESET} (${reprovados.map((r) => r.id).join(", ")})`
+    );
+  }
+
+  if (RELATORIO) {
+    mkdirSync(dirname(RELATORIO), { recursive: true });
+    writeFileSync(
+      RELATORIO,
+      JSON.stringify(
+        {
+          executado_em: new Date().toISOString(),
+          modelo: config.llmModel,
+          raciocinio: config.llmRaciocinio || null,
+          api: config.llmApi,
+          via_api: VIA_API,
+          rodadas: RODADAS,
+          aprovado: reprovados.length === 0,
+          cenarios: resultados.map((r) => ({ ...r, aprovado: aprovado(r) })),
+        },
+        null,
+        2
+      ),
+      "utf-8"
+    );
+    console.log(`${GRAY}Relatório gravado em ${RELATORIO}${RESET}`);
+  }
+
+  // Com rodadas, vale o critério de homologação; numa rodada só, qualquer falha reprova (como antes).
+  if (RODADAS > 1 ? reprovados.length > 0 : totalFailed > 0) process.exit(1);
 }
 
 main().catch((err) => {
