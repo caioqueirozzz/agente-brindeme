@@ -130,7 +130,7 @@ describe("ferramenta desligada — runTurn", () => {
     const state = createInitialState(TEL);
     const llm = new ScriptedLLM([endTurn("Olá!")]);
     const r = await runTurn("oi", state, llm, new MockBrindeMeClient(), new Logger(state.conversaId), {
-      ferramentasDesligadas: new Set(["criar_orcamento"]),
+      ferramentasDesligadas: new Set(["preparar_orcamento"]),
     });
     expect(r.response).toBe("Olá!");
   });
@@ -146,7 +146,7 @@ describe("ferramenta desligada — AgenteDefinitivo", () => {
   it("ferramenta desligada via lerEstado é passada ao runTurn", async () => {
     const { agente, repo } = montar(() => ({
       suspenso: false,
-      ferramentasDesligadas: ["criar_orcamento"],
+      ferramentasDesligadas: ["preparar_orcamento"],
     }));
     // Não testamos que o runTurn recusa, só que o agente não estoura e finaliza
     const r = await agente.processarLote(pedido(TEL, ["ks10"]));

@@ -122,6 +122,8 @@ describe("contagem centralizada de falhas de API", () => {
 
     const resultados = ultimosToolResults(llm.seen);
     expect(resultados[0].instrucao).toBeUndefined();
+    // Se o modelo transferir já na 1ª, o motivo certo vem pronto (eval 11, 25/10: transferia como "outro").
+    expect(resultados[0].motivo_sugerido).toBe("falha_sistema");
   });
 
   it("zera o contador quando a tool volta a funcionar", async () => {
@@ -174,5 +176,20 @@ describe("contagem centralizada de falhas de API", () => {
 
     expect(state.falhasConsecutivas).toBe(2);
     expect(ultimosToolResults(llm2.seen)[0].instrucao).toBe("transferir");
+  });
+
+  it("parâmetro inválido do modelo entre falhas não zera o contador (eval 11, 25/10)", async () => {
+    client.injectFault({ type: "500", remaining: 1_000 });
+    const llm = new ScriptedLLM([
+      toolUse("buscar_produtos", { consulta: "natal" }),
+      toolUse("buscar_produtos", { ocasiao: "natal" }),
+      toolUse("buscar_produtos", { consulta: "natal" }),
+      endTurn("erro"),
+    ]);
+
+    await runTurn("natal", state, llm, client, logger);
+
+    expect(state.falhasConsecutivas).toBe(2);
+    expect(ultimosToolResults(llm.seen)[0].instrucao).toBe("transferir");
   });
 });

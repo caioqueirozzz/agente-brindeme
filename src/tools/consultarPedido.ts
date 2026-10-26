@@ -11,7 +11,7 @@ import { traduzirStatusPedido } from "../knowledge/statusMap.js";
 
 export const consultarPedidoSchema = z.object({
   codigo: z.string().describe("Código do pedido informado pelo cliente (ex: 2, 21, #105)"),
-  email: z.string().email().optional().describe("E-mail do cliente para validação adicional"),
+  email: z.string().email().optional().describe("Só quando o retorno anterior foi precisa_email; não peça antes"),
 });
 
 export type ConsultarPedidoInput = z.infer<typeof consultarPedidoSchema>;

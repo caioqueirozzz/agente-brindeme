@@ -9,7 +9,6 @@ describe("aviso de transferência", () => {
     const estado = createInitialState(TEL);
     estado.cliente = { nome: "Maria", tipo: "PJ" };
     estado.produtosDiscutidos = ["Caneca Branca"];
-    estado.orcamentos = ["TESTE-1"];
     addMessage(estado, "user", "qual o horário?");
     addMessage(estado, "assistant", "Vou chamar alguém.");
 
@@ -22,7 +21,6 @@ describe("aviso de transferência", () => {
         "Motivo: lacuna_conhecimento",
         "Pergunta sem resposta: qual o horário de vocês?",
         "Produtos: Caneca Branca",
-        "Orçamentos: TESTE-1",
         "",
         "Últimas mensagens:",
         "[cliente]: qual o horário?",
@@ -31,6 +29,32 @@ describe("aviso de transferência", () => {
         `Para devolver: #devolver ${TEL} [nota]`,
       ].join("\n")
     );
+  });
+
+  it("com a estimativa confirmada, mostra a ficha para o atendente emitir o orçamento", () => {
+    const estado = createInitialState(TEL);
+    estado.fichaPedido = {
+      mensagemDoResumo: "x",
+      resumo: {
+        tipo: "PJ",
+        nome: "Empresa Demo",
+        email: "compras@demo.test",
+        telefone: TEL,
+        itens: [{ subproduto_id: "s1", cor: "Branco", nome_produto: "Caneca", quantidade: 50, preco_unitario: 18.9, subtotal: 945 }],
+        total_estimado: 945,
+        prazo_desejado: "até 10/12",
+        personalizacao: "tem arte, 2 cores",
+        arte_refs: [],
+      },
+    };
+    const texto = formatarAvisoTransferencia(TEL, resumoDoEstado(estado, "orcamento_para_emitir"));
+    expect(texto).toContain("📋 *Orçamento para emitir*");
+    expect(texto).toContain("PJ · Empresa Demo · compras@demo.test");
+    expect(texto).toMatch(/50× Caneca \(Branco\) — R\$\s?18,90 cada = R\$\s?945,00/);
+    expect(texto).toMatch(/Total estimado: R\$\s?945,00/);
+    expect(texto).toContain("Prazo desejado: até 10/12");
+    expect(texto).toContain("Personalização: tem arte, 2 cores");
+    expect(texto).toMatch(/frete e prazo a equipe confirma/);
   });
 
   it("prioridade normal e cliente sem nome", () => {

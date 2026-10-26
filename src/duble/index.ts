@@ -20,7 +20,7 @@ async function main(): Promise<void> {
     agente = new AgenteEco();
   } else if (modo === "direto") {
     const client = createBrindeMeClient();
-    console.log(`API da loja: ${config.brindeMe.mode} · escrita de orçamento: ${config.brindeMe.escritaOrcamento}`);
+    console.log(`API da loja: ${config.brindeMe.mode}`);
     await avisarConhecimentoECatalogo(client);
     agente = new AgenteDireto(criarLLM(), client);
   } else {

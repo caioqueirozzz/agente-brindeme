@@ -111,6 +111,7 @@ function formatar(r: Recomendacao, input: BuscarProdutosInput, state: Conversati
         for (const sub of produto.subprodutos) state.subprodutoParaProduto[sub.id] = produto.id;
         if (!state.produtosDiscutidos.includes(produto.id)) state.produtosDiscutidos.push(produto.id);
       }
+      state.ultimasOpcoes = r.itens.map(({ produto }) => ({ id: produto.id, nome: produto.nome }));
       const informada = r.quantidadeInformada;
       return {
         resultado: "produtos_encontrados",
@@ -139,7 +140,10 @@ function formatar(r: Recomendacao, input: BuscarProdutosInput, state: Conversati
                 total_estimado: oferta.total_estimado,
               }
             : {}),
-          cores_disponiveis: oferta.cores.map((c) => c.cor),
+          // Produto sem variação de cor vem com color "" da API.
+          cores_disponiveis: oferta.cores.map((c) => c.cor).filter(Boolean),
+          // O id da cor vai junto: sem ele, o modelo mandava o id do produto ao preparar_orcamento.
+          subprodutos: oferta.cores.map((c) => (c.cor ? { subproduto_id: c.subproduto_id, cor: c.cor } : { subproduto_id: c.subproduto_id })),
           ...(r.ocasioes.length ? { indicado_para_a_ocasiao: ocasiaoConfere } : {}),
         })),
       };

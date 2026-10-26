@@ -1,23 +1,28 @@
 import { z } from "zod";
-import { v4 as uuidv4 } from "uuid";
 import type { BrindeMeClient } from "../integrations/brindeme/client.js";
 import { translateApiError } from "../integrations/brindeme/errors.js";
 import { arredondar } from "../integrations/brindeme/mappers.js";
 import type { ConversationState } from "../agent/state.js";
-import { marcaUltimaMensagemCliente, type OrcamentoPendente } from "../agent/state.js";
+import { marcaUltimaMensagemCliente, type FichaPedido } from "../agent/state.js";
 
+// Sem CPF, CNPJ nem endereço: quem emite o orçamento coleta no fechamento (decisão de 25/10, LGPD).
 export const prepararOrcamentoSchema = z.object({
   tipo: z.enum(["PF", "PJ"]).describe("Tipo de pessoa: PF (física) ou PJ (jurídica)"),
-  nome: z.string().min(2).describe("Nome completo do cliente ou razão social"),
+  nome: z.string().min(2).describe("Nome do cliente ou da empresa"),
   email: z.string().email().describe("E-mail válido do cliente"),
   itens: z.array(z.object({
     subproduto_id: z.string(),
     quantidade: z.number().int().min(1),
   })).min(1).max(100),
+  prazo_desejado: z.string().max(100).optional().describe("Prazo nas palavras do cliente, sem converter para data (ex.: 'até 20/11'); omita se ele não disse"),
+  personalizacao: z.string().max(200).optional().describe("Se já tem a arte e quantas cores, ou se precisa de arte; omita se ele não disse"),
   observacoes: z.string().max(300).optional().describe("Observações adicionais (máx. 300 chars)"),
 });
 
 export type PrepararOrcamentoInput = z.infer<typeof prepararOrcamentoSchema>;
+
+export const AVISO_ESTIMATIVA =
+  "Valor de tabela com personalização padrão. Personalização fora do padrão, frete e prazo a equipe confirma ao emitir o orçamento.";
 
 export async function prepararOrcamentoHandler(
   input: PrepararOrcamentoInput,
@@ -46,7 +51,7 @@ export async function prepararOrcamentoHandler(
             .filter((s) => s.status && s.stock > 0)
             .map((s) => ({ subproduto_id: s.id, cor: s.color, estoque: s.stock })),
           instrucao:
-            "Esse id é do produto, não da cor. Use o subproduto_id da cor que o cliente pediu (se ele não disse, pergunte) e chame preparar_orcamento de novo.",
+            "Esse id é do produto, não da cor. Use o subproduto_id da cor que o cliente pediu; se ele aceitou qualquer cor, use uma com estoque que cubra a quantidade; se ele não disse, pergunte. Depois chame preparar_orcamento de novo.",
         };
       }
       if (!produtoId) {
@@ -84,11 +89,18 @@ export async function prepararOrcamentoHandler(
         };
       }
       if (sub.stock < item.quantidade) {
+        // Sem a cor e as alternativas, o modelo chutava a cor no texto e inventava outra quantidade (25/10).
         return {
           erro: "estoque_insuficiente",
           subproduto_id: item.subproduto_id,
+          cor: sub.color,
           estoque_disponivel: sub.stock,
           quantidade_solicitada: item.quantidade,
+          cores_que_atendem: p.subproducts
+            .filter((s) => s.status && s.stock >= item.quantidade)
+            .map((s) => ({ subproduto_id: s.id, cor: s.color })),
+          instrucao:
+            "Diga ao cliente qual cor não tem estoque. Se ele aceitou qualquer cor, prepare de novo com uma de cores_que_atendem; senão, ofereça essas cores. Nunca mude a quantidade sem ele pedir.",
         };
       }
       if (item.quantidade < p.min_quantity) {
@@ -128,57 +140,59 @@ export async function prepararOrcamentoHandler(
       });
     }
 
-    const arte_refs = state.artes.map((a) => a.ref);
+    // O modelo às vezes prepara de novo no turno do "pode enviar": a mesma ficha já foi vista, a confirmação vale.
+    const anterior = state.fichaPedido;
+    const mesmoPedido =
+      anterior !== undefined &&
+      anterior.resumo.tipo === input.tipo &&
+      anterior.resumo.email.trim().toLowerCase() === input.email.trim().toLowerCase() &&
+      chaveDosItens(anterior.resumo.itens) === chaveDosItens(input.itens);
 
-    const token = uuidv4();
-    const expiraEm = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+    // Já mostrada e o cliente respondeu: vai à equipe a ficha que ele viu, não a reescrita (20/11 virou 2023-11-20),
+    // e pedir confirmação de novo prendia o cliente num laço de "pode enviar" (conversas reais de 25/10).
+    if (mesmoPedido && marcaUltimaMensagemCliente(state) !== anterior.mensagemDoResumo) {
+      return {
+        status: "ficha_ja_apresentada",
+        resumo: anterior.resumo,
+        instrucao:
+          'O cliente já viu esta ficha. Se a última mensagem dele confirma ("pode enviar", "sim", "confirmo"), chame transferir_humano com motivo "orcamento_para_emitir" agora, sem mostrar o resumo de novo. Se não confirma, responda ao que ele disse.',
+      };
+    }
 
-    const pending: OrcamentoPendente = {
-      token,
-      expiraEm,
-      mensagemDoResumo: marcaUltimaMensagemCliente(state),
+    const ficha: FichaPedido = {
+      mensagemDoResumo: mesmoPedido ? anterior.mensagemDoResumo : marcaUltimaMensagemCliente(state),
       resumo: {
         tipo: input.tipo,
         nome: input.nome,
         email: input.email,
+        // Do número da conversa: a ficha não vai no nome de outro telefone.
         telefone: state.telefone,
         itens: itensSumario,
         total_estimado: totalEstimado,
+        prazo_desejado: input.prazo_desejado,
+        personalizacao: input.personalizacao,
         observacoes: input.observacoes,
-        arte_refs,
-      },
-      body: {
-        type: input.tipo,
-        customer_name: input.nome,
-        // Do número da conversa: o cliente não abre orçamento no nome de outro telefone.
-        customer_phone: state.telefone,
-        customer_email: input.email,
-        items: input.itens.map((i) => ({ subproduct_id: i.subproduto_id, quantity: i.quantidade })),
-        comments: buildComments(input.observacoes, arte_refs),
-        origin: "whatsapp-agente-ia",
+        arte_refs: state.artes.map((a) => a.ref),
       },
     };
 
-    state.orcamentoPendente = pending;
+    state.fichaPedido = ficha;
     state.cliente.tipo = input.tipo;
     state.cliente.nome = input.nome;
     state.cliente.email = input.email;
 
     return {
-      status: "resumo_pronto",
-      token_confirmacao: token,
-      expira_em_minutos: 15,
-      resumo: pending.resumo,
-      instrucao: "Mostre este resumo ao cliente e aguarde confirmação explícita antes de chamar criar_orcamento.",
+      status: "estimativa_pronta",
+      resumo: ficha.resumo,
+      aviso: AVISO_ESTIMATIVA,
+      instrucao:
+        'Mostre o resumo e o aviso ao cliente e pergunte se pode enviar para a equipe emitir o orçamento. Com a confirmação dele numa nova mensagem, chame transferir_humano com motivo "orcamento_para_emitir".',
     };
   } catch (err) {
     return { erro: translateApiError(err) };
   }
 }
 
-function buildComments(observacoes?: string, arteRefs?: string[]): string {
-  const parts: string[] = [];
-  if (observacoes) parts.push(`Obs: ${observacoes}`);
-  if (arteRefs?.length) parts.push(`Artes: ${arteRefs.join(", ")}`);
-  return parts.join(" | ").slice(0, 500);
+function chaveDosItens(itens: Array<{ subproduto_id: string; quantidade: number }>): string {
+  return itens.map((i) => `${i.subproduto_id}:${i.quantidade}`).sort().join("|");
 }

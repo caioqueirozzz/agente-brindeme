@@ -15,7 +15,7 @@ describe("transferir_humano com a API da loja fora", () => {
     const r = await transferirHumanoHandler({ motivo: "falha_sistema", prioridade: "alta" }, state, client);
 
     expect(r.status).toBe("transferido");
-    expect(r.resumo_para_atendente.responsavel).toEqual({ id: "desconhecido", nome: "Equipe" });
+    expect(r.resumo_para_atendente?.responsavel).toEqual({ id: "desconhecido", nome: "Equipe" });
     expect(state.modo).toBe("humano");
   });
 
@@ -27,7 +27,7 @@ describe("transferir_humano com a API da loja fora", () => {
       const state = createInitialState(TEL);
       const r = transferirHumanoHandler({ motivo: "falha_sistema", prioridade: "alta" }, state, client);
       await vi.advanceTimersByTimeAsync(5_000);
-      expect((await r).resumo_para_atendente.responsavel.nome).toBe("Equipe");
+      expect((await r).resumo_para_atendente?.responsavel.nome).toBe("Equipe");
     } finally {
       vi.useRealTimers();
     }

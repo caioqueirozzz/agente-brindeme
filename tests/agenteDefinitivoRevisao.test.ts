@@ -7,7 +7,6 @@ import { RepositorioConversas } from "../src/conversas/repositorio.js";
 import { ConversaDesconhecidaError } from "../src/contrato/agente.js";
 import { calcularTurnoId } from "../src/contrato/turno.js";
 import { MockBrindeMeClient } from "../src/integrations/brindeme/mockClient.js";
-import { EscritaSimuladaClient } from "../src/integrations/brindeme/escritaSimulada.js";
 import type { BrindeMeClient } from "../src/integrations/brindeme/client.js";
 import { MENSAGEM_TRANSFERENCIA } from "../src/tools/transferirHumano.js";
 import { setBaseConhecimento, setLacunaStore } from "../src/tools/consultarConhecimento.js";
@@ -43,11 +42,9 @@ function montar(llm: LLMProvider, extra: { tetoMs?: number; client?: BrindeMeCli
 function semearPendente(dir: string) {
   const repo = new RepositorioConversas(dir);
   const c = repo.carregar(TEL);
-  c.estado.orcamentoPendente = {
-    token: "tok",
-    expiraEm: new Date(Date.now() + 15 * 60_000).toISOString(),
+  c.estado.fichaPedido = {
+    mensagemDoResumo: "resumo-de-um-turno-anterior",
     resumo: { tipo: "PJ", nome: "E", email: "a@b.test", telefone: TEL, itens: [], total_estimado: 0, arte_refs: [] },
-    body: { type: "PJ", customer_name: "E", customer_phone: TEL, customer_email: "a@b.test", items: [{ subproduct_id: "sub-1", quantity: 50 }] },
   };
   repo.salvar(c);
 }
@@ -173,38 +170,36 @@ describe("AgenteDefinitivo — revisão final", () => {
   it("[I2] atendente assume no meio do turno: o turno para antes da próxima ferramenta e não conta como falha", async () => {
     const dir = mkdtempSync(join(tmpdir(), "conversas-"));
     semearPendente(dir);
-    const client = new EscritaSimuladaClient(new MockBrindeMeClient());
-    const criar = vi.spyOn(client, "createBudget");
-    const llm = new ScriptedLLM([toolUse("criar_orcamento", { token_confirmacao: "tok" }), endTurn("Orçamento criado!")], 80);
-    const { agente, repo } = montar(llm, { client, dir });
-    const turno = agente.processarLote(pedido(["m1"], "pode criar"));
+    const llm = new ScriptedLLM([toolUse("transferir_humano", { motivo: "orcamento_para_emitir", prioridade: "normal" }), endTurn("Enviei!")], 80);
+    const { agente, repo } = montar(llm, { dir });
+    const turno = agente.processarLote(pedido(["m1"], "pode enviar"));
     await new Promise((r) => setTimeout(r, 20));
     await agente.processarEvento({ tipo: "mensagem_atendente", telefone: TEL, id: "at5", texto: "deixa comigo", timestamp: T });
     expect(await turno).toEqual({ respostas: [], modo: "humano" });
-    expect(criar).not.toHaveBeenCalled();
+    expect(repo.carregar(TEL).estado.fichaPedido).toBeDefined();
     expect(repo.carregar(TEL).falhasPorTurno).toEqual({});
   });
 
-  it("[I2] orçamento criado antes de o atendente assumir: o aviso conta o que o agente já fez", async () => {
+  it("[I2] estimativa enviada antes de o atendente assumir: a ficha chega a ele mesmo assim", async () => {
     const dir = mkdtempSync(join(tmpdir(), "conversas-"));
     semearPendente(dir);
     let assumir!: () => Promise<unknown>;
     const llm: LLMProvider = {
       chat: vi
         .fn<LLMProvider["chat"]>()
-        .mockResolvedValueOnce(toolUse("criar_orcamento", { token_confirmacao: "tok" }))
+        .mockResolvedValueOnce(toolUse("transferir_humano", { motivo: "orcamento_para_emitir", prioridade: "normal" }))
         .mockImplementationOnce(async () => {
           await assumir();
-          return endTurn("Pronto, orçamento criado!");
+          return endTurn("Pronto, enviei para a equipe!");
         }),
     };
-    const { agente } = montar(llm, { client: new EscritaSimuladaClient(new MockBrindeMeClient()), dir });
+    const { agente } = montar(llm, { dir });
     assumir = () =>
       agente.processarEvento({ tipo: "mensagem_atendente", telefone: TEL, id: "at6", texto: "assumo daqui", timestamp: T });
-    const r = await agente.processarLote(pedido(["m2"], "pode criar"));
+    const r = await agente.processarLote(pedido(["m2"], "pode enviar"));
     expect(r.respostas).toEqual([]);
     expect(r.modo).toBe("humano");
-    expect(r.avisoAtendente).toMatch(/TESTE-/);
+    expect(r.avisoAtendente).toContain("Orçamento para emitir");
   });
 
   it("[I3] lote reagrupado pela ponte: a resposta guardada que não foi entregue vem junto", async () => {

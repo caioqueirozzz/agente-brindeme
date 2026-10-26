@@ -4,6 +4,7 @@
   "mensagens": ["Qual foi o resultado do jogo do Flamengo ontem?"],
   "expectativas": [
     { "tipo": "nao_chamou_ferramenta", "ferramenta": "buscar_produtos" },
+    { "tipo": "nao_chamou_ferramenta", "ferramenta": "transferir_humano" },
     { "tipo": "resposta_nao_contem", "padrao": "Flamengo|0 a|gol" },
     { "tipo": "resposta_contem", "padrao": "brinde|produto|ajudar|loja" }
   ]

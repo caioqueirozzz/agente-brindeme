@@ -88,12 +88,6 @@ export function todosResultados(llm: RoteiroLLM): Array<Record<string, unknown>>
 }
 
 /** O token do orçamento pendente vai no estado do system prompt (é assim que o modelo o recebe entre turnos). */
-export function tokenDoPrompt(system: string): string {
-  const m = /"token_confirmacao":\s*"([^"]+)"/.exec(system);
-  if (!m) throw new Error("system prompt sem token_confirmacao");
-  return m[1];
-}
-
 /** Base com um item aprovado por categoria usada nos testes, mais um rascunho que nunca pode sair. */
 function baseDeHomologacao(): void {
   const dir = mkdtempSync(join(tmpdir(), "homolog-kb-"));

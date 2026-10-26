@@ -26,7 +26,7 @@ export const TEXTO_COMANDOS = [
   "Exemplo: #devolver 5583999990000 cliente já recebeu o boleto",
   "#suspender [motivo] — pausa o agente para todos os clientes",
   "#retomar — retoma o agente",
-  "#desligar <ferramenta> — desliga uma ferramenta (ex: #desligar criar_orcamento)",
+  "#desligar <ferramenta> — desliga uma ferramenta (ex: #desligar preparar_orcamento)",
   "#religar <ferramenta> — religa uma ferramenta",
   "#status — mostra se o agente está suspenso e quais ferramentas estão desligadas",
   `Ferramentas: ${NOMES_FERRAMENTAS.join(", ")}`,

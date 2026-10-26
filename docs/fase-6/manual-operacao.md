@@ -35,7 +35,7 @@ npm run check:api
 ```bash
 npm run sync:catalogo
 ```
-A primeira carga leva cerca de 20 min (6.527 produtos a 30 req/min). Depois disso, o próprio agente ressincroniza a cada 6 h.
+A primeira carga leva cerca de 3,6 h (6.527 produtos a 30 req/min). Depois disso, o próprio agente ressincroniza a cada 6 h.
 
 ```bash
 npm run kb:validar
@@ -86,7 +86,7 @@ Digite em **"Mensagem para mim"** (a conversa do chip consigo mesmo). Só valem 
 | `#status` | Mostra se a IA está suspensa e quais ferramentas estão desligadas pelo chip. |
 | `#ajuda` (ou qualquer `#` desconhecido) | Lista os comandos. |
 
-Ferramentas: `consultar_conhecimento`, `buscar_produtos`, `detalhar_produto`, `preparar_orcamento`, `criar_orcamento`, `consultar_orcamento`, `consultar_pedido`, `registrar_arte`, `transferir_humano`.
+Ferramentas: `consultar_conhecimento`, `buscar_produtos`, `detalhar_produto`, `preparar_orcamento`, `consultar_pedido`, `registrar_arte`, `transferir_humano`.
 
 > `FERRAMENTAS_DESLIGADAS` no `.env` também desliga, mas só muda com o restart do agente, e o `#status` não a mostra.
 
@@ -129,7 +129,7 @@ Ferramentas: `consultar_conhecimento`, `buscar_produtos`, `detalhar_produto`, `p
 | Muitas transferências `falha_sistema` | API da loja lenta, 429 (cota compartilhada) ou fora | `npm run check:api`. Se persistir: `#suspender API da loja instável` e atender pelo chip. |
 | Transferência logo na 1ª falha, com alerta no log `acesso_negado` | Chave da loja inválida ou revogada (401/403) | Trocar `BRINDEME_TOKEN`, rodar `verificar:env` e reiniciar. Até lá: `#suspender`. |
 | A IA errou um preço ou uma informação | Modelo citou algo que não veio da ferramenta (os testes não pegaram) | Corrigir com o cliente, **guardar o print**, `#desligar` a ferramenta envolvida se o erro se repetir, e abrir issue com o `conversaId` (está no log). |
-| A IA criou orçamento indevido | — | Avisar a loja para cancelar no painel; `#desligar criar_orcamento`; abrir issue. Os orçamentos criados aparecem no aviso e em `data/conversas/<tel>.json`. |
+| Chegou uma ficha de orçamento (motivo `orcamento_para_emitir`) | O cliente confirmou a estimativa | Conferir a ficha no aviso (itens, total estimado, prazo, personalização, e-mail), emitir o orçamento no painel da loja e responder o cliente pelo chip. A IA não cria orçamento: quem emite é a equipe (R5). |
 | Cliente abusivo / spam | — | O limite `RESPOSTAS_POR_HORA` transfere sozinho. Se quiser, bloqueie o número no WhatsApp. |
 | QR code de novo / "sessão desconectada" | WhatsApp derrubou o aparelho conectado | Parear de novo. As conversas não se perdem. |
 | Custo de tokens alto | Volume ou conversas longas | `relatorio:piloto` (linha Tokens). Reduzir `RESPOSTAS_POR_HORA` ou `WHATSAPP_LIBERADOS`. |
@@ -166,12 +166,13 @@ npm run relatorio:piloto -- --desde 2026-10-20 --saida docs/fase-6/piloto-semana
 | `data/artes/<telefone>/` | Artes enviadas |
 | `logs/<conversaId>.jsonl` | Log de cada turno (mascarado) |
 | `data/lacunas.jsonl` | Perguntas sem resposta (mascaradas) |
-| `data/ponte-estado.json` | Modo (IA/humano) de cada telefone |
+| `data/ponte-estado.json` | Modo (IA/humano) de cada telefone e partes de resposta pendentes |
+| `data/orcamentos-teste.json` | Orçamentos TESTE da escrita simulada, que saiu em 25/10 (R5). Só existe em máquina que rodou antes disso; `limpar:dados` ainda o limpa |
 | `data/estado-sistema.json` | Suspensão e ferramentas desligadas |
 
 - **Nunca** versionar `.env` nem `data/` (já estão no `.gitignore`).
-- Retenção (issue #4): `npm run limpar:dados -- --dias <prazo>` lista o que passou do prazo; com `--executar`, apaga **de vez**. Rode com o agente parado. **O prazo é decisão da loja**: registre aqui quando for decidido: `RETENCAO_DIAS = ____ (decidido por ____ em __/__/____)`.
-- O cliente pediu para apagar os dados dele? Pare o agente e apague `data/conversas/<telefone>.json` e `data/artes/<telefone>/`. Para localizar os logs, procure o `conversaId` que está no arquivo da conversa.
+- Retenção (issue #4): `npm run limpar:dados -- --dias <prazo>` lista o que passou do prazo: conversas, artes, logs e, dentro de `orcamentos-teste.json`, `lacunas.jsonl` e `ponte-estado.json`, os registros desses clientes. Com `--executar`, apaga **de vez**. Rode com o agente e a ponte parados. **O prazo é decisão da loja**: registre aqui quando for decidido: `RETENCAO_DIAS = ____ (decidido por ____ em __/__/____)`.
+- O cliente pediu para apagar os dados dele? Pare o agente e a ponte, rode `npm run limpar:dados -- --telefone <telefone>` para conferir o que sai e repita com `--executar`. Sai tudo dele: conversa, artes, logs, orçamentos TESTE, lacunas e o estado na ponte.
 
 ---
 

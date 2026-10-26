@@ -3,6 +3,7 @@
   "descricao": "Cliente pergunta preço sem informar quantidade",
   "mensagens": ["Quanto custa a caneca personalizada?"],
   "expectativas": [
-    { "tipo": "resposta_contem", "padrao": "quantidade|quantidad" }
+    { "tipo": "resposta_contem", "padrao": "quantidade|quantas|quantos" },
+    { "tipo": "resposta_nao_contem", "padrao": "R\\$\\s*\\d" }
   ]
 }

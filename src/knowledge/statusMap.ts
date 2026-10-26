@@ -23,20 +23,6 @@ const FALLBACK: StatusTraduzido = {
   sugerir_atendente: true,
 };
 
-/** Observados em GET /budget (12/10/2026). */
-export const STATUS_ORCAMENTO: Record<string, StatusTraduzido> = {
-  "aguardando orcamento": {
-    frase: "Seu orçamento está sendo montado pela nossa equipe.",
-  },
-  "pendente de aprovacao": {
-    frase: "Seu orçamento está pronto e aguardando sua aprovação.",
-    requer_acao_cliente: true,
-  },
-  "orcamento aprovado": {
-    frase: "Seu orçamento foi aprovado! A equipe segue com os próximos passos.",
-  },
-};
-
 /** Observados em GET /order (12/10/2026). */
 export const STATUS_PEDIDO: Record<string, StatusTraduzido> = {
   aprovado: {
@@ -68,10 +54,6 @@ function traduzir(
 
 export function traduzirStatusPedido(statusName?: string | null) {
   return traduzir(STATUS_PEDIDO, statusName);
-}
-
-export function traduzirStatusOrcamento(statusName?: string | null) {
-  return traduzir(STATUS_ORCAMENTO, statusName);
 }
 
 /** Status vistos em produção mas ainda sem frase aprovada — alimenta a lista de lacunas. */

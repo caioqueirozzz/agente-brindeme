@@ -58,7 +58,24 @@ describe("buscar_produtos (ferramenta)", () => {
       min_quantity: 25,
       cores_disponiveis: ["Branco", "Preto"],
       imagem_url: "https://cdn.teste/caneca.jpg",
+      subprodutos: [
+        { subproduto_id: "c-bco", cor: "Branco" },
+        { subproduto_id: "c-pto", cor: "Preto" },
+      ],
     });
+  });
+
+  it("produto sem cor (color vazio na API) não devolve cor vazia", async () => {
+    client = new ClienteCatalogoFalso([
+      produto({ id: "porta-talher", nome: "Porta Talher", min: 20, subprodutos: [sub("pt-1", "", 500, [[20, 999, 6.52]])] }),
+    ]);
+    const index = new MemoryProductIndexStore();
+    await sincronizarCatalogo(client, index);
+    setProductIndexStore(index);
+
+    const r = await buscar({ consulta: "porta talher", quantidade: 100 });
+    expect(r.produtos[0].cores_disponiveis).toEqual([]);
+    expect(r.produtos[0].subprodutos).toEqual([{ subproduto_id: "pt-1" }]);
   });
 
   it("sem quantidade: nenhum preço chega ao modelo, só o mínimo, e manda perguntar (eval 17)", async () => {
@@ -68,10 +85,12 @@ describe("buscar_produtos (ferramenta)", () => {
     expect(JSON.stringify(r.produtos)).not.toMatch(/preco|total_estimado|18\.9/);
   });
 
-  it("não expõe ids de subproduto, estoque nem dado interno ao modelo", async () => {
+  it("não expõe estoque nem dado interno ao modelo; o id da cor só aparece em subprodutos", async () => {
     const r = await buscar({ consulta: "caneca", quantidade: 100 });
     const json = JSON.stringify(r);
-    expect(json).not.toMatch(/c-bco|c-pto|estoque|"stock"|cost/);
+    expect(json).not.toMatch(/estoque|"stock"|cost/);
+    const { subprodutos: _ids, ...resto } = r.produtos[0];
+    expect(JSON.stringify(resto)).not.toMatch(/c-bco|c-pto/);
   });
 
   it("orcamento_total sem quantidade é dado faltando, não busca vazia", async () => {
@@ -105,6 +124,15 @@ describe("buscar_produtos (ferramenta)", () => {
     expect(state.subprodutoParaProduto["c-bco"]).toBe("caneca");
     expect(state.subprodutoParaProduto["c-pto"]).toBe("caneca");
     expect(state.produtosDiscutidos).toContain("caneca");
+  });
+
+  it("guarda as opções apresentadas, na ordem, e a busca seguinte as substitui ('a primeira opção')", async () => {
+    const r = await buscar({ consulta: "caneca", quantidade: 100 });
+    expect(state.ultimasOpcoes).toEqual(r.produtos.map((p: Saida) => ({ id: p.id, nome: p.nome })));
+
+    await buscar({ consulta: "squeeze", quantidade: 100 });
+    expect(state.ultimasOpcoes).toEqual([{ id: "squeeze", nome: "Squeeze de Alumínio" }]);
+    expect(state.produtosDiscutidos).toEqual(expect.arrayContaining(["caneca", "squeeze"]));
   });
 
   it("guarda a necessidade do cliente no estado", async () => {

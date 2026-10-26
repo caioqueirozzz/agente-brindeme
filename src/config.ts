@@ -49,8 +49,7 @@ export const config = {
     timeoutMs: int(process.env.BRINDEME_TIMEOUT_MS, 10_000),
     maxRetries: int(process.env.BRINDEME_MAX_RETRIES, 2),
     maxEsperaRetryMs: int(process.env.BRINDEME_MAX_ESPERA_RETRY_MS, 10_000),
-    /** "simulada" devolve orçamento TESTE sem POST na loja; só "real" grava de verdade (vale com BRINDEME_MODE=http). */
-    escritaOrcamento: (process.env.ORCAMENTO_ESCRITA === "real" ? "real" : "simulada") as "real" | "simulada",
+    /** Orçamentos TESTE da escrita simulada (removida em 25/10, R5): o arquivo antigo ainda passa pelo limpar:dados. */
     orcamentosTesteArquivo: process.env.ORCAMENTOS_TESTE_ARQUIVO ?? "data/orcamentos-teste.json",
   },
 

@@ -17,8 +17,8 @@ class LLMQueVeOPrompt implements LLMProvider {
   }
 }
 
-describe("orçamento confirmado no turno seguinte (eval 05)", () => {
-  it("o token do resumo pendente chega ao modelo quando o cliente responde 'pode criar'", async () => {
+describe("estimativa confirmada no turno seguinte (eval 05)", () => {
+  it("a estimativa pendente chega ao modelo quando o cliente responde 'pode enviar'", async () => {
     const state = createInitialState("5583999990000");
     semearMapaSubprodutos(state);
     const client = new MockBrindeMeClient();
@@ -29,16 +29,62 @@ describe("orçamento confirmado no turno seguinte (eval 05)", () => {
         email: "joao@teste.com",
         itens: [{ subproduto_id: "sub-001-branco", quantidade: 50 }],
       }),
-      endTurn("Resumo: 50 canecas brancas, R$ 945,00. Posso criar?"),
+      endTurn("Resumo: 50 canecas brancas, R$ 945,00. Posso enviar para a equipe?"),
       endTurn("ok"),
     ]);
 
     await runTurn("Quero 50 canecas brancas, PF, João Silva, joao@teste.com", state, llm, client, new Logger("t-entre-turnos"));
-    const token = state.orcamentoPendente!.token;
-    await runTurn("Pode criar", state, llm, client, new Logger("t-entre-turnos"));
+    await runTurn("Pode enviar", state, llm, client, new Logger("t-entre-turnos"));
 
-    const promptDoSegundoTurno = llm.sistemas.at(-1)!;
-    expect(promptDoSegundoTurno).toContain(token);
-    expect(promptDoSegundoTurno).toContain("sub-001-branco");
+    const estado = JSON.parse(llm.sistemas.at(-1)!.split("# Estado atual da conversa")[1].split("---")[0]);
+    expect(estado.estimativa_aguardando_confirmacao).toMatchObject({ email: "joao@teste.com", total_estimado: 945 });
+    expect(JSON.stringify(estado)).toContain("sub-001-branco");
+  });
+});
+
+describe("opções apresentadas no turno anterior", () => {
+  it("chegam ao modelo com posição e nome, para 'a primeira opção' apontar a lista certa", async () => {
+    const state = createInitialState("5583999990000");
+    state.produtosDiscutidos = ["antigo", "caneca", "squeeze"];
+    state.ultimasOpcoes = [
+      { id: "caneca", nome: "Caneca de Porcelana" },
+      { id: "squeeze", nome: "Squeeze de Alumínio" },
+    ];
+    const llm = new LLMQueVeOPrompt([endTurn("ok")]);
+
+    await runTurn("me fala mais da primeira opção", state, llm, new MockBrindeMeClient(), new Logger("t-opcoes"));
+
+    const estado = JSON.parse(llm.sistemas[0].split("# Estado atual da conversa")[1].split("---")[0]);
+    expect(estado.ultimas_opcoes_apresentadas).toEqual([
+      { posicao: 1, id: "caneca", nome: "Caneca de Porcelana" },
+      { posicao: 2, id: "squeeze", nome: "Squeeze de Alumínio" },
+    ]);
+  });
+});
+
+describe("cores do produto detalhado no turno anterior", () => {
+  it("chegam ao modelo com o subproduto_id, para o orçamento não depender de inventar o id", async () => {
+    const state = createInitialState("5583999990000");
+    const llm = new LLMQueVeOPrompt([
+      toolUse("detalhar_produto", { produto_id: "prod-001" }),
+      endTurn("A caneca tem branco e preto."),
+      endTurn("ok"),
+    ]);
+    const client = new MockBrindeMeClient();
+
+    await runTurn("me fala da caneca", state, llm, client, new Logger("t-detalhados"));
+    await runTurn("quero 50 da branca", state, llm, client, new Logger("t-detalhados"));
+
+    const estado = JSON.parse(llm.sistemas.at(-1)!.split("# Estado atual da conversa")[1].split("---")[0]);
+    expect(estado.produtos_detalhados).toEqual([
+      {
+        id: "prod-001",
+        nome: "Caneca de Porcelana Personalizada",
+        cores: [
+          { subproduto_id: "sub-001-branco", cor: "Branco" },
+          { subproduto_id: "sub-001-preto", cor: "Preto" },
+        ],
+      },
+    ]);
   });
 });

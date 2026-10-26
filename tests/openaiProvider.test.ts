@@ -151,6 +151,12 @@ describe("criarLLM", () => {
     expect(() => criarLLM({ openaiApiKey: "chave", llmModel: "m", llmRaciocinio: "baixo" })).toThrow(/none, minimal, low, medium, high, xhigh, max/);
   });
 
+  it("LLM_REASONING com modelo da família gpt-4: recusa ao subir, em vez de dar 400 em todo turno", () => {
+    expect(() => criarLLM({ openaiApiKey: "chave", llmModel: "gpt-4o-mini", llmRaciocinio: "none" })).toThrow(/gpt-4o-mini.*LLM_REASONING/);
+    expect(() => criarLLM({ openaiApiKey: "chave", llmModel: "gpt-4.1-mini", llmRaciocinio: "low" })).toThrow(/LLM_REASONING/);
+    expect(criarLLM({ openaiApiKey: "chave", llmModel: "gpt-4o-mini", llmRaciocinio: "" })).toBeInstanceOf(OpenAIProvider);
+  });
+
   it("com chave e modelo, devolve o provedor da OpenAI", () => {
     expect(criarLLM({ openaiApiKey: "chave-falsa", llmModel: "m", llmRaciocinio: "low" })).toBeInstanceOf(OpenAIProvider);
   });

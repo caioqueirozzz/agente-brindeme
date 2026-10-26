@@ -4,7 +4,6 @@ import { join } from "path";
 import { MAX_RODADAS_DE_FERRAMENTA, montarJanela, runTurn } from "../src/agent/runTurn.js";
 import { createInitialState, type ConversationState, type Mensagem } from "../src/agent/state.js";
 import { MockBrindeMeClient } from "../src/integrations/brindeme/mockClient.js";
-import { EscritaSimuladaClient } from "../src/integrations/brindeme/escritaSimulada.js";
 import { Logger } from "../src/logging/logger.js";
 import { setBaseConhecimento, setLacunaStore } from "../src/tools/consultarConhecimento.js";
 import { MemoryLacunaStore } from "../src/knowledge/lacunas.js";
@@ -42,18 +41,11 @@ describe("montarJanela (histórico que vai ao modelo)", () => {
   });
 });
 
-function comOrcamentoPendente(state: ConversationState, token: string): ConversationState {
-  state.orcamentoPendente = {
-    token,
-    expiraEm: new Date(Date.now() + 15 * 60_000).toISOString(),
+/** Estimativa mostrada num turno anterior: a mensagem nova do cliente é a confirmação. */
+function comFichaPedido(state: ConversationState): ConversationState {
+  state.fichaPedido = {
+    mensagemDoResumo: "resumo-de-um-turno-anterior",
     resumo: { tipo: "PJ", nome: "Empresa", email: "a@b.test", telefone: TEL, itens: [], total_estimado: 0, arte_refs: [] },
-    body: {
-      type: "PJ",
-      customer_name: "Empresa",
-      customer_phone: TEL,
-      customer_email: "a@b.test",
-      items: [{ subproduct_id: "sub-1", quantity: 50 }],
-    },
   };
   return state;
 }
@@ -78,30 +70,29 @@ describe("runTurn — Fase 4", () => {
 
   it("cancelado enquanto o modelo pensava: a ferramenta seguinte não roda", async () => {
     const controle = new AbortController();
-    const client = new EscritaSimuladaClient(new MockBrindeMeClient());
-    const criar = vi.spyOn(client, "createBudget");
     const llm: LLMProvider = {
       async chat(): Promise<LLMResponse> {
         controle.abort();
-        return toolUse("criar_orcamento", { token_confirmacao: "tok" });
+        return toolUse("transferir_humano", { motivo: "orcamento_para_emitir", prioridade: "normal" });
       },
     };
-    const state = comOrcamentoPendente(createInitialState(TEL), "tok");
+    const state = comFichaPedido(createInitialState(TEL));
     await expect(
-      runTurn("pode criar", state, llm, client, new Logger(state.conversaId), { signal: controle.signal })
+      runTurn("pode enviar", state, llm, new MockBrindeMeClient(), new Logger(state.conversaId), { signal: controle.signal })
     ).rejects.toThrow();
-    expect(criar).not.toHaveBeenCalled();
+    expect(state.modo).toBe("ia");
+    expect(state.fichaPedido).toBeDefined();
   });
 
-  it("aoEfeito roda logo depois de criar_orcamento", async () => {
-    const state = comOrcamentoPendente(createInitialState(TEL), "tok");
+  it("aoEfeito roda logo depois da transferência com a estimativa", async () => {
+    const state = comFichaPedido(createInitialState(TEL));
     const vistos: string[] = [];
-    const llm = new ScriptedLLM([toolUse("criar_orcamento", { token_confirmacao: "tok" }), endTurn("Criado!")]);
-    await runTurn("pode criar", state, llm, new EscritaSimuladaClient(new MockBrindeMeClient()), new Logger(state.conversaId), {
-      aoEfeito: () => vistos.push(state.orcamentoTokens.tok ?? "sem token"),
+    const llm = new ScriptedLLM([toolUse("transferir_humano", { motivo: "orcamento_para_emitir", prioridade: "normal" }), endTurn("Enviei!")]);
+    const r = await runTurn("pode enviar", state, llm, new MockBrindeMeClient(), new Logger(state.conversaId), {
+      aoEfeito: () => vistos.push(state.modo),
     });
-    expect(vistos).toHaveLength(1);
-    expect(vistos[0]).toMatch(/^TESTE-/);
+    expect(vistos).toEqual(["humano"]);
+    expect(r.transferencia?.ficha_pedido?.email).toBe("a@b.test");
   });
 
   it("aoEfeito roda logo depois de registrar_arte", async () => {
@@ -132,7 +123,7 @@ describe("runTurn — Fase 4", () => {
     const teimoso: LLMProvider = {
       async chat(): Promise<LLMResponse> {
         chamadas++;
-        return toolUse("consultar_orcamento", { codigo: "X" });
+        return toolUse("consultar_pedido", { codigo: "X" });
       },
     };
     const state = createInitialState(TEL);

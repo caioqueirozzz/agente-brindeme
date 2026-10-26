@@ -3,6 +3,9 @@ import type { BrindeMeClient } from "../integrations/brindeme/client.js";
 import { ApiError, translateApiError } from "../integrations/brindeme/errors.js";
 import type { ConversationState } from "../agent/state.js";
 
+/** Cobre "me fala da primeira, e da segunda? fico com a primeira". */
+const PRODUTOS_DETALHADOS_GUARDADOS = 3;
+
 export const detalharProdutoSchema = z.object({
   produto_id: z.string().describe("ID do produto"),
   quantidade: z.number().int().positive().optional().describe("Quantidade desejada para calcular o preço"),
@@ -24,6 +27,11 @@ export async function detalharProdutoHandler(
     // para resolver o item sem varrer o catálogo inteiro.
     for (const s of p.subproducts) state.subprodutoParaProduto[s.id] = p.id;
     if (!state.produtosDiscutidos.includes(p.id)) state.produtosDiscutidos.push(p.id);
+    const detalhado = { id: p.id, nome: p.name, cores: activeSubs.map((s) => ({ subproduto_id: s.id, cor: s.color })) };
+    state.produtosDetalhados = [detalhado, ...(state.produtosDetalhados ?? []).filter((d) => d.id !== p.id)].slice(
+      0,
+      PRODUTOS_DETALHADOS_GUARDADOS
+    );
 
     const precoNaQuantidade = (sub: (typeof activeSubs)[number]): number | null => {
       if (!input.quantidade) return null;
@@ -43,6 +51,8 @@ export async function detalharProdutoHandler(
       disponivel: s.stock > 0,
       tabela_precos: s.prices.map((r) => ({ min: r.min, max: r.max, preco: r.price })),
       preco_para_quantidade: precoNaQuantidade(s),
+      // O modelo errou a conta (112 ≥ 100) e transferiu: a comparação sai pronta.
+      atende_quantidade: input.quantidade ? s.stock >= input.quantidade : null,
     }));
 
     const tabelasDistintas = new Set(activeSubs.map((s) => JSON.stringify(s.prices)));
@@ -58,6 +68,9 @@ export async function detalharProdutoHandler(
       descricao: p.description,
       min_quantity: p.min_quantity,
       subprodutos_ativos: subprodutos,
+      cores_que_atendem_quantidade: input.quantidade
+        ? subprodutos.filter((s) => s.atende_quantidade).map((s) => s.cor)
+        : null,
       precos_variam_por_cor: precosVariamPorCor,
       /** Só quando todas as cores compartilham a mesma tabela; senão use a de cada subproduto. */
       tabela_precos: precosVariamPorCor ? null : (subprodutos[0]?.tabela_precos ?? []),

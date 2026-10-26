@@ -3,6 +3,26 @@ import { MockBrindeMeClient } from "../src/integrations/brindeme/mockClient.js";
 import { translateApiError } from "../src/integrations/brindeme/errors.js";
 import { createInitialState } from "../src/agent/state.js";
 
+describe("MockBrindeMeClient — contador de orçamentos (eval 27)", () => {
+  const body = {
+    type: "PF" as const,
+    customer_name: "João Silva",
+    customer_phone: "5583999990000",
+    customer_email: "joao@teste.com",
+    items: [{ subproduct_id: "sub-001-branco", quantity: 50 }],
+    comments: "",
+    origin: "whatsapp-agente-ia",
+  };
+
+  it("conta só orçamento novo: a repetição pela mesma chave não conta", async () => {
+    const client = new MockBrindeMeClient();
+    await client.createBudget(body, { idempotencyKey: "k1" });
+    await client.createBudget(body, { idempotencyKey: "k1" });
+    await client.createBudget(body, { idempotencyKey: "k2" });
+    expect(client.orcamentosCriados).toBe(2);
+  });
+});
+
 describe("MockBrindeMeClient — falhas simuladas", () => {
   let client: MockBrindeMeClient;
 

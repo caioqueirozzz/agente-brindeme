@@ -1,8 +1,10 @@
 import { z } from "zod";
 import type { BrindeMeClient } from "../integrations/brindeme/client.js";
-import type { ConversationState } from "../agent/state.js";
+import type { ConversationState, FichaPedido } from "../agent/state.js";
+import { marcaUltimaMensagemCliente } from "../agent/state.js";
 
 export const MOTIVOS = [
+  "orcamento_para_emitir",
   "pedido_cliente",
   "reclamacao",
   "desconto",
@@ -37,7 +39,8 @@ export interface ResumoTransferencia {
   prioridade: "normal" | "alta";
   observacao?: string;
   produtos_discutidos: string[];
-  orcamentos_na_conversa: string[];
+  /** Estimativa confirmada pelo cliente, para o atendente emitir o orçamento (motivo orcamento_para_emitir). */
+  ficha_pedido?: FichaPedido["resumo"];
   artes_registradas: string[];
   necessidade: ConversationState["necessidade"];
   ultimas_mensagens: string;
@@ -53,6 +56,23 @@ export async function transferirHumanoHandler(
   state: ConversationState,
   client: BrindeMeClient
 ) {
+  if (input.motivo === "orcamento_para_emitir") {
+    if (!state.fichaPedido) {
+      return {
+        erro: "sem_estimativa",
+        instrucao_ao_agente: "Chame preparar_orcamento antes: a equipe precisa da estimativa para emitir o orçamento.",
+      };
+    }
+    // A confirmação é uma mensagem do cliente DEPOIS do resumo; no mesmo turno ele nem viu o resumo.
+    if (state.fichaPedido.mensagemDoResumo === marcaUltimaMensagemCliente(state)) {
+      return {
+        erro: "aguardando_confirmacao",
+        instrucao_ao_agente:
+          "Mostre o resumo ao cliente e espere ele confirmar numa nova mensagem antes de enviar para a equipe.",
+      };
+    }
+  }
+
   // A transferência por falha de sistema acontece justamente com a API fora: listAdmins não pode derrubá-la.
   let admins: Awaited<ReturnType<BrindeMeClient["listAdmins"]>> = [];
   let prazo: ReturnType<typeof setTimeout> | undefined;
@@ -86,7 +106,7 @@ export async function transferirHumanoHandler(
     prioridade: input.prioridade,
     observacao: input.observacao,
     produtos_discutidos: state.produtosDiscutidos,
-    orcamentos_na_conversa: state.orcamentos,
+    ...(state.fichaPedido ? { ficha_pedido: state.fichaPedido.resumo } : {}),
     artes_registradas: state.artes.map((a) => a.arquivo),
     necessidade: state.necessidade,
     ultimas_mensagens: ultimasMensagens,
@@ -98,6 +118,7 @@ export async function transferirHumanoHandler(
   };
 
   state.modo = "humano";
+  state.fichaPedido = undefined;
 
   return {
     status: "transferido",

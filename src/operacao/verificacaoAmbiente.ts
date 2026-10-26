@@ -5,6 +5,7 @@
  */
 import { conferirPrazos } from "../config.js";
 import { ehFerramenta } from "../tools/nomes.js";
+import { aceitaRaciocinio } from "../llm/index.js";
 
 export type Gravidade = "ok" | "aviso" | "erro";
 
@@ -60,7 +61,9 @@ export function verificarAmbiente(
   if (!env.LLM_MODEL?.trim()) erro("LLM_MODEL", "vazio: o agente não sobe sem o id do modelo");
   else ok("LLM_MODEL", env.LLM_MODEL);
   const raciocinio = (env.LLM_REASONING ?? "").trim();
-  if ((env.LLM_API ?? "chat") === "chat" && raciocinio && raciocinio !== "none") {
+  if (raciocinio && env.LLM_MODEL && !aceitaRaciocinio(env.LLM_MODEL.trim())) {
+    erro("LLM_REASONING", `"${raciocinio}" com ${env.LLM_MODEL}: esse modelo não aceita raciocínio e todo turno daria 400; deixe vazio`);
+  } else if ((env.LLM_API ?? "chat") === "chat" && raciocinio && raciocinio !== "none") {
     aviso("LLM_REASONING", `"${raciocinio}" com LLM_API=chat quebrou as ferramentas na verificação de 15/10 (issue #7); use none`);
   }
   if ((env.LLM_API ?? "chat") === "responses") aviso("LLM_API", "responses não foi validada nos evals; o piloto foi homologado com chat");
@@ -76,11 +79,6 @@ export function verificarAmbiente(
     if (!env.BRINDEME_TOKEN?.trim()) erro("BRINDEME_TOKEN", "vazio com BRINDEME_MODE=http");
     else ok("BRINDEME_TOKEN", "preenchido");
   }
-  const escrita = env.ORCAMENTO_ESCRITA === "real" ? "real" : "simulada";
-  if (escrita === "real" && modo !== "http") erro("ORCAMENTO_ESCRITA", "real só vale com BRINDEME_MODE=http");
-  else if (escrita === "simulada" && opcoes.producao) {
-    aviso("ORCAMENTO_ESCRITA", "simulada: os orçamentos do piloto NÃO chegam à loja (só data/orcamentos-teste.json)");
-  } else ok("ORCAMENTO_ESCRITA", escrita);
 
   // Conhecimento e catálogo
   if ((env.KB_INCLUIR_RASCUNHOS ?? "false") === "true") naProducao("KB_INCLUIR_RASCUNHOS", "true: o cliente recebe texto NÃO aprovado pela loja");

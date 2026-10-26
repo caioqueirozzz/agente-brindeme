@@ -27,12 +27,14 @@ interface Expectativa {
     | "transferiu_com_motivo"
     | "resposta_contem"
     | "resposta_nao_contem"
-    | "campo_nao_vazou";
+    | "campo_nao_vazou"
+    | "max_transferencias";
   ferramenta?: string;
   ordem?: string[];
   motivo?: string;
   padrao?: string;
   campo?: string;
+  max?: number;
 }
 
 interface Scenario {
@@ -114,6 +116,7 @@ async function runScenario(scenario: Scenario): Promise<{ passed: number; failed
   const allToolCallDetails: Array<{ name: string; inputSummary: string }> = [];
   let lastResponse = "";
   let lastTransferMotivo: string | undefined;
+  let transferencias = 0;
 
   for (const [i, msg] of scenario.mensagens.entries()) {
     const userMsg = msg.startsWith("/arte ")
@@ -129,6 +132,7 @@ async function runScenario(scenario: Scenario): Promise<{ passed: number; failed
       allToolCallDetails.push(tc);
     }
     if (result.transferred) {
+      transferencias++;
       // Extract motivo from last tool call
       const transferCall = result.toolsCalled.find((t) => t.name === "transferir_humano");
       if (transferCall) {
@@ -193,6 +197,13 @@ async function runScenario(scenario: Scenario): Promise<{ passed: number; failed
         results.push({
           passed: !lastResponse.includes(exp.campo!),
           msg: `campo_nao_vazou: ${exp.campo}`,
+        });
+        break;
+
+      case "max_transferencias":
+        results.push({
+          passed: transferencias <= exp.max!,
+          msg: `max_transferencias: ${exp.max} (feitas: ${transferencias})`,
         });
         break;
     }

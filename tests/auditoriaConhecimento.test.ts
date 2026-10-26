@@ -111,8 +111,9 @@ describe("auditoria da base de conhecimento no turno", () => {
     expect(log.find((e) => e.type === "response_sent")).not.toHaveProperty("kb_itens");
     expect(lacunas.listar()).toHaveLength(1);
 
-    const ultimo = llm.seen[llm.seen.length - 1];
-    const toolResult = JSON.parse((ultimo[ultimo.length - 1].content as any[])[0].content);
+    // seen[1] é a chamada logo depois da ferramenta; o "Vou chamar um atendente." sem transferir ainda gera a cobrança.
+    const depoisDaFerramenta = llm.seen[1];
+    const toolResult = JSON.parse((depoisDaFerramenta[depoisDaFerramenta.length - 1].content as any[])[0].content);
     expect(toolResult).toMatchObject({ instrucao: "transferir", motivo_sugerido: "lacuna_conhecimento" });
   });
 

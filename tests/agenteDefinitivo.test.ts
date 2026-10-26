@@ -7,7 +7,6 @@ import { RepositorioConversas } from "../src/conversas/repositorio.js";
 import { TurnoEmAndamentoError } from "../src/contrato/agente.js";
 import { calcularTurnoId } from "../src/contrato/turno.js";
 import { MockBrindeMeClient } from "../src/integrations/brindeme/mockClient.js";
-import { EscritaSimuladaClient } from "../src/integrations/brindeme/escritaSimulada.js";
 import type { BrindeMeClient } from "../src/integrations/brindeme/client.js";
 import { setBaseConhecimento, setLacunaStore } from "../src/tools/consultarConhecimento.js";
 import { MemoryLacunaStore } from "../src/knowledge/lacunas.js";
@@ -35,20 +34,13 @@ function montar(
   return { agente, repo, dir };
 }
 
-function semearOrcamentoPendente(dir: string, token: string): void {
+/** Estimativa mostrada num turno anterior, à espera da confirmação do cliente. */
+function semearFichaPedido(dir: string): void {
   const repo = new RepositorioConversas(dir);
   const c = repo.carregar(TEL);
-  c.estado.orcamentoPendente = {
-    token,
-    expiraEm: new Date(Date.now() + 15 * 60_000).toISOString(),
+  c.estado.fichaPedido = {
+    mensagemDoResumo: "resumo-de-um-turno-anterior",
     resumo: { tipo: "PJ", nome: "Empresa", email: "a@b.test", telefone: TEL, itens: [], total_estimado: 0, arte_refs: [] },
-    body: {
-      type: "PJ",
-      customer_name: "Empresa",
-      customer_phone: TEL,
-      customer_email: "a@b.test",
-      items: [{ subproduct_id: "sub-1", quantity: 50 }],
-    },
   };
   repo.salvar(c);
 }
@@ -129,44 +121,43 @@ describe("AgenteDefinitivo", () => {
     expect(c.estado.historico.filter((m) => m.role === "user")).toHaveLength(1);
   });
 
-  it("teto de tempo: cancela, não cria o orçamento depois e transfere", async () => {
+  it("teto de tempo: cancela, transfere pelo sistema e a estimativa pendente chega ao atendente", async () => {
     const dir = mkdtempSync(join(tmpdir(), "conversas-"));
-    semearOrcamentoPendente(dir, "tok");
-    const client = new EscritaSimuladaClient(new MockBrindeMeClient());
-    const criar = vi.spyOn(client, "createBudget");
+    semearFichaPedido(dir);
     const lento: LLMProvider = {
       async chat(): Promise<LLMResponse> {
         await new Promise((r) => setTimeout(r, 100));
-        return toolUse("criar_orcamento", { token_confirmacao: "tok" });
+        return toolUse("transferir_humano", { motivo: "orcamento_para_emitir", prioridade: "normal" });
       },
     };
-    const { agente } = montar(lento, { tetoMs: 20, client, dir });
+    const { agente } = montar(lento, { tetoMs: 20, dir });
 
-    const r = await agente.processarLote(pedido(TEL, ["t1"], "pode criar"));
+    const r = await agente.processarLote(pedido(TEL, ["t1"], "pode enviar"));
 
-    expect(criar).not.toHaveBeenCalled();
     expect(r).toMatchObject({ respostas: [MSG_FALHA], modo: "humano" });
     expect(r.avisoAtendente).toContain("turno passou do teto de tempo");
+    expect(r.avisoAtendente).toContain("Orçamento para emitir");
   });
 
-  it("o estado vai para o disco logo depois de criar_orcamento, antes do turno acabar", async () => {
+  it("o estado vai para o disco logo depois da transferência com a estimativa, antes do turno acabar", async () => {
     const dir = mkdtempSync(join(tmpdir(), "conversas-"));
-    semearOrcamentoPendente(dir, "tok");
+    semearFichaPedido(dir);
     let derrubar: ((e: Error) => void) | undefined;
     const llm: LLMProvider = {
       chat: vi
         .fn<LLMProvider["chat"]>()
-        .mockResolvedValueOnce(toolUse("criar_orcamento", { token_confirmacao: "tok" }))
+        .mockResolvedValueOnce(toolUse("transferir_humano", { motivo: "orcamento_para_emitir", prioridade: "normal" }))
         .mockImplementationOnce(() => new Promise<LLMResponse>((_, rej) => (derrubar = rej))),
     };
-    const { agente } = montar(llm, { client: new EscritaSimuladaClient(new MockBrindeMeClient()), dir });
+    const { agente } = montar(llm, { dir });
 
-    const turno = agente.processarLote(pedido(TEL, ["o1"], "pode criar"));
+    const turno = agente.processarLote(pedido(TEL, ["o1"], "pode enviar"));
     await vi.waitFor(() => expect(derrubar).toBeDefined());
-    expect(new RepositorioConversas(dir).carregar(TEL).estado.orcamentoTokens.tok).toMatch(/^TESTE-/);
+    expect(new RepositorioConversas(dir).carregar(TEL).estado.modo).toBe("humano");
 
+    // Com a transferência já feita, a falha seguinte do modelo conclui pela transferência.
     derrubar!(new Error("processo caiu"));
-    await expect(turno).rejects.toThrow("processo caiu");
+    await expect(turno).resolves.toMatchObject({ modo: "humano" });
   });
 
   it("limite por hora: transfere uma vez com aviso; depois a IA fica quieta", async () => {

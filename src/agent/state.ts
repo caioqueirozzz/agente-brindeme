@@ -21,15 +21,16 @@ export interface ArquivoRecebido {
   bytes: number;
 }
 
-export interface OrcamentoPendente {
-  token: string;
-  expiraEm: string;
+/**
+ * Estimativa que o cliente confirma e o atendente emite (requisito R5 da loja: o agente estima, quem emite
+ * é pessoa). Fica no estado até a transferência com motivo orcamento_para_emitir.
+ */
+export interface FichaPedido {
   /**
    * Última mensagem do cliente quando o resumo foi gerado (hash do texto, ver marcaUltimaMensagemCliente).
-   * criar_orcamento só vale depois de uma mensagem nova do cliente: a confirmação.
-   * Ausente em pendências salvas antes da Fase 6.
+   * A transferência só vale depois de uma mensagem nova do cliente: a confirmação.
    */
-  mensagemDoResumo?: string;
+  mensagemDoResumo: string;
   resumo: {
     tipo: "PF" | "PJ";
     nome: string;
@@ -44,10 +45,11 @@ export interface OrcamentoPendente {
       subtotal: number;
     }>;
     total_estimado: number;
+    prazo_desejado?: string;
+    personalizacao?: string;
     observacoes?: string;
     arte_refs: string[];
   };
-  body: import("../integrations/brindeme/types.js").CreateBudgetBody;
 }
 
 export interface ConversationState {
@@ -70,6 +72,10 @@ export interface ConversationState {
     dataLimite?: string;
   };
   produtosDiscutidos: string[];
+  /** A última lista de buscar_produtos, na ordem mostrada: é a que "a primeira opção" aponta. */
+  ultimasOpcoes?: Array<{ id: string; nome: string }>;
+  /** Os últimos de detalhar_produto, o mais recente primeiro: sem isto o subproduto_id da cor some no turno seguinte. */
+  produtosDetalhados?: Array<{ id: string; nome: string; cores: Array<{ subproduto_id: string; cor: string }> }>;
   /**
    * subproduto_id → produto_id. GET /product (listagem) não traz subprodutos,
    * então só dá para resolver um subproduto via GET /product/{id}. O mapa é
@@ -79,15 +85,7 @@ export interface ConversationState {
   artes: ArteRegistrada[];
   /** Arquivos que chegaram pelo WhatsApp (gravados pela ponte). Ausente em estados salvos antes da Fase 4. */
   arquivosRecebidos?: ArquivoRecebido[];
-  orcamentoPendente?: OrcamentoPendente;
-  orcamentos: string[];
-  /**
-   * código do orçamento → UUID. GET /budget/{id} só aceita o UUID, mas o
-   * cliente (e o modelo) só conhecem o código. Guardado na criação.
-   */
-  orcamentoIds: Record<string, string>;
-  /** token de confirmação → código do orçamento criado. Garante idempotência sem depender da implementação do client. */
-  orcamentoTokens: Record<string, string>;
+  fichaPedido?: FichaPedido;
   falhasConsecutivas: number;
   falhasValidacaoPedido: number;
   /** Consultas de pedido nesta conversa — teto contra varredura de códigos. */
@@ -106,9 +104,6 @@ export function createInitialState(telefone: string): ConversationState {
     subprodutoParaProduto: {},
     artes: [],
     arquivosRecebidos: [],
-    orcamentos: [],
-    orcamentoIds: {},
-    orcamentoTokens: {},
     falhasConsecutivas: 0,
     falhasValidacaoPedido: 0,
     consultasPedido: 0,
@@ -133,11 +128,6 @@ export function addMessage(
 export function marcaUltimaMensagemCliente(state: ConversationState): string {
   const m = [...state.historico].reverse().find((x) => x.role === "user");
   return m ? createHash("sha256").update(m.content.trim()).digest("hex").slice(0, 16) : "";
-}
-
-export function isTokenValid(state: ConversationState): boolean {
-  if (!state.orcamentoPendente) return false;
-  return new Date() < new Date(state.orcamentoPendente.expiraEm);
 }
 
 export function normalizePhone(phone: string): string {

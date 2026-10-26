@@ -7,8 +7,6 @@ import { consultarConhecimentoSchema, consultarConhecimentoHandler } from "./con
 import { buscarProdutosSchema, buscarProdutosHandler } from "./buscarProdutos.js";
 import { detalharProdutoSchema, detalharProdutoHandler } from "./detalharProduto.js";
 import { prepararOrcamentoSchema, prepararOrcamentoHandler } from "./prepararOrcamento.js";
-import { criarOrcamentoSchema, criarOrcamentoHandler } from "./criarOrcamento.js";
-import { consultarOrcamentoSchema, consultarOrcamentoHandler } from "./consultarOrcamento.js";
 import { consultarPedidoSchema, consultarPedidoHandler } from "./consultarPedido.js";
 import { registrarArteSchema, registrarArteHandler } from "./registrarArte.js";
 import { transferirHumanoSchema, transferirHumanoHandler } from "./transferirHumano.js";
@@ -42,7 +40,7 @@ export const tools: ToolDefinition[] = [
   {
     name: "consultar_conhecimento",
     description:
-      "Consulta a base de conhecimento aprovada da loja: como funciona o pedido, formatos de arte, prazos, entrega, formas de pagamento, trocas e defeitos, horário e endereço. Use para qualquer dúvida geral sobre a loja. Se a base não cobrir a pergunta, o retorno manda transferir — nunca responda política, prazo ou condição de memória.",
+      "Consulta a base de conhecimento aprovada da loja: como funciona o pedido, formatos de arte, prazos, entrega, formas de pagamento, trocas e defeitos, horário e endereço. Use para dúvida sobre como a loja funciona. Não use para pedido de orçamento, produto, preço, estoque ou status de pedido (use as ferramentas de catálogo, orçamento e pedido), nem para assunto fora da loja. Se a base não cobrir a pergunta, o retorno manda transferir — nunca responda política, prazo ou condição de memória.",
     inputSchema: schemaDaFerramenta(consultarConhecimentoSchema),
     schema: consultarConhecimentoSchema,
     handler: consultarConhecimentoHandler as ToolDefinition["handler"],
@@ -58,7 +56,7 @@ export const tools: ToolDefinition[] = [
   {
     name: "detalhar_produto",
     description:
-      "Retorna detalhes completos de um produto: subprodutos ativos, cores, estoque, tabela de preços por faixa e personalizações. Use quando o cliente pedir mais informações sobre um produto específico, com o id que veio de buscar_produtos.",
+      "Retorna detalhes completos de um produto: subprodutos ativos, cores, estoque, tabela de preços por faixa e personalizações. Use quando o cliente pedir mais informações sobre um produto específico, com o id que veio de buscar_produtos. Com quantidade, diga quais cores cobrem o pedido pelo campo cores_que_atendem_quantidade, sem comparar estoque de cabeça.",
     inputSchema: schemaDaFerramenta(detalharProdutoSchema),
     schema: detalharProdutoSchema,
     handler: detalharProdutoHandler as ToolDefinition["handler"],
@@ -66,31 +64,15 @@ export const tools: ToolDefinition[] = [
   {
     name: "preparar_orcamento",
     description:
-      "Valida os itens, calcula preços estimados e gera um resumo + token de confirmação. DEVE ser chamada antes de criar_orcamento. O cliente precisa ver o resumo e confirmar explicitamente antes da criação.",
+      "Valida os itens (cor, estoque, quantidade mínima, faixa de preço) e calcula a estimativa de tabela para a equipe emitir o orçamento. Cada item é um subproduto (produto + cor): o subproduto_id da cor pedida vem de subprodutos em buscar_produtos, de subprodutos_ativos em detalhar_produto ou de produtos_detalhados no estado da conversa; nunca use o id do produto e nunca invente. O cliente vê o resumo e confirma; depois, transferir_humano com motivo orcamento_para_emitir leva a estimativa à equipe.",
     inputSchema: schemaDaFerramenta(prepararOrcamentoSchema),
     schema: prepararOrcamentoSchema,
     handler: prepararOrcamentoHandler as ToolDefinition["handler"],
   },
   {
-    name: "criar_orcamento",
-    description:
-      "Cria o orçamento na plataforma usando o token gerado por preparar_orcamento. Só chame após confirmação explícita do cliente. Idempotente: chamar duas vezes com o mesmo token retorna o mesmo orçamento.",
-    inputSchema: schemaDaFerramenta(criarOrcamentoSchema),
-    schema: criarOrcamentoSchema,
-    handler: criarOrcamentoHandler as ToolDefinition["handler"],
-  },
-  {
-    name: "consultar_orcamento",
-    description:
-      "Consulta o status de um orçamento pelo código. Só retorna orçamentos criados nesta conversa.",
-    inputSchema: schemaDaFerramenta(consultarOrcamentoSchema),
-    schema: consultarOrcamentoSchema,
-    handler: consultarOrcamentoHandler as ToolDefinition["handler"],
-  },
-  {
     name: "consultar_pedido",
     description:
-      "Consulta status e prazo de entrega de um pedido. Valida o telefone do cliente; se não bater, solicita o e-mail. Nunca retorna dados sensíveis (CPF, e-mail, boleto, NF).",
+      "Consulta status e prazo de entrega de um pedido. Basta o código: o telefone da conversa é validado sozinho. Só passe o e-mail se o retorno anterior foi precisa_email. Nunca retorna dados sensíveis (CPF, e-mail, boleto, NF).",
     inputSchema: schemaDaFerramenta(consultarPedidoSchema),
     schema: consultarPedidoSchema,
     handler: consultarPedidoHandler as ToolDefinition["handler"],
@@ -106,7 +88,7 @@ export const tools: ToolDefinition[] = [
   {
     name: "transferir_humano",
     description:
-      "Transfere o atendimento para um humano. Use quando: o cliente pedir atendente, houver reclamação, 2 falhas seguidas de ferramenta, desconto/pagamento/frete específico, arte problemática ou intenção não entendida após 2 tentativas.",
+      "Transfere o atendimento para um humano. Use quando: o cliente confirmar a estimativa de preparar_orcamento (motivo orcamento_para_emitir: a equipe emite o orçamento), pedir status de orçamento, o cliente pedir atendente (motivo pedido_cliente), houver reclamação, 2 falhas seguidas de ferramenta, desconto/pagamento/frete específico, arte problemática ou intenção não entendida após 2 tentativas.",
     inputSchema: schemaDaFerramenta(transferirHumanoSchema),
     schema: transferirHumanoSchema,
     handler: transferirHumanoHandler as ToolDefinition["handler"],

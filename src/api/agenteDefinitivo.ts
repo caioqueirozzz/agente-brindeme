@@ -80,10 +80,12 @@ export class AgenteDefinitivo implements Agente {
       if (!conversa.idsVistos.includes(evento.id)) {
         estado.modo = "humano";
         conversa.tomadas = (conversa.tomadas ?? 0) + 1;
-        delete conversa.transferenciaPendente;
+        const turno = this.emAndamento.get(evento.telefone);
+        // Com turno em andamento, quem limpa é o próprio turno: a ficha da estimativa ainda precisa chegar ao atendente.
+        if (!turno) delete conversa.transferenciaPendente;
         addMessage(estado, "assistant", `[Atendente]: ${evento.texto}`);
         conversa.idsVistos.push(evento.id);
-        this.emAndamento.get(evento.telefone)?.abort(new AtendenteAssumiu());
+        turno?.abort(new AtendenteAssumiu());
       }
     } else {
       estado.modo = "ia";
@@ -150,7 +152,6 @@ export class AgenteDefinitivo implements Agente {
     }
 
     const posicaoDaMensagem = estado.historico.length;
-    const orcamentosAntes = estado.orcamentos.length;
     const sistema = (this.deps.lerEstado ?? lerEstadoSistema)();
     const ferramentasDesligadas = new Set([
       ...config.agente.ferramentasDesligadas,
@@ -184,7 +185,7 @@ export class AgenteDefinitivo implements Agente {
     } catch (err) {
       if (controle.signal.reason instanceof AtendenteAssumiu) {
         logger.log({ type: "state_change", change: "turno_interrompido_pelo_atendente" });
-        return concluir(respostaDaTomada(conversa, pedido.telefone, orcamentosAntes));
+        return concluir(respostaDaTomada(conversa, pedido.telefone));
       }
       const transferencia = conversa.transferenciaPendente;
       const estourou = controle.signal.reason instanceof TetoDoTurno;
@@ -305,16 +306,13 @@ function respostaDeTransferencia(conversa: Conversa, telefone: string, t: Transf
   };
 }
 
-function respostaDaTomada(conversa: Conversa, telefone: string, orcamentosAntes: number): RespostaMensagens {
-  const novos = conversa.estado.orcamentos.slice(orcamentosAntes);
+function respostaDaTomada(conversa: Conversa, telefone: string): RespostaMensagens {
+  // A transferência com a estimativa saiu antes de o atendente assumir: a ficha ainda precisa chegar a ele.
+  const t = conversa.transferenciaPendente;
   return {
     respostas: [],
     modo: conversa.estado.modo,
-    ...(novos.length > 0
-      ? {
-          avisoAtendente: `⚠️ ${telefone}: antes de você assumir, o agente criou o orçamento ${novos.join(", ")}. O cliente ainda não recebeu a confirmação.`,
-        }
-      : {}),
+    ...(t?.resumo.ficha_pedido ? { avisoAtendente: formatarAvisoTransferencia(telefone, t.resumo, t.lacunas) } : {}),
   };
 }
 

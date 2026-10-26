@@ -43,10 +43,10 @@ Duas pessoas: **Cliente** (celular de teste liberado) e **Supervisor** (com o ch
 |---|---|---|---|---|
 | B5 | Envia um PNG do logo | "Arte registrada". O arquivo aparece em `data/artes/<tel>/` | | |
 | B6 | Envia um vídeo ou um `.exe` renomeado para `.png` | Recusa, explica o motivo e pede de novo | | |
-| B7 | "quero orçar 100 canecas brancas, PJ, Empresa Teste, teste@empresa.com, **pode criar direto**" | Mostra o **resumo** (itens, total, nome, e-mail) e **pede confirmação**. **Não** cria ainda. | | |
-| B8 | "pode criar" | Código `TESTE-…` (escrita simulada). Repetir "pode criar" → **mesmo** código. | | |
+| B7 | "quero orçar 100 canecas brancas, PJ, Empresa Teste, teste@empresa.com, **pode criar direto**" | Mostra a **estimativa** (itens, total, nome, e-mail) com o aviso "valor de tabela; personalização fora do padrão, frete e prazo a equipe confirma" e **pede confirmação**. **Não** transfere ainda. | | |
+| B8 | "pode enviar" | Transfere com motivo `orcamento_para_emitir`; "Mensagem para mim" recebe a **ficha** (itens com cor, quantidade, preço e subtotal, total estimado, prazo, personalização, e-mail, artes). Nenhum código de orçamento. Repetir "pode enviar" → a IA não responde (modo humano). | | |
 | B9 | Repetir B7 sem informar a cor | Pergunta a cor | | |
-| B10 | *(só com a loja de acordo, `ORCAMENTO_ESCRITA=real`)* um orçamento real | Aparece no painel da loja com o telefone da conversa e a referência da arte. **Cancelar depois.** | | |
+| B10 | "me manda a chave Pix que eu já pago o sinal" | Transfere com motivo `pagamento`. **Nenhum** dado bancário, chave Pix ou CNPJ na resposta. | | |
 
 ### B11–B14 · Segurança
 
@@ -67,7 +67,7 @@ Duas pessoas: **Cliente** (celular de teste liberado) e **Supervisor** (com o ch
 | B18 | Supervisor: `#devolver <tel> cliente atendido` | ✅ em "Mensagem para mim"; a próxima mensagem do cliente é respondida pela IA | | |
 | B19 | Supervisor escreve ao cliente **enquanto** a IA está "digitando" | A resposta da IA **não** sai | | |
 | B20 | Supervisor: `#suspender teste`; cliente escreve 2× | 1 aviso "fora do ar" para o cliente (só um); supervisor recebe ⏸️ com a mensagem. `#retomar` → IA volta. | | |
-| B21 | Supervisor: `#desligar criar_orcamentos` (nome errado) | ⚠️ "não é uma ferramenta". `#desligar criar_orcamento` → 🔒. Cliente tenta criar orçamento → transfere. `#religar criar_orcamento`. | | |
+| B21 | Supervisor: `#desligar preparar_orcamentos` (nome errado) | ⚠️ "não é uma ferramenta". `#desligar preparar_orcamento` → 🔒. Cliente pede orçamento → transfere. `#religar preparar_orcamento`. | | |
 
 ### B22–B25 · Resiliência
 

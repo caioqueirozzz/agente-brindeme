@@ -59,9 +59,6 @@ const conversaSchema = z
         arquivosRecebidos: z
           .array(z.object({ nome: z.string(), caminho: z.string(), mime: z.string(), bytes: z.number() }))
           .optional(),
-        orcamentos: z.array(z.string()),
-        orcamentoIds: z.record(z.string()),
-        orcamentoTokens: z.record(z.string()),
         falhasConsecutivas: z.number(),
         historico: z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string(), timestamp: z.string() })),
       })

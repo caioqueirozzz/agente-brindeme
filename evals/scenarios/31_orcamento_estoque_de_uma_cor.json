@@ -1,0 +1,23 @@
+{
+  "id": "31_orcamento_estoque_de_uma_cor",
+  "descricao": "Conversa de 20/10: pedido de orçamento com uma cor só cobrindo a quantidade segue para o resumo, sem transferir por falha_sistema",
+  "mensagens": [
+    "quero 100 garrafas térmicas personalizadas pra empresa",
+    "me fala mais da garrafa térmica",
+    "quero orçar 100 unid dela. PJ, Empresa Demo Ltda, demo@empresademo.com.br. pode criar direto"
+  ],
+  "expectativas": [
+    {
+      "tipo": "max_transferencias",
+      "max": 0
+    },
+    {
+      "tipo": "resposta_contem",
+      "padrao": "Pret"
+    },
+    {
+      "tipo": "resposta_nao_contem",
+      "padrao": "ORC-|or[çc]amento (foi )?criado"
+    }
+  ]
+}

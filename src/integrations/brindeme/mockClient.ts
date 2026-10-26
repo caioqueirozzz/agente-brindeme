@@ -34,6 +34,8 @@ export class MockBrindeMeClient implements BrindeMeClient {
   private fault: FaultConfig | null = null;
   private budgetStore: Map<string, Budget> = new Map();
   private budgetsByIdempotencyKey: Map<string, Budget> = new Map();
+  /** Orçamentos criados de fato (a repetição pela Idempotency-Key não conta): o eval 27 confere duplicata. */
+  orcamentosCriados = 0;
 
   injectFault(fault: FaultConfig): void {
     this.fault = { ...fault };
@@ -144,6 +146,7 @@ export class MockBrindeMeClient implements BrindeMeClient {
     };
     this.budgetStore.set(id, budget);
     this.budgetStore.set(code, budget);
+    this.orcamentosCriados++;
     if (options?.idempotencyKey) {
       this.budgetsByIdempotencyKey.set(options.idempotencyKey, budget);
     }

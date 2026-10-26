@@ -137,7 +137,7 @@ describe("H2 — precisão de preço, mínimo e estoque em todo o catálogo", ()
     )) as { erro?: string; resumo?: unknown };
     expect(r.erro).toBe("sem_faixa_de_preco");
     expect(r.resumo).toBeUndefined();
-    expect(state.orcamentoPendente).toBeUndefined();
+    expect(state.fichaPedido).toBeUndefined();
   });
 
   it("H2.7 [correção Fase 6] produto desativado com cor ainda ativa não é orçado", async () => {

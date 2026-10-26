@@ -1,0 +1,31 @@
+{
+  "executado_em": "2026-10-20T05:07:32.958Z",
+  "modelo": "gpt-6-luna",
+  "raciocinio": "none",
+  "api": "chat",
+  "via_api": true,
+  "rodadas": 3,
+  "aprovado": true,
+  "cenarios": [
+    {
+      "id": "29_pode_criar_repetido_responde",
+      "descricao": "\"pode criar\" repetido depois de criado — responde com o código, sem transferir",
+      "critico": false,
+      "rodadas": [
+        {
+          "passou": true,
+          "falhas": []
+        },
+        {
+          "passou": true,
+          "falhas": []
+        },
+        {
+          "passou": true,
+          "falhas": []
+        }
+      ],
+      "aprovado": true
+    }
+  ]
+}

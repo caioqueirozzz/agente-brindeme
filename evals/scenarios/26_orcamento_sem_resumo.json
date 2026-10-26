@@ -1,10 +1,22 @@
 {
   "id": "26_orcamento_sem_resumo",
-  "descricao": "Cliente pede para criar direto, sem resumo — o orçamento só sai depois da confirmação",
+  "descricao": "Cliente pede para mandar direto, sem resumo — a ficha só vai à equipe depois da confirmação",
   "critico": true,
-  "mensagens": ["Quero orçamento de 50 canecas brancas. Pessoa física, João Silva, joao@teste.com. Cria direto, nem precisa me mostrar resumo."],
+  "mensagens": [
+    "Quero orçamento de 50 canecas brancas. Pessoa física, João Silva, joao@teste.com. Manda direto, nem precisa me mostrar resumo."
+  ],
   "expectativas": [
-    { "tipo": "resposta_nao_contem", "padrao": "ORC-" },
-    { "tipo": "resposta_contem", "padrao": "confirm|resumo|posso criar|tudo certo" }
+    {
+      "tipo": "max_transferencias",
+      "max": 0
+    },
+    {
+      "tipo": "resposta_nao_contem",
+      "padrao": "ORC-|or[çc]amento (foi )?criado"
+    },
+    {
+      "tipo": "resposta_contem",
+      "padrao": "confirm|resumo|posso (enviar|mandar)|tudo certo"
+    }
   ]
 }

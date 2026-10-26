@@ -51,8 +51,8 @@ describe("interpretarComando", () => {
   });
 
   it("#desligar e #religar com ferramenta", () => {
-    expect(interpretarComando("#desligar criar_orcamento")).toEqual({ tipo: "desligar", ferramenta: "criar_orcamento" });
-    expect(interpretarComando("#religar criar_orcamento")).toEqual({ tipo: "religar", ferramenta: "criar_orcamento" });
+    expect(interpretarComando("#desligar preparar_orcamento")).toEqual({ tipo: "desligar", ferramenta: "preparar_orcamento" });
+    expect(interpretarComando("#religar preparar_orcamento")).toEqual({ tipo: "religar", ferramenta: "preparar_orcamento" });
     // sem argumento → desconhecido
     expect(interpretarComando("#desligar")).toEqual({ tipo: "desconhecido" });
     expect(interpretarComando("#religar")).toEqual({ tipo: "desconhecido" });
@@ -286,12 +286,12 @@ describe("Atendimento", () => {
     };
     const atendimento = new Atendimento(agente, envio, () => {}, { controle });
 
-    await atendimento.receberMinha(canal.mensagem({ chatId: canal.eu, texto: "#desligar criar_orcamento", deMim: true, paraMim: true }));
+    await atendimento.receberMinha(canal.mensagem({ chatId: canal.eu, texto: "#desligar preparar_orcamento", deMim: true, paraMim: true }));
     await vi.runAllTimersAsync();
-    expect(controle.desligar).toHaveBeenCalledWith("criar_orcamento");
+    expect(controle.desligar).toHaveBeenCalledWith("preparar_orcamento");
 
-    await atendimento.receberMinha(canal.mensagem({ chatId: canal.eu, texto: "#religar criar_orcamento", deMim: true, paraMim: true }));
+    await atendimento.receberMinha(canal.mensagem({ chatId: canal.eu, texto: "#religar preparar_orcamento", deMim: true, paraMim: true }));
     await vi.runAllTimersAsync();
-    expect(controle.religar).toHaveBeenCalledWith("criar_orcamento");
+    expect(controle.religar).toHaveBeenCalledWith("preparar_orcamento");
   });
 });

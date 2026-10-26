@@ -1,14 +1,16 @@
 # Agente de Atendimento
 
-Agente IA de atendimento no WhatsApp para loja de brindes personalizados: recomenda produtos, prepara e cria orçamentos, consulta pedidos e transfere para uma pessoa quando precisa.
+Agente IA de atendimento no WhatsApp para loja de brindes personalizados: recomenda produtos, estima o orçamento e transfere a ficha para a equipe emitir (requisito R5 da loja), consulta pedidos e transfere para uma pessoa quando precisa. Visão atual e decisões 23 em diante: [docs/spec-agente.md](docs/spec-agente.md).
 
 ## Piloto (Fase 6) — comece por aqui
 
 | Documento | Para quê |
 |---|---|
+| [docs/spec-agente.md](docs/spec-agente.md) | **Spec completa**: objetivo, arquitetura, ferramentas, garantias em código, decisões e pendências |
 | [docs/fase-6/relatorio-homologacao.md](docs/fase-6/relatorio-homologacao.md) | O que foi testado, as falhas corrigidas, o que falta e o parecer |
 | [docs/fase-6/roteiro-homologacao.md](docs/fase-6/roteiro-homologacao.md) | Roteiro de aceite (automatizado + chip) e critérios de go/no-go |
 | [docs/fase-6/manual-operacao.md](docs/fase-6/manual-operacao.md) | Ligar, acompanhar, comandos do chip, transferências, incidentes, LGPD |
+| [docs/fase-6/teste-no-chip.md](docs/fase-6/teste-no-chip.md) | Subir num chip novo com WhatsApp Business e rodar os 12 cenários ao vivo |
 
 | Comando | O que faz |
 |---|---|
@@ -121,7 +123,7 @@ O agente recebe uma mensagem do usuário em `runTurn`, que monta o prompt de sis
 | 1 | `tsx` como runtime | Zero configuração para TypeScript + ESM |
 | 2 | `zod-to-json-schema` para tool definitions | Zod valida entrada em runtime; o mesmo schema vai pro LLM |
 | 3 | `BrindeMeClient` como interface TypeScript | Troca por implementação HTTP na Fase 2 sem tocar nas tools |
-| 4 | Token de confirmação para `criar_orcamento` | Garante em código que o cliente viu o resumo antes |
+| 4 | ~~Token de confirmação para `criar_orcamento`~~ (substituída: desde o R5 a confirmação é a mensagem nova do cliente antes da transferência, decisões 38 e 50 da spec) | Garante em código que o cliente viu o resumo antes |
 | 5 | Idempotência pelo token no `ConversationState` + header `Idempotency-Key` | Vale para mock e HTTP; antes dependia de `instanceof MockBrindeMeClient` e o cliente real perderia a proteção em silêncio |
 | 6 | `falhasConsecutivas` contado em `runTurn`, não nas tools | As tools capturam o erro internamente; contar no loop faz a regra "2 falhas → transferir" valer para todas as 8 ferramentas |
 | 7 | `modo = "humano"` faz short-circuit antes do LLM | `runTurn` retorna `null`; CLI exibe mensagem de pausa |
@@ -161,7 +163,7 @@ Validado contra `https://api.brinde.me` com header `X-Api-Key` em 12/10/2026.
 ```bash
 npm run check:api                  # valida acesso e as consultas (somente leitura)
 npm run sync:pedidos -- --dias 180 # alimenta o índice local de pedidos
-npm run test:orcamento             # exercita POST /budget (CRIA ORÇAMENTO REAL)
+npm run test:orcamento             # exercita POST /budget (CRIA ORÇAMENTO REAL); o agente não usa desde o R5
 ```
 
 ### O que a validação descobriu

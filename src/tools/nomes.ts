@@ -8,8 +8,6 @@ export const NOMES_FERRAMENTAS = [
   "buscar_produtos",
   "detalhar_produto",
   "preparar_orcamento",
-  "criar_orcamento",
-  "consultar_orcamento",
   "consultar_pedido",
   "registrar_arte",
   "transferir_humano",

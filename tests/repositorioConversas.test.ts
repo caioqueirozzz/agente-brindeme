@@ -32,6 +32,16 @@ describe("RepositorioConversas", () => {
     expect(readdirSync(dir)).toEqual([`${TEL}.json`]);
   });
 
+  it("as últimas opções apresentadas sobrevivem ao reinício", () => {
+    const repo = new RepositorioConversas(dir);
+    const c = repo.carregar(TEL);
+    c.estado.ultimasOpcoes = [{ id: "caneca", nome: "Caneca de Porcelana" }];
+    repo.salvar(c);
+    expect(new RepositorioConversas(dir).carregar(TEL).estado.ultimasOpcoes).toEqual([
+      { id: "caneca", nome: "Caneca de Porcelana" },
+    ]);
+  });
+
   it("arquivo ilegível vira .corrompido-<data>, a conversa recomeça e sai um alerta", () => {
     writeFileSync(join(dir, `${TEL}.json`), "{ quebrado", "utf-8");
     const alertas: Array<Record<string, unknown>> = [];

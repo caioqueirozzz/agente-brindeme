@@ -48,9 +48,9 @@ describe("lerEstadoSistema", () => {
 
   it("lê ferramentasDesligadas do disco", () => {
     const arq = tmpArquivo();
-    escreverEstadoSistema({ suspenso: false, ferramentasDesligadas: ["criar_orcamento"] }, arq);
+    escreverEstadoSistema({ suspenso: false, ferramentasDesligadas: ["preparar_orcamento"] }, arq);
     invalidarCache();
-    expect(lerEstadoSistema(arq).ferramentasDesligadas).toEqual(["criar_orcamento"]);
+    expect(lerEstadoSistema(arq).ferramentasDesligadas).toEqual(["preparar_orcamento"]);
   });
 
   it("cache: segunda leitura não vai ao disco", () => {

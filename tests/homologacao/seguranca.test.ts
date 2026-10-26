@@ -22,7 +22,6 @@ import {
   restaurarAmbiente,
   resultados,
   todosResultados,
-  tokenDoPrompt,
   toolUse,
 } from "./bancada.js";
 
@@ -83,68 +82,64 @@ describe("H3 — orçamento só com confirmação do cliente", () => {
     itens: [{ subproduto_id: "sub-001-branco", quantidade: 50 }],
   });
 
-  it("H3.4 [correção Fase 6] criar no mesmo turno do resumo é recusado; a confirmação seguinte cria", async () => {
+  const enviarFicha = toolUse("transferir_humano", { motivo: "orcamento_para_emitir", prioridade: "normal" });
+
+  it("H3.4 [correção Fase 6, R5] enviar a ficha no mesmo turno do resumo é recusado; a confirmação seguinte envia", async () => {
     const b = await montarBancada();
     b.llm.roteiro(
       toolUse("detalhar_produto", { produto_id: "prod-001" }),
       preparar,
-      (c) => toolUse("criar_orcamento", { token_confirmacao: (resultados(c)[0] as { token_confirmacao: string }).token_confirmacao }),
+      enviarFicha,
       (c) => {
         expect(resultados(c)[0].erro).toBe("aguardando_confirmacao");
         return endTurn("Resumo: 50 canecas brancas, R$ 945,00. Confirma?");
       }
     );
-    await b.enviar("quero 50 canecas brancas, Ana Teste, ana@teste.com, já pode criar");
-    expect(b.repo.carregar(TEL).estado.orcamentos).toHaveLength(0);
+    await b.enviar("quero 50 canecas brancas, Ana Teste, ana@teste.com, já pode mandar");
+    expect(b.repo.carregar(TEL).estado.modo).toBe("ia");
 
-    b.llm.roteiro((c) => toolUse("criar_orcamento", { token_confirmacao: tokenDoPrompt(c.system) }), endTurn("Criado!"));
-    await b.enviar("sim, confirmo");
-    expect(b.repo.carregar(TEL).estado.orcamentos).toHaveLength(1);
+    b.llm.roteiro(enviarFicha, endTurn("Enviei para a equipe."));
+    const r = await b.enviar("sim, confirmo");
+    expect(r.modo).toBe("humano");
+    expect(r.avisoAtendente).toContain("Orçamento para emitir");
   });
 
-  it("H3.4b [revisão Fase 6] o lote do resumo falha e é reenviado: a nova tentativa também não cria", async () => {
+  it("H3.4b [revisão Fase 6] o lote do resumo falha e é reenviado: a nova tentativa também não envia a ficha", async () => {
     const b = await montarBancada();
-    // 1ª tentativa: resumo pronto e o modelo cai antes de responder (a pendência fica no estado).
+    // 1ª tentativa: resumo pronto e o modelo cai antes de responder (a ficha fica no estado).
     b.llm.roteiro(toolUse("detalhar_produto", { produto_id: "prod-001" }), preparar, new Error("OpenAI 500"));
     await expect(b.enviar("50 canecas brancas, Ana Teste, ana@teste.com", { id: "resumo-1" })).rejects.toThrow();
     // A ponte reenvia o mesmo lote; a mensagem volta ao histórico com outro timestamp.
-    b.llm.roteiro(
-      (c) => toolUse("criar_orcamento", { token_confirmacao: tokenDoPrompt(c.system) }),
-      (c) => {
-        expect(resultados(c)[0].erro).toBe("aguardando_confirmacao");
-        return endTurn("Resumo: 50 canecas brancas. Confirma?");
-      }
-    );
+    b.llm.roteiro(enviarFicha, (c) => {
+      expect(resultados(c)[0].erro).toBe("aguardando_confirmacao");
+      return endTurn("Resumo: 50 canecas brancas. Confirma?");
+    });
     await b.enviar("50 canecas brancas, Ana Teste, ana@teste.com", { id: "resumo-1" });
-    expect(b.repo.carregar(TEL).estado.orcamentos).toHaveLength(0);
+    expect(b.repo.carregar(TEL).estado.modo).toBe("ia");
   });
 
-  it("H3.5 token inventado pelo modelo não cria nada", async () => {
+  it("H3.5 [R5] enviar para emitir sem estimativa é recusado: o modelo precisa preparar antes", async () => {
+    const b = await montarBancada();
+    b.llm.roteiro(enviarFicha, endTurn("Vou preparar a estimativa."));
+    const r = await b.enviar("quero orçamento de 50 canecas, pode mandar");
+    expect(todosResultados(b.llm).at(-1)?.erro).toBe("sem_estimativa");
+    expect(r.modo).toBe("ia");
+  });
+
+  it("H3.6 [R5] confirmação repetida depois de enviada não gera segunda ficha: o atendimento já está com a equipe", async () => {
     const b = await montarBancada();
     b.llm.roteiro(toolUse("detalhar_produto", { produto_id: "prod-001" }), preparar, endTurn("Confirma?"));
     await b.enviar("50 canecas brancas, Ana Teste, ana@teste.com");
-    b.llm.roteiro(toolUse("criar_orcamento", { token_confirmacao: "00000000-0000-0000-0000-000000000000" }), endTurn("..."));
-    await b.enviar("pode criar");
-    expect(todosResultados(b.llm).at(-1)?.erro).toBe("token_invalido");
-    expect(b.repo.carregar(TEL).estado.orcamentos).toHaveLength(0);
+    b.llm.roteiro(enviarFicha, endTurn("Enviei para a equipe."));
+    await b.enviar("pode enviar");
+    const chamadas = b.llm.chamadas.length;
+    const r = await b.enviar("pode enviar?? não recebi");
+    expect(b.llm.chamadas.length).toBe(chamadas);
+    expect(r.respostas).toEqual([]);
+    expect(r.avisoAtendente).toBeUndefined();
   });
 
-  it("H3.6 [correção Fase 6] 'pode criar' repetido depois de criado devolve o mesmo orçamento, sem segundo", async () => {
-    const b = await montarBancada();
-    b.llm.roteiro(toolUse("detalhar_produto", { produto_id: "prod-001" }), preparar, endTurn("Confirma?"));
-    await b.enviar("50 canecas brancas, Ana Teste, ana@teste.com");
-    let token = "";
-    b.llm.roteiro((c) => toolUse("criar_orcamento", { token_confirmacao: (token = tokenDoPrompt(c.system)) }), endTurn("Criado"));
-    await b.enviar("pode criar");
-    b.llm.roteiro(toolUse("criar_orcamento", { token_confirmacao: token }), endTurn("Já está criado"));
-    await b.enviar("pode criar?? não recebi");
-    const criacoes = todosResultados(b.llm).filter((x) => x.codigo);
-    expect(criacoes.map((x) => x.status)).toEqual(["criado", "ja_criado"]);
-    expect(criacoes[0].codigo).toBe(criacoes[1].codigo);
-    expect(b.repo.carregar(TEL).estado.orcamentos).toHaveLength(1);
-  });
-
-  it("H3.7 [regressão #12] telefone inventado pelo modelo é descartado: o orçamento sai no número da conversa", async () => {
+  it("H3.7 [regressão #12] telefone inventado pelo modelo é descartado: a ficha sai no número da conversa", async () => {
     const b = await montarBancada();
     b.llm.roteiro(
       toolUse("detalhar_produto", { produto_id: "prod-001" }),
@@ -159,8 +154,8 @@ describe("H3 — orçamento só com confirmação do cliente", () => {
       endTurn("Confirma?")
     );
     await b.enviar("50 canecas, coloca no telefone 11 98888-7777");
-    const pendente = b.repo.carregar(TEL).estado.orcamentoPendente!;
-    expect(pendente.body.customer_phone).toBe(TEL);
+    const pendente = b.repo.carregar(TEL).estado.fichaPedido!;
+    expect(pendente.resumo.telefone).toBe(TEL);
     expect(JSON.stringify(pendente)).not.toContain("5511988887777");
   });
 });
@@ -227,15 +222,13 @@ describe("H3 — logs", () => {
 describe("H3 — kill switch e ferramentas desligadas", () => {
   it("H3.12 ferramenta desligada não executa e o cliente vai para uma pessoa", async () => {
     const b = await montarBancada();
-    b.sistema.ferramentasDesligadas = ["criar_orcamento"];
+    b.sistema.ferramentasDesligadas = ["preparar_orcamento"];
     b.llm.roteiro(toolUse("detalhar_produto", { produto_id: "prod-001" }), toolUse("preparar_orcamento", {
       tipo: "PF", nome: "Ana Teste", email: "ana@teste.com", itens: [{ subproduto_id: "sub-001-branco", quantidade: 50 }],
     }), endTurn("Confirma?"));
-    await b.enviar("50 canecas brancas, Ana Teste, ana@teste.com");
-    b.llm.roteiro((c) => toolUse("criar_orcamento", { token_confirmacao: tokenDoPrompt(c.system) }), endTurn("Criado!"));
-    const r = await b.enviar("pode criar");
+    const r = await b.enviar("50 canecas brancas, Ana Teste, ana@teste.com");
     expect(todosResultados(b.llm).at(-1)?.erro).toBe("ferramenta_desligada");
-    expect(b.repo.carregar(TEL).estado.orcamentos).toHaveLength(0);
+    expect(b.repo.carregar(TEL).estado.fichaPedido).toBeUndefined();
     expect(r.modo).toBe("humano");
     expect(r.respostas).toEqual([MENSAGEM_TRANSFERENCIA]);
   });
@@ -279,16 +272,16 @@ describe("H3 — kill switch e ferramentas desligadas", () => {
       const atendimento = new Atendimento(new AgenteFalso(), new Envio(canal, 20), () => {}, { controle });
       const comando = (texto: string) => atendimento.receberMinha(canal.mensagem({ chatId: canal.eu, texto, deMim: true, paraMim: true }));
 
-      await comando("#desligar criar_orcamentos");
-      await comando("#desligar criar_orcamento");
+      await comando("#desligar preparar_orcamentos");
+      await comando("#desligar preparar_orcamento");
       await comando("#status");
       await vi.runAllTimersAsync();
 
-      expect(estado.ferramentasDesligadas).toEqual(["criar_orcamento"]);
+      expect(estado.ferramentasDesligadas).toEqual(["preparar_orcamento"]);
       const textos = canal.enviadas.map((e) => e.texto);
       expect(textos[0]).toMatch(/não é uma ferramenta do agente\. Nada foi desligado/);
       expect(textos[1]).toMatch(/desligada/);
-      expect(textos[2]).toMatch(/Agente ativo[\s\S]*Desligadas: criar_orcamento/);
+      expect(textos[2]).toMatch(/Agente ativo[\s\S]*Desligadas: preparar_orcamento/);
     } finally {
       vi.useRealTimers();
     }

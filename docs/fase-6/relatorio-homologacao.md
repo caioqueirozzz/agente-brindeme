@@ -156,12 +156,13 @@ A suíte automatizada prova que **o código** faz a coisa certa em cada caminho,
 
 ## 8. Configuração de referência do piloto
 
+Atualizada em 25/10: o agente não escreve orçamento (R5) e o modelo é o `gpt-4o-mini` (decisões 48–50 da [spec](../spec-agente.md#12-decisões)).
+
 ```ini
 BRINDEME_MODE=http
-ORCAMENTO_ESCRITA=real            # ou simulada, se a loja preferir validar os primeiros dias sem gravar
 KB_INCLUIR_RASCUNHOS=false
-LLM_MODEL=gpt-6-luna
-LLM_REASONING=none                # low quebra as ferramentas na Chat Completions (issue #7)
+LLM_MODEL=gpt-4o-mini
+LLM_REASONING=                    # vazio: gpt-4* não aceita reasoning_effort (todo turno daria 400)
 LLM_API=chat
 WHATSAPP_LIBERADOS=<números do piloto>   # piloto controlado: só quem foi convidado
 RESPOSTAS_POR_HORA=30

@@ -18,7 +18,8 @@ export interface ResumoPiloto {
   ferramentas: Record<string, number>;
   errosDeFerramenta: Record<string, number>;
   transferencias: { total: number; porMotivo: Record<string, number>; conversasTransferidas: number };
-  orcamentosCriados: number;
+  /** Transferências com a estimativa para a equipe emitir (R5). */
+  orcamentosParaEmitir: number;
   lacunas: Array<{ pergunta: string; vezes: number }>;
   alertas: Record<string, number>;
   mensagensComAgenteSuspenso: number;
@@ -37,7 +38,7 @@ export function resumirLogs(eventosPorConversa: EventoLog[][], desde?: string): 
     ferramentas: {},
     errosDeFerramenta: {},
     transferencias: { total: 0, porMotivo: {}, conversasTransferidas: 0 },
-    orcamentosCriados: 0,
+    orcamentosParaEmitir: 0,
     lacunas: [],
     alertas: {},
     mensagensComAgenteSuspenso: 0,
@@ -68,10 +69,11 @@ export function resumirLogs(eventosPorConversa: EventoLog[][], desde?: string): 
           somar(r.ferramentas, nome);
           if (e.error) somar(r.errosDeFerramenta, `${nome}: ${String(e.error).slice(0, 60)}`);
           const saida = (e.output ?? {}) as { status?: string };
-          if (nome === "criar_orcamento" && saida.status === "criado") r.orcamentosCriados++;
           if (nome === "transferir_humano" && saida.status === "transferido") {
             r.transferencias.total++;
-            somar(r.transferencias.porMotivo, String((e.input as { motivo?: string })?.motivo ?? "outro"));
+            const motivo = String((e.input as { motivo?: string })?.motivo ?? "outro");
+            somar(r.transferencias.porMotivo, motivo);
+            if (motivo === "orcamento_para_emitir") r.orcamentosParaEmitir++;
             transferida = true;
           }
           break;
@@ -122,7 +124,7 @@ export function formatarRelatorio(r: ResumoPiloto): string {
     `| Conversas | ${r.conversas} |`,
     `| Mensagens recebidas | ${r.mensagensRecebidas} |`,
     `| Respostas da IA | ${r.respostasEnviadas} |`,
-    `| Orçamentos criados | ${r.orcamentosCriados} |`,
+    `| Orçamentos enviados para emitir | ${r.orcamentosParaEmitir} |`,
     `| Conversas transferidas | ${r.transferencias.conversasTransferidas} (${pct(r.transferencias.conversasTransferidas, r.conversas)}) |`,
     `| Tokens (entrada / saída) | ${r.tokens.entrada} / ${r.tokens.saida} |`,
     `| Mensagens com o agente suspenso | ${r.mensagensComAgenteSuspenso} |`,

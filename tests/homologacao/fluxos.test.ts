@@ -14,7 +14,6 @@ import {
   restaurarAmbiente,
   resultados,
   todosResultados,
-  tokenDoPrompt,
   toolUse,
 } from "./bancada.js";
 
@@ -55,35 +54,35 @@ describe("H1 — fluxos completos", () => {
       }),
       (c) => {
         const prep = resultados(c)[0] as { status: string; resumo: { total_estimado: number; telefone: string } };
-        expect(prep.status).toBe("resumo_pronto");
+        expect(prep.status).toBe("estimativa_pronta");
         expect(prep.resumo.total_estimado).toBe(945);
         expect(prep.resumo.telefone).toBe(TEL);
-        return endTurn("Resumo: 50 canecas brancas, total estimado R$ 945,00. Posso criar?");
+        return endTurn("Resumo: 50 canecas brancas, total estimado R$ 945,00. Posso enviar para a equipe emitir?");
       }
     );
     const r4 = await b.enviar("branca. Empresa Teste Ltda, PJ, compras@empresa.com");
-    expect(r4.respostas.join(" ")).toMatch(/Posso criar/);
+    expect(r4.respostas.join(" ")).toMatch(/Posso enviar/);
 
     b.llm.roteiro(
-      (c) => toolUse("criar_orcamento", { token_confirmacao: tokenDoPrompt(c.system) }),
+      toolUse("transferir_humano", { motivo: "orcamento_para_emitir", prioridade: "normal" }),
       (c) => {
-        const criado = resultados(c)[0] as { status: string; codigo: string };
-        expect(criado.status).toBe("criado");
-        return endTurn(`Pronto! Orçamento ${criado.codigo} criado.`);
+        expect((resultados(c)[0] as { status: string }).status).toBe("transferido");
+        return endTurn("Enviei para a equipe, que emite o orçamento e fala com você.");
       }
     );
-    const r5 = await b.enviar("pode criar");
-    expect(r5.respostas.join(" ")).toMatch(/ORC-\d+/);
+    const r5 = await b.enviar("pode enviar");
+    expect(r5.modo).toBe("humano");
+    expect(r5.avisoAtendente).toContain("Orçamento para emitir");
+    expect(r5.avisoAtendente).toContain("compras@empresa.com");
 
     const conversa = b.repo.carregar(TEL);
-    expect(conversa.estado.orcamentos).toHaveLength(1);
-    expect(conversa.estado.orcamentoPendente).toBeUndefined();
+    expect(conversa.estado.fichaPedido).toBeUndefined();
     expect(conversa.estado.cliente).toMatchObject({ tipo: "PJ", nome: "Empresa Teste Ltda" });
-    expect(conversa.estado.modo).toBe("ia");
+    expect(conversa.estado.modo).toBe("humano");
     expect(b.llm.pendentes()).toBe(0);
   });
 
-  it("H1.2 arte enviada pelo WhatsApp entra no orçamento como referência", async () => {
+  it("H1.2 arte enviada pelo WhatsApp entra na ficha como referência", async () => {
     const b = await montarBancada();
     const arquivo = { nome: "logo.png", caminho: "data/artes/5583999990000/logo.png", mime: "image/png", bytes: 20480 };
 
@@ -106,9 +105,8 @@ describe("H1 — fluxos completos", () => {
     await b.enviar("100 canecas pretas, Maria Souza, maria@teste.com");
 
     const conversa = b.repo.carregar(TEL);
-    const pendente = conversa.estado.orcamentoPendente!;
+    const pendente = conversa.estado.fichaPedido!;
     expect(pendente.resumo.arte_refs).toHaveLength(1);
-    expect(pendente.body.comments).toContain(pendente.resumo.arte_refs[0]);
     // 100 pretas: faixa 100–499 da cor preta = 16,40 (a branca seria 15,40).
     expect(pendente.resumo.total_estimado).toBe(1640);
   });
@@ -141,7 +139,7 @@ describe("H1 — fluxos completos", () => {
     expect(r.avisoAtendente).toBeUndefined();
   });
 
-  it("H1.5 o agente reinicia entre o resumo e a confirmação: o 'pode criar' ainda funciona", async () => {
+  it("H1.5 o agente reinicia entre o resumo e a confirmação: a confirmação ainda envia a ficha", async () => {
     const dir = mkdtempSync(join(tmpdir(), "homolog-reinicio-"));
     const antes = await montarBancada({ repoDir: dir });
     antes.llm.roteiro(
@@ -159,12 +157,12 @@ describe("H1 — fluxos completos", () => {
     // Processo novo, mesmo disco: a conversa volta do arquivo.
     const depois = await montarBancada({ repoDir: dir });
     depois.llm.roteiro(
-      (c) => toolUse("criar_orcamento", { token_confirmacao: tokenDoPrompt(c.system) }),
-      (c) => endTurn(`Criado: ${(resultados(c)[0] as { codigo: string }).codigo}`)
+      toolUse("transferir_humano", { motivo: "orcamento_para_emitir", prioridade: "normal" }),
+      endTurn("Enviei para a equipe.")
     );
     const r = await depois.enviar("confirmo");
-    expect(r.respostas.join(" ")).toMatch(/ORC-\d+/);
-    expect(depois.repo.carregar(TEL).estado.orcamentos).toHaveLength(1);
+    expect(r.avisoAtendente).toContain("Carlos Lima");
+    expect(depois.repo.carregar(TEL).estado.modo).toBe("humano");
   });
 
   it("H1.6 mesma mensagem reenviada pela ponte (mesmo turnoId) não roda o modelo de novo", async () => {

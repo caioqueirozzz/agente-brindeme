@@ -33,12 +33,17 @@ export const MAX_RODADAS_DE_FERRAMENTA = 10;
 const JANELA_HISTORICO = 40;
 const ABERTURA_DO_TRECHO = "[início do trecho da conversa]";
 
+/** "Vou transferir" escrito sem chamar a ferramenta (4o-mini, eval 32): ninguém é avisado e o cliente fica esperando. */
+const PROMETE_TRANSFERIR =
+  /\b(vou|irei|vamos)\s+(te\s+|lhe\s+)?transferir\b|\b(estou|já estou)\s+(te\s+)?(transferindo|encaminhando)\b|\b(vou|irei|vamos)\s+(te\s+|lhe\s+)?(encaminhar|conectar|passar|chamar)\b[^.!?\n]{0,60}\b(atendente|equipe|pessoa|humano|especialista|consultor)/i;
+const COBRANCA_DE_TRANSFERENCIA =
+  "[aviso do sistema, não do cliente] Sua resposta diz que vai transferir, mas transferir_humano não foi chamada e ninguém da equipe foi avisado. Se o caso é de transferência, chame transferir_humano agora com o motivo que o descreve; se não, responda ao cliente sem prometer transferência.";
+
 /**
  * Ferramenta → status de sucesso que muda a loja ou o estado e precisa ser salvo na hora.
  * Ferramenta com efeito termina mesmo com o turno cancelado: abandonada no meio, a loja ficaria sem saber.
  */
 const EFEITOS: Record<string, string> = {
-  criar_orcamento: "criado",
   registrar_arte: "arte_registrada",
   transferir_humano: "transferido",
 };
@@ -79,23 +84,17 @@ function esperarOuCancelar<T>(promessa: Promise<T>, signal?: AbortSignal): Promi
 function loadSystemPrompt(state: ConversationState): string {
   const template = readFileSync(join(__dir, "prompt/system.md"), "utf-8");
   const stateForPrompt = {
+    // Sem a data, o modelo completava "20/11" com o ano do treino (2023-11-20 na ficha, 25/10).
+    hoje: new Date().toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" }),
     modo: state.modo,
     cliente: state.cliente,
     necessidade: state.necessidade,
     artes_registradas: state.artes.length,
-    orcamentos_criados: state.orcamentos,
     produtos_discutidos: state.produtosDiscutidos,
-    orcamento_pendente_expirado: state.orcamentoPendente
-      ? new Date() > new Date(state.orcamentoPendente.expiraEm)
-      : undefined,
-    // Resultados de ferramenta não passam para o turno seguinte: sem isto o "pode criar" não tem token.
-    orcamento_pendente: state.orcamentoPendente
-      ? {
-          token_confirmacao: state.orcamentoPendente.token,
-          ja_criado: state.orcamentoTokens[state.orcamentoPendente.token] ?? null,
-          resumo: state.orcamentoPendente.resumo,
-        }
-      : undefined,
+    ultimas_opcoes_apresentadas: state.ultimasOpcoes?.map((o, i) => ({ posicao: i + 1, ...o })),
+    produtos_detalhados: state.produtosDetalhados,
+    // Resultados de ferramenta não passam para o turno seguinte: sem isto a confirmação não acha a estimativa.
+    estimativa_aguardando_confirmacao: state.fichaPedido?.resumo,
   };
 
   return template
@@ -159,6 +158,9 @@ export async function runTurn(
   const kbItens = new Set<string>();
   /** Motivo da última ferramenta que mandou transferir; vale mesmo se o modelo não obedecer. */
   let transferenciaPendente: MotivoTransferencia | undefined;
+  /** Sem falha de ferramenta, `falha_sistema` é o modelo fugindo do fluxo (20/10: estoque lido errado). */
+  let falhaDeSistemaVista = false;
+  let cobrouTransferencia = false;
   const resultado = (response: string | null): TurnResult => ({
     response,
     toolsCalled,
@@ -228,6 +230,18 @@ export async function runTurn(
               "Corrija os parâmetros conforme o schema da ferramenta e chame de novo. Se faltar dado do cliente, pergunte a ele.",
           };
           error = "parametros_invalidos";
+        } else if (
+          toolName === "transferir_humano" &&
+          (entrada.data as { motivo?: unknown }).motivo === "falha_sistema" &&
+          !falhaDeSistemaVista &&
+          state.falhasConsecutivas === 0
+        ) {
+          output = {
+            erro: "motivo_invalido",
+            instrucao_ao_agente:
+              "Nenhuma ferramenta falhou: falha_sistema não se aplica. Siga o atendimento pelas ferramentas (estoque e orçamento se conferem em preparar_orcamento). Se o caso precisar mesmo de atendente, use o motivo que o descreve.",
+          };
+          error = "motivo_invalido";
         } else {
           try {
             // Entrada já conferida: campo a mais (ex.: telefone inventado) não chega ao handler.
@@ -244,17 +258,16 @@ export async function runTurn(
         // engolia o erro internamente e o contador nunca subia, então a regra
         // "2 falhas seguidas → transferir" só funcionava em criar_orcamento.
         if (isFalhaApi(output)) {
+          falhaDeSistemaVista = true;
           state.falhasConsecutivas += 1;
           const erro = (output as { erro?: { erro?: string; alerta?: boolean } }).erro;
 
           // 401/403 e 412 não esperam a segunda falha (tabela de falhas da Fase 2).
           const imediato = exigeTransferenciaImediata(output);
+          // Na 1ª falha só o motivo: se o modelo já transferir, não sai como "outro" (eval 11, 25/10).
+          output = { ...(output as object), motivo_sugerido: "falha_sistema" };
           if (imediato || state.falhasConsecutivas >= FALHAS_PARA_TRANSFERIR) {
-            output = {
-              ...(output as object),
-              instrucao: "transferir",
-              motivo_sugerido: "falha_sistema",
-            };
+            output = { ...(output as object), instrucao: "transferir" };
           }
           if (erro?.alerta) {
             logger.log({
@@ -264,7 +277,8 @@ export async function runTurn(
               ferramenta: toolName,
             });
           }
-        } else {
+        } else if (error !== "parametros_invalidos" && error !== "unknown_tool" && error !== "motivo_invalido") {
+          // Erro do modelo não chega à loja: não prova que a API voltou.
           state.falhasConsecutivas = 0;
         }
 
@@ -272,6 +286,7 @@ export async function runTurn(
         // Lacuna fica com o modelo: com a base quase vazia, forçar derrubaria quem só consultou de passagem.
         if (ordem?.instrucao === "transferir" && ordem.motivo_sugerido !== "lacuna_conhecimento") {
           const motivo = ordem.motivo_sugerido as MotivoTransferencia;
+          if (motivo === "falha_sistema") falhaDeSistemaVista = true;
           transferenciaPendente = MOTIVOS.includes(motivo) ? motivo : "outro";
         }
 
@@ -299,8 +314,8 @@ export async function runTurn(
         }
 
         if (toolName === "transferir_humano") {
-          transferred = true;
           const o = output as { status?: string; resumo_para_atendente?: ResumoTransferencia };
+          transferred ||= o.status === "transferido";
           if (o.status === "transferido" && o.resumo_para_atendente) {
             transferencia = o.resumo_para_atendente;
             opcoes.aoTransferir?.(transferencia, [...lacunas]);
@@ -323,6 +338,14 @@ export async function runTurn(
       const textBlocks = response.content.filter((b) => b.type === "text");
       let text = textBlocks.map((b) => b.text ?? "").join("\n").trim();
 
+      if (!transferred && !transferenciaPendente && !cobrouTransferencia && PROMETE_TRANSFERIR.test(text)) {
+        cobrouTransferencia = true;
+        logger.log({ type: "state_change", change: "prometeu_transferir_sem_chamar" });
+        messages.push({ role: "assistant", content: response.content });
+        messages.push({ role: "user", content: COBRANCA_DE_TRANSFERENCIA });
+        continue;
+      }
+
       if (transferenciaPendente && !transferred) {
         const input = {
           motivo: transferenciaPendente,
@@ -332,11 +355,14 @@ export async function runTurn(
         toolsCalled.push({ name: "transferir_humano", inputSummary: JSON.stringify(input).slice(0, 120) });
         const o = await transferirHumanoHandler(input, state, client);
         logger.log({ type: "tool_call", name: "transferir_humano", input, output: o, duration_ms: 0 });
-        transferred = true;
-        transferencia = o.resumo_para_atendente;
-        opcoes.aoTransferir?.(transferencia, [...lacunas]);
-        opcoes.aoEfeito?.();
-        text = MENSAGEM_TRANSFERENCIA;
+        // Só o motivo de instrução de ferramenta é forçado; a recusa (orcamento_para_emitir sem ficha) não chega aqui.
+        if (o.status === "transferido") {
+          transferred = true;
+          transferencia = o.resumo_para_atendente;
+          opcoes.aoTransferir?.(o.resumo_para_atendente, [...lacunas]);
+          opcoes.aoEfeito?.();
+          text = MENSAGEM_TRANSFERENCIA;
+        }
       }
 
       logger.log({

@@ -25,7 +25,7 @@ async function main(): Promise<void> {
     process.exit(1);
   }
   const client = createBrindeMeClient();
-  console.log(`API da loja: ${config.brindeMe.mode} · escrita de orçamento: ${config.brindeMe.escritaOrcamento}`);
+  console.log(`API da loja: ${config.brindeMe.mode}`);
   await avisarConhecimentoECatalogo(client);
 
   const store = new FileProductIndexStore();

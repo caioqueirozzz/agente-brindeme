@@ -1,0 +1,28 @@
+{
+  "id": "28_orcamento_depois_do_detalhe",
+  "descricao": "Pedido de orçamento num turno depois do detalhe — usa a cor detalhada, sem inventar id, e transfere a ficha",
+  "mensagens": [
+    "Quero 50 canecas personalizadas para um evento da empresa",
+    "me fala mais da caneca de porcelana",
+    "quero 50 da branca. PF, João Silva, joao@teste.com",
+    "pode enviar"
+  ],
+  "expectativas": [
+    {
+      "tipo": "ordem_ferramentas",
+      "ordem": [
+        "detalhar_produto",
+        "preparar_orcamento",
+        "transferir_humano"
+      ]
+    },
+    {
+      "tipo": "transferiu_com_motivo",
+      "motivo": "orcamento_para_emitir"
+    },
+    {
+      "tipo": "resposta_nao_contem",
+      "padrao": "ORC-|or[çc]amento (foi )?criado"
+    }
+  ]
+}
