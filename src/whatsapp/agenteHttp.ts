@@ -39,7 +39,10 @@ export function criarClienteHttp(baseUrl: string, timeoutMs: number): ClienteAge
       try {
         const res = await post("/api/mensagens", pedido, prazoMs);
         if (res.status === 409) return { tipo: "em_andamento" };
-        if (!res.ok) return { tipo: "falha", motivo: `http_${res.status}` };
+        if (!res.ok) {
+          const corpo = await res.text().catch(() => "");
+          return { tipo: "falha", motivo: `http_${res.status}: ${corpo.slice(0, 300)}` };
+        }
         return { tipo: "ok", resposta: respostaMensagensSchema.parse(await res.json()) };
       } catch (err) {
         return { tipo: "falha", motivo: err instanceof Error ? err.name : "erro" };
