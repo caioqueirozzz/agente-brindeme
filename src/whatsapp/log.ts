@@ -4,7 +4,16 @@ import { mascararTexto } from "../logging/logger.js";
 
 export type LogPonte = (evento: Record<string, unknown>) => void;
 
-const NO_TERMINAL = new Set(["lote_falhou", "envio_falhou", "evento_pendente", "varredura_falhou", "erro_ao_receber"]);
+const NO_TERMINAL = new Set([
+  "lote_falhou",
+  "envio_falhou",
+  "evento_pendente",
+  "varredura_falhou",
+  "erro_ao_receber",
+  "midia_nao_baixou",
+  "mensagem_nao_convertida",
+  "reconexao_falhou",
+]);
 
 export function criarLogPonte(dir = "logs"): LogPonte {
   mkdirSync(dir, { recursive: true });

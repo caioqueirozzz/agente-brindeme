@@ -10,6 +10,7 @@ const controle = vi.hoisted(() => ({
   lidFalha: false,
   envioRetorna: { id: "enviada" } as unknown,
   proprioLidErrado: false,
+  envios: [] as unknown[][],
 }));
 
 vi.mock("whatsapp-web.js", async () => {
@@ -39,7 +40,8 @@ vi.mock("whatsapp-web.js", async () => {
       }
       return [{ pn: "558399990000@c.us", lid: "123@lid" }];
     }
-    async sendMessage() {
+    async sendMessage(...args: unknown[]) {
+      controle.envios.push(args);
       return controle.envioRetorna;
     }
     async getChatById() {
@@ -79,8 +81,8 @@ function msg(id: string, extra: Record<string, unknown> = {}) {
   };
 }
 
-async function montar(): Promise<CanalWwebjs> {
-  const canal = new CanalWwebjs({ sessaoDir: "nunca-usado", log: () => {} });
+async function montar(log: (e: Record<string, unknown>) => void = () => {}): Promise<CanalWwebjs> {
+  const canal = new CanalWwebjs({ sessaoDir: "nunca-usado", log });
   await canal.iniciar();
   clienteAtual().emit("ready");
   return canal;
@@ -96,6 +98,7 @@ describe("CanalWwebjs (biblioteca falsa)", () => {
     controle.lidFalha = false;
     controle.envioRetorna = { id: "enviada" };
     controle.proprioLidErrado = false;
+    controle.envios = [];
     vi.spyOn(console, "log").mockImplementation(() => {});
     vi.spyOn(console, "warn").mockImplementation(() => {});
     vi.spyOn(console, "error").mockImplementation(() => {});
@@ -237,6 +240,39 @@ describe("CanalWwebjs (biblioteca falsa)", () => {
     const pendentes = await canal.pendentes();
     expect(pendentes[0].mensagens).toHaveLength(120);
     expect(pedidos).toEqual([{ limit: 120, fromMe: false }]);
+  });
+
+  it("envio sem marcar como lida e sem prévia de link (e-mail virava prévia de site)", async () => {
+    const canal = await montar();
+    await canal.enviar(`${TEL}@c.us`, "seu e-mail é teste@empresa.com");
+    expect(controle.envios).toEqual([[`${TEL}@c.us`, "seu e-mail é teste@empresa.com", { sendSeen: false, linkPreview: false }]]);
+  });
+
+  it("[#30] mensagem sem id ao vivo não é entregue e vai para o log com o tipo", async () => {
+    const eventos: Record<string, unknown>[] = [];
+    const canal = await montar((e) => eventos.push(e));
+    const recebidas: unknown[] = [];
+    canal.aoMensagem((m) => recebidas.push(m));
+    clienteAtual().emit("message_create", msg("x", { id: {} }));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(recebidas).toHaveLength(0);
+    expect(eventos).toContainEqual({ type: "mensagem_nao_convertida", erro: "Error: mensagem sem id (tipo chat)" });
+  });
+
+  it("[#30] varredura descarta a mensagem sem id e entrega as outras", async () => {
+    const eventos: Record<string, unknown>[] = [];
+    const canal = await montar((e) => eventos.push(e));
+    controle.chats = [
+      {
+        id: { _serialized: `${TEL}@c.us` },
+        isGroup: false,
+        unreadCount: 2,
+        fetchMessages: async () => [msg("sem", { id: {} }), msg("boa")],
+      },
+    ];
+    const pendentes = await canal.pendentes();
+    expect(pendentes[0].mensagens.map((m) => m.id)).toEqual(["boa"]);
+    expect(eventos).toContainEqual({ type: "mensagem_nao_convertida", erro: "Error: mensagem sem id (tipo chat)" });
   });
 
   it("[F13] desconectado com UNPAIRED e getState indisponível: não relança nem gera QR", async () => {

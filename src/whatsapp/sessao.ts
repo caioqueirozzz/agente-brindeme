@@ -77,8 +77,8 @@ export class CanalWwebjs implements CanalWhatsApp {
   }
 
   async enviar(chatId: string, texto: string): Promise<void> {
-    // Sem sendSeen: false a biblioteca marca a conversa como lida a cada envio.
-    const enviada = await this.exigirCliente().sendMessage(chatId, texto, { sendSeen: false });
+    // Sem sendSeen: false a biblioteca marca a conversa como lida a cada envio; e-mail no texto virava prévia de site.
+    const enviada = await this.exigirCliente().sendMessage(chatId, texto, { sendSeen: false, linkPreview: false });
     // A biblioteca resolve vazio, sem lançar, quando não acha a conversa.
     if (!enviada) throw new Error(`WhatsApp não encontrou a conversa ${chatId}`);
   }
@@ -124,7 +124,13 @@ export class CanalWwebjs implements CanalWhatsApp {
       const chatId = chat.id._serialized;
       if (chat.isGroup || chat.unreadCount <= 0 || !ehConversaDireta(chatId)) continue;
       const recentes = await chat.fetchMessages({ limit: chat.unreadCount, fromMe: false });
-      const mensagens = await Promise.all(naoLidasDoCliente(recentes, chat.unreadCount).map((m) => this.converter(m)));
+      // Uma mensagem que não converte não pode derrubar a varredura das outras.
+      const convertidas = await Promise.allSettled(naoLidasDoCliente(recentes, chat.unreadCount).map((m) => this.converter(m)));
+      const mensagens: MensagemRecebida[] = [];
+      for (const c of convertidas) {
+        if (c.status === "fulfilled") mensagens.push(c.value);
+        else this.opcoes.log({ type: "mensagem_nao_convertida", erro: String(c.reason) });
+      }
       if (mensagens.length > 0) resultado.push({ chatId, mensagens });
     }
     return resultado;
@@ -200,12 +206,15 @@ export class CanalWwebjs implements CanalWhatsApp {
   }
 
   private async converter(msg: Message): Promise<MensagemRecebida> {
+    // Sem id o lote vira 400 na API (#30: o WhatsApp Web trocou _serialized por $1).
+    const id = msg.id?._serialized;
+    if (!id) throw new Error(`mensagem sem id (tipo ${msg.type})`);
     const chatId = msg.fromMe ? msg.to : msg.from;
     const direta = ehConversaDireta(chatId, msg.author);
     const telefone = direta ? await this.resolverTelefone(chatId) : null;
     const tipo = tipoDaMensagem(msg.type);
     const recebida: MensagemRecebida = {
-      id: msg.id._serialized,
+      id,
       chatId,
       telefone,
       deMim: msg.fromMe,
