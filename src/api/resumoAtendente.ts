@@ -39,8 +39,11 @@ export function formatarAvisoTransferencia(
     `Motivo: ${resumo.motivo}${resumo.observacao && !soAFicha ? ` — ${resumo.observacao}` : ""}`,
   ];
   if (lacunas.length > 0) linhas.push(`Pergunta sem resposta: ${lacunas.join(" | ")}`);
-  if (resumo.produtos_nomes.length > 0 && !soAFicha) linhas.push(`Produtos: ${resumo.produtos_nomes.join(", ")}`);
+  const produtos = resumo.produtos_nomes ?? resumo.produtos_discutidos;
+  if (produtos.length > 0 && !soAFicha) linhas.push(`Produtos: ${produtos.join(", ")}`);
   if (resumo.ficha_pedido) linhas.push("", ...linhasDaFicha(resumo.ficha_pedido));
+  // Fora do cabeçalho, mas não se perde: pode ter um detalhe que a ficha não traz.
+  if (soAFicha && resumo.observacao) linhas.push(`Nota do agente (confira com a ficha): ${resumo.observacao}`);
   if (resumo.artes_registradas.length > 0) linhas.push(`Artes: ${resumo.artes_registradas.join(", ")}`);
   if (resumo.ultimas_mensagens) {
     linhas.push(

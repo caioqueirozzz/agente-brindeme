@@ -325,7 +325,13 @@ export class CanalWwebjs implements CanalWhatsApp {
     );
     if (!processo || processo.exitCode !== null || processo.signalCode !== null) return;
     const saiu = new Promise<void>((resolve) => processo.once("exit", () => resolve()));
-    processo.kill("SIGKILL");
+    try {
+      // No Windows o kill lança EACCES se o Chrome estiver no meio da saída; sem o try a rejeição derrubava a ponte.
+      processo.kill("SIGKILL");
+    } catch (err) {
+      this.opcoes.log({ type: "chrome_nao_morreu", erro: String(err) });
+      return;
+    }
     await comPrazo(saiu, 5_000).catch(() => this.opcoes.log({ type: "chrome_nao_morreu", pid: processo.pid }));
   }
 

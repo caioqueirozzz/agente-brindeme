@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { addMessage, createInitialState } from "../src/agent/state.js";
 import { formatarAvisoTransferencia, resumoDoEstado } from "../src/api/resumoAtendente.js";
-
 const TEL = "5583999990000";
 
 describe("aviso de transferência", () => {
@@ -77,8 +76,11 @@ describe("aviso de transferência", () => {
       resumoDoEstado(estado, "orcamento_para_emitir", "Emitir orçamento para 100 canecas brancas")
     );
     expect(texto.split("\n")[2]).toBe("Motivo: orcamento_para_emitir");
-    expect(texto).not.toContain("canecas brancas");
     expect(texto).not.toMatch(/^Produtos:/m);
+    // O que o modelo anotou não se perde: vai depois da ficha, marcado para conferir com ela.
+    const linhas = texto.split("\n");
+    const nota = linhas.indexOf("Nota do agente (confira com a ficha): Emitir orçamento para 100 canecas brancas");
+    expect(nota).toBeGreaterThan(linhas.indexOf("📋 *Orçamento para emitir*"));
   });
 
   it("[#26] produtos discutidos saem pelo nome; id sem nome conhecido fica como está", () => {
@@ -88,6 +90,15 @@ describe("aviso de transferência", () => {
     estado.produtosDetalhados = [{ id: "p2", nome: "Garrafa Térmica", cores: [] }];
     const texto = formatarAvisoTransferencia(TEL, resumoDoEstado(estado, "desconto"));
     expect(texto).toContain("Produtos: Caneca Cerâmica 330ml, Garrafa Térmica, p3");
+  });
+
+  it("resumo gravado antes de produtos_nomes existir ainda formata (deploy no meio de uma transferência)", () => {
+    const { produtos_nomes: _, ...antigo } = resumoDoEstado(
+      Object.assign(createInitialState(TEL), { produtosDiscutidos: ["prod-x"] }),
+      "pedido_cliente"
+    );
+    const texto = formatarAvisoTransferencia(TEL, antigo as ReturnType<typeof resumoDoEstado>);
+    expect(texto).toContain("Produtos: prod-x");
   });
 
   it("[#26] últimas mensagens saem formatadas para o WhatsApp, sem Markdown cru", () => {

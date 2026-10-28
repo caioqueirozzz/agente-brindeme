@@ -346,6 +346,21 @@ describe("CanalWwebjs (biblioteca falsa)", () => {
     expect(controle.chromesVivosAoLancar.at(-1)).toBe(0);
   });
 
+  it("[#29] kill que lança (Windows: EACCES no meio da saída) não derruba a reconexão", async () => {
+    const eventos: Record<string, unknown>[] = [];
+    await montar((e) => eventos.push(e));
+    controle.estado = null;
+    controle.destroyFechaNavegador = false;
+    const antigo = clienteAtual() as unknown as { processo: { kill: () => boolean } };
+    antigo.processo.kill = () => {
+      throw new Error("kill EACCES");
+    };
+    clienteAtual().emit("disconnected", "NAVIGATION");
+    await vi.advanceTimersByTimeAsync(6_000);
+    expect(controle.clientes).toHaveLength(2);
+    expect(eventos).toContainEqual({ type: "chrome_nao_morreu", erro: "Error: kill EACCES" });
+  });
+
   it("[#29] Chrome que o destroy() fechou não leva SIGKILL", async () => {
     await montar();
     controle.estado = null;

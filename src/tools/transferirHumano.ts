@@ -39,7 +39,8 @@ export interface ResumoTransferencia {
   prioridade: "normal" | "alta";
   observacao?: string;
   produtos_discutidos: string[];
-  produtos_nomes: string[];
+  /** Opcional: resumo gravado em disco antes deste campo existir não pode travar a transferência. */
+  produtos_nomes?: string[];
   /** Estimativa confirmada pelo cliente, para o atendente emitir o orçamento (motivo orcamento_para_emitir). */
   ficha_pedido?: FichaPedido["resumo"];
   artes_registradas: string[];

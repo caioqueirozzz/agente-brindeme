@@ -84,6 +84,8 @@ export interface ConversationState {
     dataLimite?: string;
   };
   produtosDiscutidos: string[];
+  /** id → nome de tudo que entrou em produtosDiscutidos: a ficha do atendente mostra nome, não id. */
+  nomesProdutos?: Record<string, string>;
   /** A última lista de buscar_produtos, na ordem mostrada: é a que "a primeira opção" aponta. */
   ultimasOpcoes?: Array<{ id: string; nome: string; cores?: CorDoProduto[] }>;
   /** Os últimos de detalhar_produto, o mais recente primeiro: sem isto o subproduto_id da cor some no turno seguinte. */
@@ -163,8 +165,14 @@ export function lembrarDetalhado(state: ConversationState, detalhado: ProdutoDet
 
 /** Os produtos discutidos pelo nome, para o atendente; id sem nome conhecido fica como está. */
 export function nomesDosProdutos(state: ConversationState): string[] {
-  const nomes = new Map([...(state.produtosDetalhados ?? []), ...(state.ultimasOpcoes ?? [])].map((p) => [p.id, p.nome]));
-  return state.produtosDiscutidos.map((id) => nomes.get(id) ?? id);
+  // As listas recentes cobrem estados gravados antes de nomesProdutos existir.
+  const recentes = new Map([...(state.produtosDetalhados ?? []), ...(state.ultimasOpcoes ?? [])].map((p) => [p.id, p.nome]));
+  return state.produtosDiscutidos.map((id) => state.nomesProdutos?.[id] ?? recentes.get(id) ?? id);
+}
+
+export function discutirProduto(state: ConversationState, id: string, nome: string): void {
+  if (!state.produtosDiscutidos.includes(id)) state.produtosDiscutidos.push(id);
+  state.nomesProdutos = { ...state.nomesProdutos, [id]: nome };
 }
 
 export function normalizePhone(phone: string): string {

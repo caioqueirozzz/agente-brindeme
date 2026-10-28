@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { BrindeMeClient } from "../integrations/brindeme/client.js";
 import { ApiError, translateApiError } from "../integrations/brindeme/errors.js";
-import { lembrarDetalhado, type ConversationState } from "../agent/state.js";
+import { discutirProduto, lembrarDetalhado, type ConversationState } from "../agent/state.js";
 
 export const detalharProdutoSchema = z.object({
   produto_id: z.string().describe("ID do produto"),
@@ -23,7 +23,7 @@ export async function detalharProdutoHandler(
     // Guarda de onde veio cada subproduto: preparar_orcamento precisa disso
     // para resolver o item sem varrer o catálogo inteiro.
     for (const s of p.subproducts) state.subprodutoParaProduto[s.id] = p.id;
-    if (!state.produtosDiscutidos.includes(p.id)) state.produtosDiscutidos.push(p.id);
+    discutirProduto(state, p.id, p.name);
     lembrarDetalhado(state, { id: p.id, nome: p.name, cores: activeSubs.map((s) => ({ subproduto_id: s.id, cor: s.color })) });
 
     const precoNaQuantidade = (sub: (typeof activeSubs)[number]): number | null => {
