@@ -103,6 +103,11 @@ describe("prepararOrcamento", () => {
     expect(r.erro).toBe("informe_a_cor");
     expect(r.opcoes).toContainEqual(expect.objectContaining({ subproduto_id: "sub-001-branco" }));
     expect(r.instrucao).toMatch(/preparar_orcamento de novo/);
+    // Resultado de ferramenta some no turno seguinte: sem isto, o "Aceito" do cliente voltava ao id do produto (#28).
+    expect(limpo.produtosDetalhados?.[0]).toMatchObject({
+      id: "prod-001",
+      cores: expect.arrayContaining([expect.objectContaining({ subproduto_id: "sub-001-branco" })]),
+    });
     const segunda = await prepararOrcamentoHandler(
       { ...validInput, itens: [{ subproduto_id: "sub-001-branco", quantidade: 50 }] },
       limpo,

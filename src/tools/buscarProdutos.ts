@@ -111,7 +111,12 @@ function formatar(r: Recomendacao, input: BuscarProdutosInput, state: Conversati
         for (const sub of produto.subprodutos) state.subprodutoParaProduto[sub.id] = produto.id;
         if (!state.produtosDiscutidos.includes(produto.id)) state.produtosDiscutidos.push(produto.id);
       }
-      state.ultimasOpcoes = r.itens.map(({ produto }) => ({ id: produto.id, nome: produto.nome }));
+      // Com as cores: o turno seguinte ("aceito", "pode ser essa") precisa do subproduto_id, não do id do produto (#28).
+      state.ultimasOpcoes = r.itens.map(({ produto, oferta }) => ({
+        id: produto.id,
+        nome: produto.nome,
+        cores: oferta.cores.map((c) => ({ subproduto_id: c.subproduto_id, cor: c.cor })),
+      }));
       const informada = r.quantidadeInformada;
       return {
         resultado: "produtos_encontrados",

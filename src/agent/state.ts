@@ -53,6 +53,17 @@ export interface FichaPedido {
   };
 }
 
+export interface CorDoProduto {
+  subproduto_id: string;
+  cor: string;
+}
+
+export interface ProdutoDetalhado {
+  id: string;
+  nome: string;
+  cores: CorDoProduto[];
+}
+
 export interface ConversationState {
   conversaId: string;
   telefone: string;
@@ -74,9 +85,9 @@ export interface ConversationState {
   };
   produtosDiscutidos: string[];
   /** A última lista de buscar_produtos, na ordem mostrada: é a que "a primeira opção" aponta. */
-  ultimasOpcoes?: Array<{ id: string; nome: string }>;
+  ultimasOpcoes?: Array<{ id: string; nome: string; cores?: CorDoProduto[] }>;
   /** Os últimos de detalhar_produto, o mais recente primeiro: sem isto o subproduto_id da cor some no turno seguinte. */
-  produtosDetalhados?: Array<{ id: string; nome: string; cores: Array<{ subproduto_id: string; cor: string }> }>;
+  produtosDetalhados?: ProdutoDetalhado[];
   /**
    * subproduto_id → produto_id. GET /product (listagem) não traz subprodutos,
    * então só dá para resolver um subproduto via GET /product/{id}. O mapa é
@@ -137,6 +148,17 @@ export function ultimasMensagens(state: ConversationState): string {
     .slice(-4)
     .map((m) => `[${m.role}]: ${markdownParaWhatsApp(m.content)}`)
     .join("\n");
+}
+
+/** Cobre "me fala da primeira, e da segunda? fico com a primeira". */
+const PRODUTOS_DETALHADOS_GUARDADOS = 3;
+
+/** O mais recente primeiro: é daqui que o subproduto_id da cor chega ao turno seguinte. */
+export function lembrarDetalhado(state: ConversationState, detalhado: ProdutoDetalhado): void {
+  state.produtosDetalhados = [detalhado, ...(state.produtosDetalhados ?? []).filter((d) => d.id !== detalhado.id)].slice(
+    0,
+    PRODUTOS_DETALHADOS_GUARDADOS
+  );
 }
 
 /** Os produtos discutidos pelo nome, para o atendente; id sem nome conhecido fica como está. */

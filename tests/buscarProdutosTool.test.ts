@@ -128,11 +128,19 @@ describe("buscar_produtos (ferramenta)", () => {
 
   it("guarda as opções apresentadas, na ordem, e a busca seguinte as substitui ('a primeira opção')", async () => {
     const r = await buscar({ consulta: "caneca", quantidade: 100 });
-    expect(state.ultimasOpcoes).toEqual(r.produtos.map((p: Saida) => ({ id: p.id, nome: p.nome })));
+    expect(state.ultimasOpcoes?.map(({ id, nome }) => ({ id, nome }))).toEqual(r.produtos.map((p: Saida) => ({ id: p.id, nome: p.nome })));
 
     await buscar({ consulta: "squeeze", quantidade: 100 });
-    expect(state.ultimasOpcoes).toEqual([{ id: "squeeze", nome: "Squeeze de Alumínio" }]);
+    expect(state.ultimasOpcoes?.map(({ id, nome }) => ({ id, nome }))).toEqual([{ id: "squeeze", nome: "Squeeze de Alumínio" }]);
     expect(state.produtosDiscutidos).toEqual(expect.arrayContaining(["caneca", "squeeze"]));
+  });
+
+  it("[#28] as opções guardadas levam o subproduto_id de cada cor para o turno seguinte", async () => {
+    const r = await buscar({ consulta: "caneca", quantidade: 100 });
+    expect(state.ultimasOpcoes?.[0].cores).toEqual(
+      r.produtos[0].subprodutos.map((s: { subproduto_id: string; cor?: string }) => ({ subproduto_id: s.subproduto_id, cor: s.cor ?? "" }))
+    );
+    expect(state.ultimasOpcoes?.[0].cores?.length).toBeGreaterThan(0);
   });
 
   it("guarda a necessidade do cliente no estado", async () => {

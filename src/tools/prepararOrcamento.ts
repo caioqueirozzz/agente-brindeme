@@ -3,7 +3,7 @@ import type { BrindeMeClient } from "../integrations/brindeme/client.js";
 import { translateApiError } from "../integrations/brindeme/errors.js";
 import { arredondar } from "../integrations/brindeme/mappers.js";
 import type { ConversationState } from "../agent/state.js";
-import { marcaUltimaMensagemCliente, type FichaPedido } from "../agent/state.js";
+import { lembrarDetalhado, marcaUltimaMensagemCliente, type FichaPedido } from "../agent/state.js";
 
 // Sem CPF, CNPJ nem endereço: quem emite o orçamento coleta no fechamento (decisão de 25/10, LGPD).
 export const prepararOrcamentoSchema = z.object({
@@ -51,6 +51,12 @@ export async function prepararOrcamentoHandler(
       if (!produtoId && state.produtosDiscutidos.includes(item.subproduto_id)) {
         const produto = await client.getProduct(item.subproduto_id);
         for (const s of produto.subproducts) state.subprodutoParaProduto[s.id] = produto.id;
+        // Resultado de ferramenta some no turno seguinte: sem isto, o "Aceito" do cliente voltava ao id do produto (#28).
+        lembrarDetalhado(state, {
+          id: produto.id,
+          nome: produto.name,
+          cores: produto.subproducts.filter((s) => s.status).map((s) => ({ subproduto_id: s.id, cor: s.color })),
+        });
         return {
           erro: "informe_a_cor",
           produto: produto.name,
