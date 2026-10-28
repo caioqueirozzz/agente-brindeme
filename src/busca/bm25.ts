@@ -81,11 +81,12 @@ export class IndiceBM25 {
     return Math.log(1 + (N - n + 0.5) / (n + 0.5));
   }
 
-  private parcela(doc: DocInterno, termo: string): number {
+  /** `idfDe` é o termo cujo peso vale: o sinônimo pesa o que pesa a palavra pedida. */
+  private parcela(doc: DocInterno, termo: string, idfDe = termo): number {
     const tf = doc.tf.get(termo);
     if (!tf) return 0;
     const norm = 1 - B + B * (doc.comprimento / (this.mediaComprimento || 1));
-    return this.idf(termo) * ((tf * (K1 + 1)) / (tf + K1 * norm));
+    return this.idf(idfDe) * ((tf * (K1 + 1)) / (tf + K1 * norm));
   }
 
   pontuar(consulta: TermoConsulta[]): Map<string, PontuacaoDocumento> {
@@ -103,7 +104,8 @@ export class IndiceBM25 {
         const exato = this.parcela(doc, t.termo);
         let melhorAlternativa = 0;
         for (const alt of t.alternativas) {
-          melhorAlternativa = Math.max(melhorAlternativa, this.parcela(doc, alt) * PESO_SINONIMO);
+          // Com o IDF do próprio sinônimo, a rara "xicara" passava na frente da "caneca" pedida (#26).
+          melhorAlternativa = Math.max(melhorAlternativa, this.parcela(doc, alt, t.termo) * PESO_SINONIMO);
         }
         // Max, não soma: o mesmo conceito não conta duas vezes.
         const contribuicao = Math.max(exato, melhorAlternativa);

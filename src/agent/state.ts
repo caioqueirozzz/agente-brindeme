@@ -1,5 +1,6 @@
 import { createHash } from "crypto";
 import { v4 as uuidv4 } from "uuid";
+import { markdownParaWhatsApp } from "../contrato/texto.js";
 
 export interface Mensagem {
   role: "user" | "assistant";
@@ -128,6 +129,20 @@ export function addMessage(
 export function marcaUltimaMensagemCliente(state: ConversationState): string {
   const m = [...state.historico].reverse().find((x) => x.role === "user");
   return m ? createHash("sha256").update(m.content.trim()).digest("hex").slice(0, 16) : "";
+}
+
+/** O fim da conversa para o atendente, no formato que o WhatsApp mostra (o cliente recebeu assim, não em Markdown). */
+export function ultimasMensagens(state: ConversationState): string {
+  return state.historico
+    .slice(-4)
+    .map((m) => `[${m.role}]: ${markdownParaWhatsApp(m.content)}`)
+    .join("\n");
+}
+
+/** Os produtos discutidos pelo nome, para o atendente; id sem nome conhecido fica como está. */
+export function nomesDosProdutos(state: ConversationState): string[] {
+  const nomes = new Map([...(state.produtosDetalhados ?? []), ...(state.ultimasOpcoes ?? [])].map((p) => [p.id, p.nome]));
+  return state.produtosDiscutidos.map((id) => nomes.get(id) ?? id);
 }
 
 export function normalizePhone(phone: string): string {

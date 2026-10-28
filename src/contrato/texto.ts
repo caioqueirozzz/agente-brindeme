@@ -17,11 +17,14 @@ export function loteParaTexto(mensagens: MensagemLote[]): string {
     .join("\n");
 }
 
-export function formatarParaWhatsApp(texto: string): string[] {
-  const convertido = texto
+export function markdownParaWhatsApp(texto: string): string {
+  return texto
     .replace(/\*\*(.+?)\*\*/g, "*$1*")
     .replace(/^#{1,6}[ \t]+(.+)$/gm, (_, titulo: string) => `*${titulo.replace(/\*/g, "")}*`);
-  const paragrafos = convertido
+}
+
+export function formatarParaWhatsApp(texto: string): string[] {
+  const paragrafos = markdownParaWhatsApp(texto)
     .split(/\n[ \t]*\n/)
     .map((p) => p.trim())
     .filter(Boolean);

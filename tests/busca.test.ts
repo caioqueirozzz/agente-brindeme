@@ -74,11 +74,12 @@ describe("BM25", () => {
     expect(r.get("caneca")!.cobertura).toBe(1);
   });
 
-  it("casa por sinônimo, valendo menos que a palavra exata", () => {
-    const exato = motor.pontuar(q("caneca")).get("caneca")!.score;
-    const sinonimo = motor.pontuar(q("copo")).get("caneca")!;
+  it("casa por sinônimo, valendo menos que a palavra exata na mesma consulta", () => {
+    const comCopo = new IndiceBM25([...docs, { id: "copo", campos: [{ tokens: tokenizar("Copo de porcelana"), peso: 3 }, { tokens: tokenizar("branco resistente"), peso: 1 }] }]);
+    const r = comCopo.pontuar(q("copo"));
+    const sinonimo = r.get("caneca")!;
     expect(sinonimo.score).toBeGreaterThan(0);
-    expect(sinonimo.score).toBeLessThan(exato);
+    expect(sinonimo.score).toBeLessThan(r.get("copo")!.score);
     expect(sinonimo.cobertura).toBe(1);
   });
 
@@ -94,6 +95,18 @@ describe("BM25", () => {
 
   it("consulta vazia não pontua nada", () => {
     expect(motor.pontuar([]).size).toBe(0);
+  });
+
+  it("[#26] palavra comum pedida vence o sinônimo raro", () => {
+    const canecas = Array.from({ length: 20 }, (_, i) => ({
+      id: `caneca-${i}`,
+      campos: [{ tokens: tokenizar(`Caneca modelo ${i}`), peso: 3 }],
+    }));
+    const xicara = { id: "xicara", campos: [{ tokens: tokenizar("Xícara com pires"), peso: 3 }] };
+    const outros = Array.from({ length: 30 }, (_, i) => ({ id: `outro-${i}`, campos: [{ tokens: tokenizar(`Caderno ${i}`), peso: 3 }] }));
+    const r = new IndiceBM25([xicara, ...canecas, ...outros]).pontuar(q("caneca"));
+    const ordem = [...r.entries()].sort((a, b) => b[1].score - a[1].score).map(([id]) => id);
+    expect(ordem.at(-1)).toBe("xicara");
   });
 });
 

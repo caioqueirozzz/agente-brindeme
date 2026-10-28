@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { MockBrindeMeClient } from "../src/integrations/brindeme/mockClient.js";
-import { prepararOrcamentoHandler } from "../src/tools/prepararOrcamento.js";
+import { AVISO_ESTIMATIVA, prepararOrcamentoHandler } from "../src/tools/prepararOrcamento.js";
 import { transferirHumanoHandler } from "../src/tools/transferirHumano.js";
 import { addMessage, createInitialState } from "../src/agent/state.js";
 import { semearMapaSubprodutos } from "./helpers/mapaSubprodutos.js";
@@ -51,6 +51,22 @@ describe("prepararOrcamento", () => {
     // 50 * 18.90 em float dá 944.9999999999999; o total é arredondado em
     // centavos justamente para esse número não chegar ao cliente.
     expect(result.resumo.total_estimado).toBe(945);
+  });
+
+  it("[#26] traz o resumo pronto para o cliente: produto, cor, valores e o aviso literal", async () => {
+    const result = (await prepararOrcamentoHandler(validInput, state, client)) as {
+      resumo_para_cliente: string;
+      instrucao: string;
+    };
+    // toLocaleString separa "R$" do valor com espaço inquebrável.
+    expect(result.resumo_para_cliente.replace(/ /g, " ")).toBe(
+      [
+        "• 50× Caneca de Porcelana Personalizada (Branco) — R$ 18,90 cada = R$ 945,00",
+        "Total estimado: R$ 945,00",
+        `_${AVISO_ESTIMATIVA}_`,
+      ].join("\n")
+    );
+    expect(result.instrucao).toMatch(/resumo_para_cliente/);
   });
 
   it("telefone do orçamento é o da conversa, não o que o modelo mandar (#12)", async () => {

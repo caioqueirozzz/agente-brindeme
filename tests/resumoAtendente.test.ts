@@ -57,6 +57,47 @@ describe("aviso de transferência", () => {
     expect(texto).toMatch(/frete e prazo a equipe confirma/);
   });
 
+  it("[#26] no orçamento para emitir, o cabeçalho não traz o texto do modelo nem a lista de produtos discutidos", () => {
+    const estado = createInitialState(TEL);
+    estado.produtosDiscutidos = ["uuid-xicara", "uuid-vidro", "uuid-caneca"];
+    estado.fichaPedido = {
+      mensagemDoResumo: "x",
+      resumo: {
+        tipo: "PJ",
+        nome: "Empresa Teste",
+        email: "teste@empresa.test",
+        telefone: TEL,
+        itens: [{ subproduto_id: "s1", cor: "Branco", nome_produto: "Xícara com Pires", quantidade: 100, preco_unitario: 7.8, subtotal: 780 }],
+        total_estimado: 780,
+        arte_refs: [],
+      },
+    };
+    const texto = formatarAvisoTransferencia(
+      TEL,
+      resumoDoEstado(estado, "orcamento_para_emitir", "Emitir orçamento para 100 canecas brancas")
+    );
+    expect(texto.split("\n")[2]).toBe("Motivo: orcamento_para_emitir");
+    expect(texto).not.toContain("canecas brancas");
+    expect(texto).not.toMatch(/^Produtos:/m);
+  });
+
+  it("[#26] produtos discutidos saem pelo nome; id sem nome conhecido fica como está", () => {
+    const estado = createInitialState(TEL);
+    estado.produtosDiscutidos = ["p1", "p2", "p3"];
+    estado.ultimasOpcoes = [{ id: "p1", nome: "Caneca Cerâmica 330ml" }];
+    estado.produtosDetalhados = [{ id: "p2", nome: "Garrafa Térmica", cores: [] }];
+    const texto = formatarAvisoTransferencia(TEL, resumoDoEstado(estado, "desconto"));
+    expect(texto).toContain("Produtos: Caneca Cerâmica 330ml, Garrafa Térmica, p3");
+  });
+
+  it("[#26] últimas mensagens saem formatadas para o WhatsApp, sem Markdown cru", () => {
+    const estado = createInitialState(TEL);
+    addMessage(estado, "assistant", "### Estimativa\n**Xícara** por R$ 7,80");
+    const texto = formatarAvisoTransferencia(TEL, resumoDoEstado(estado, "outro"));
+    expect(texto).toContain("[agente]: *Estimativa*\n*Xícara* por R$ 7,80");
+    expect(texto).not.toMatch(/###|\*\*/);
+  });
+
   it("prioridade normal e cliente sem nome", () => {
     const resumo = { ...resumoDoEstado(createInitialState(TEL), "pedido_cliente", "quer falar com o dono"), prioridade: "normal" as const };
     const texto = formatarAvisoTransferencia(TEL, resumo);
