@@ -88,7 +88,7 @@ export class CanalWwebjs implements CanalWhatsApp {
     this.encerrando = true;
     const cliente = this.cliente;
     this.cliente = null;
-    if (cliente) await comPrazo(cliente.destroy(), 10_000).catch(() => {});
+    if (cliente) await this.derrubar(cliente);
   }
 
   async digitando(chatId: string, duracaoMs = DIGITANDO_MAX_MS): Promise<void> {
@@ -307,13 +307,26 @@ export class CanalWwebjs implements CanalWhatsApp {
       const antigo = this.cliente;
       this.cliente = null;
       // destroy(), nunca logout(): logout apaga a sessão e obriga a escanear o QR de novo.
-      if (antigo) await antigo.destroy().catch(() => {});
+      if (antigo) await this.derrubar(antigo);
       await this.lancar();
     } catch (err) {
       this.opcoes.log({ type: "reconexao_falhou", erro: String(err) });
+      console.error(`🚨 Reconexão do WhatsApp falhou (${String(err)}). A ponte está parada até reconectar; se repetir, reinicie o processo.`);
     } finally {
       this.reconectando = false;
     }
+  }
+
+  /** O destroy() da biblioteca só fecha o Chrome com o CDP de pé; caído, o Chrome segue vivo segurando o perfil (#29). */
+  private async derrubar(cliente: ClienteWhatsApp): Promise<void> {
+    const processo = cliente.pupBrowser?.process();
+    await comPrazo(cliente.destroy(), 10_000).catch((err) =>
+      this.opcoes.log({ type: "destroy_falhou", erro: String(err) })
+    );
+    if (!processo || processo.exitCode !== null || processo.signalCode !== null) return;
+    const saiu = new Promise<void>((resolve) => processo.once("exit", () => resolve()));
+    processo.kill("SIGKILL");
+    await comPrazo(saiu, 5_000).catch(() => this.opcoes.log({ type: "chrome_nao_morreu", pid: processo.pid }));
   }
 
   private async trocarVersao(cliente: ClienteWhatsApp): Promise<void> {
@@ -328,7 +341,7 @@ export class CanalWwebjs implements CanalWhatsApp {
     if (desconexaoTerminal(motivo)) {
       this.saude.desvinculado = true;
       if (this.cliente === cliente) this.cliente = null;
-      await comPrazo(cliente.destroy(), 10_000).catch(() => {});
+      await this.derrubar(cliente);
       console.error(`🚨 WhatsApp desconectado de vez (${motivo}). Suba de novo e escaneie o QR.`);
       return;
     }
