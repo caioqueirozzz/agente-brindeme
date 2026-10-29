@@ -145,7 +145,7 @@ export class CanalWwebjs implements CanalWhatsApp {
     const versao = this.versoes[this.indiceVersao];
     const cliente = new Client({
       authStrategy: new LocalAuth({ dataPath: this.opcoes.sessaoDir, clientId: "presentes-especiais" }),
-      puppeteer: { headless: true, args: ["--no-sandbox", "--disable-dev-shm-usage"] },
+      puppeteer: { headless: true, executablePath: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", args: ["--no-sandbox", "--disable-dev-shm-usage"] },
       ...(versao
         ? { webVersion: versao, webVersionCache: { type: "remote" as const, remotePath: VERSOES_REMOTAS, strict: false } }
         : {}),
