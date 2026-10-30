@@ -10,21 +10,53 @@ const controle = vi.hoisted(() => ({
   lidFalha: false,
   envioRetorna: { id: "enviada" } as unknown,
   proprioLidErrado: false,
+  envios: [] as unknown[][],
+  /** false simula o CDP caído: o destroy() da biblioteca volta sem fechar o Chrome (#29). */
+  destroyFechaNavegador: true,
+  inicializacaoFalha: false,
+  chromesVivosAoLancar: [] as number[],
 }));
 
 vi.mock("whatsapp-web.js", async () => {
   const { EventEmitter } = await import("events");
+  function processoFalso() {
+    const p = Object.assign(new EventEmitter(), {
+      exitCode: null as number | null,
+      signalCode: null as string | null,
+      sinais: [] as string[],
+      kill: (sinal: string) => {
+        p.sinais.push(sinal);
+        queueMicrotask(() => {
+          p.signalCode = sinal;
+          p.emit("exit");
+        });
+        return true;
+      },
+    });
+    return p;
+  }
   class ClienteFalso extends EventEmitter {
     info = { wid: { user: "5583900000000", _serialized: "5583900000000@c.us" } };
     pupPage = { evaluate: async () => true };
     destruido = false;
+    processo = processoFalso();
+    pupBrowser = { process: () => this.processo };
     constructor(public options: unknown) {
       super();
+      const vivos = (controle.clientes as ClienteFalso[]).filter(
+        (c) => c.processo.exitCode === null && c.processo.signalCode === null
+      );
+      controle.chromesVivosAoLancar.push(vivos.length);
       controle.clientes.push(this);
     }
-    async initialize() {}
+    async initialize() {
+      if (controle.inicializacaoFalha && controle.clientes.length > 1) {
+        throw new Error("The browser is already running for nunca-usado");
+      }
+    }
     async destroy() {
       this.destruido = true;
+      if (controle.destroyFechaNavegador) this.processo.exitCode = 0;
     }
     async getState() {
       return controle.estado;
@@ -39,7 +71,8 @@ vi.mock("whatsapp-web.js", async () => {
       }
       return [{ pn: "558399990000@c.us", lid: "123@lid" }];
     }
-    async sendMessage() {
+    async sendMessage(...args: unknown[]) {
+      controle.envios.push(args);
       return controle.envioRetorna;
     }
     async getChatById() {
@@ -79,8 +112,8 @@ function msg(id: string, extra: Record<string, unknown> = {}) {
   };
 }
 
-async function montar(): Promise<CanalWwebjs> {
-  const canal = new CanalWwebjs({ sessaoDir: "nunca-usado", log: () => {} });
+async function montar(log: (e: Record<string, unknown>) => void = () => {}): Promise<CanalWwebjs> {
+  const canal = new CanalWwebjs({ sessaoDir: "nunca-usado", log });
   await canal.iniciar();
   clienteAtual().emit("ready");
   return canal;
@@ -96,6 +129,10 @@ describe("CanalWwebjs (biblioteca falsa)", () => {
     controle.lidFalha = false;
     controle.envioRetorna = { id: "enviada" };
     controle.proprioLidErrado = false;
+    controle.envios = [];
+    controle.destroyFechaNavegador = true;
+    controle.inicializacaoFalha = false;
+    controle.chromesVivosAoLancar = [];
     vi.spyOn(console, "log").mockImplementation(() => {});
     vi.spyOn(console, "warn").mockImplementation(() => {});
     vi.spyOn(console, "error").mockImplementation(() => {});
@@ -239,6 +276,39 @@ describe("CanalWwebjs (biblioteca falsa)", () => {
     expect(pedidos).toEqual([{ limit: 120, fromMe: false }]);
   });
 
+  it("envio sem marcar como lida e sem prévia de link (e-mail virava prévia de site)", async () => {
+    const canal = await montar();
+    await canal.enviar(`${TEL}@c.us`, "seu e-mail é teste@empresa.com");
+    expect(controle.envios).toEqual([[`${TEL}@c.us`, "seu e-mail é teste@empresa.com", { sendSeen: false, linkPreview: false }]]);
+  });
+
+  it("[#30] mensagem sem id ao vivo não é entregue e vai para o log com o tipo", async () => {
+    const eventos: Record<string, unknown>[] = [];
+    const canal = await montar((e) => eventos.push(e));
+    const recebidas: unknown[] = [];
+    canal.aoMensagem((m) => recebidas.push(m));
+    clienteAtual().emit("message_create", msg("x", { id: {} }));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(recebidas).toHaveLength(0);
+    expect(eventos).toContainEqual({ type: "mensagem_nao_convertida", erro: "Error: mensagem sem id (tipo chat)" });
+  });
+
+  it("[#30] varredura descarta a mensagem sem id e entrega as outras", async () => {
+    const eventos: Record<string, unknown>[] = [];
+    const canal = await montar((e) => eventos.push(e));
+    controle.chats = [
+      {
+        id: { _serialized: `${TEL}@c.us` },
+        isGroup: false,
+        unreadCount: 2,
+        fetchMessages: async () => [msg("sem", { id: {} }), msg("boa")],
+      },
+    ];
+    const pendentes = await canal.pendentes();
+    expect(pendentes[0].mensagens.map((m) => m.id)).toEqual(["boa"]);
+    expect(eventos).toContainEqual({ type: "mensagem_nao_convertida", erro: "Error: mensagem sem id (tipo chat)" });
+  });
+
   it("[F13] desconectado com UNPAIRED e getState indisponível: não relança nem gera QR", async () => {
     await montar();
     controle.estado = null;
@@ -262,6 +332,54 @@ describe("CanalWwebjs (biblioteca falsa)", () => {
     clienteAtual().emit("disconnected", "NAVIGATION");
     await vi.advanceTimersByTimeAsync(6_000);
     expect(controle.clientes).toHaveLength(2);
+  });
+
+  it("[#29] Chrome que sobrevive ao destroy() é morto antes de lançar o cliente novo", async () => {
+    await montar();
+    controle.estado = null;
+    controle.destroyFechaNavegador = false;
+    const antigo = clienteAtual() as unknown as { processo: { sinais: string[] } };
+    clienteAtual().emit("disconnected", "NAVIGATION");
+    await vi.advanceTimersByTimeAsync(6_000);
+    expect(antigo.processo.sinais).toEqual(["SIGKILL"]);
+    expect(controle.clientes).toHaveLength(2);
+    expect(controle.chromesVivosAoLancar.at(-1)).toBe(0);
+  });
+
+  it("[#29] kill que lança (Windows: EACCES no meio da saída) não derruba a reconexão", async () => {
+    const eventos: Record<string, unknown>[] = [];
+    await montar((e) => eventos.push(e));
+    controle.estado = null;
+    controle.destroyFechaNavegador = false;
+    const antigo = clienteAtual() as unknown as { processo: { kill: () => boolean } };
+    antigo.processo.kill = () => {
+      throw new Error("kill EACCES");
+    };
+    clienteAtual().emit("disconnected", "NAVIGATION");
+    await vi.advanceTimersByTimeAsync(6_000);
+    expect(controle.clientes).toHaveLength(2);
+    expect(eventos).toContainEqual({ type: "chrome_nao_morreu", erro: "Error: kill EACCES" });
+  });
+
+  it("[#29] Chrome que o destroy() fechou não leva SIGKILL", async () => {
+    await montar();
+    controle.estado = null;
+    const antigo = clienteAtual() as unknown as { processo: { sinais: string[] } };
+    clienteAtual().emit("disconnected", "NAVIGATION");
+    await vi.advanceTimersByTimeAsync(6_000);
+    expect(antigo.processo.sinais).toEqual([]);
+    expect(controle.clientes).toHaveLength(2);
+  });
+
+  it("[#29] reconexão que falha avisa no terminal e no log", async () => {
+    const eventos: Record<string, unknown>[] = [];
+    await montar((e) => eventos.push(e));
+    controle.estado = null;
+    controle.inicializacaoFalha = true;
+    clienteAtual().emit("disconnected", "NAVIGATION");
+    await vi.advanceTimersByTimeAsync(6_000);
+    expect(eventos.some((e) => e.type === "reconexao_falhou")).toBe(true);
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining("🚨 Reconexão do WhatsApp falhou"));
   });
 
   it("[F15] digitando acaba em até 4s", async () => {

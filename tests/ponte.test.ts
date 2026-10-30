@@ -298,7 +298,7 @@ describe("Ponte", () => {
       await vi.runAllTimersAsync();
       expect(agente.lotes[0].mensagens.map((m) => m.texto)).toEqual([
         "[arquivo recusado: video.mp4, formato video/mp4 não aceito (aceitos: PNG, JPG, SVG, PDF)]",
-        "[arquivo recusado: arquivo, não foi possível baixar]",
+        "[arquivo recusado: arquivo, não chegou por falha nossa ao baixar; não é o formato]",
       ]);
       expect(agente.lotes[0].mensagens.every((m) => m.arquivo === undefined)).toBe(true);
     });

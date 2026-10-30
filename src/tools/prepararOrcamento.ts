@@ -3,7 +3,7 @@ import type { BrindeMeClient } from "../integrations/brindeme/client.js";
 import { translateApiError } from "../integrations/brindeme/errors.js";
 import { arredondar } from "../integrations/brindeme/mappers.js";
 import type { ConversationState } from "../agent/state.js";
-import { marcaUltimaMensagemCliente, type FichaPedido } from "../agent/state.js";
+import { lembrarDetalhado, marcaUltimaMensagemCliente, type FichaPedido } from "../agent/state.js";
 
 // Sem CPF, CNPJ nem endereço: quem emite o orçamento coleta no fechamento (decisão de 25/10, LGPD).
 export const prepararOrcamentoSchema = z.object({
@@ -23,6 +23,13 @@ export type PrepararOrcamentoInput = z.infer<typeof prepararOrcamentoSchema>;
 
 export const AVISO_ESTIMATIVA =
   "Valor de tabela com personalização padrão. Personalização fora do padrão, frete e prazo a equipe confirma ao emitir o orçamento.";
+
+export const reais = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+/** A mesma linha vai ao cliente e à ficha da equipe: os dois veem o mesmo produto e a mesma cor. */
+export function linhaDoItem(i: FichaPedido["resumo"]["itens"][number]): string {
+  return `• ${i.quantidade}× ${i.nome_produto}${i.cor ? ` (${i.cor})` : ""} — ${reais(i.preco_unitario)} cada = ${reais(i.subtotal)}`;
+}
 
 export async function prepararOrcamentoHandler(
   input: PrepararOrcamentoInput,
@@ -44,6 +51,12 @@ export async function prepararOrcamentoHandler(
       if (!produtoId && state.produtosDiscutidos.includes(item.subproduto_id)) {
         const produto = await client.getProduct(item.subproduto_id);
         for (const s of produto.subproducts) state.subprodutoParaProduto[s.id] = produto.id;
+        // Resultado de ferramenta some no turno seguinte: sem isto, o "Aceito" do cliente voltava ao id do produto (#28).
+        lembrarDetalhado(state, {
+          id: produto.id,
+          nome: produto.name,
+          cores: produto.subproducts.filter((s) => s.status).map((s) => ({ subproduto_id: s.id, cor: s.color })),
+        });
         return {
           erro: "informe_a_cor",
           produto: produto.name,
@@ -185,8 +198,14 @@ export async function prepararOrcamentoHandler(
       status: "estimativa_pronta",
       resumo: ficha.resumo,
       aviso: AVISO_ESTIMATIVA,
+      // Pronto e literal: o modelo reescrevia o produto pedido no lugar do estimado, tirava a cor e trocava palavras do aviso (#26).
+      resumo_para_cliente: [
+        ...itensSumario.map(linhaDoItem),
+        `Total estimado: ${reais(totalEstimado)}`,
+        `_${AVISO_ESTIMATIVA}_`,
+      ].join("\n"),
       instrucao:
-        'Mostre o resumo e o aviso ao cliente e pergunte se pode enviar para a equipe emitir o orçamento. Com a confirmação dele numa nova mensagem, chame transferir_humano com motivo "orcamento_para_emitir".',
+        'Mostre resumo_para_cliente ao cliente exatamente como veio, sem reescrever produto, cor, valores nem o aviso, e pergunte se pode enviar para a equipe emitir o orçamento. Com a confirmação dele numa nova mensagem, chame transferir_humano com motivo "orcamento_para_emitir".',
     };
   } catch (err) {
     return { erro: translateApiError(err) };

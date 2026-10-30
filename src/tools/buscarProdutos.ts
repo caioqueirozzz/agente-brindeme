@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { BrindeMeClient } from "../integrations/brindeme/client.js";
-import type { ConversationState } from "../agent/state.js";
+import { discutirProduto, type ConversationState } from "../agent/state.js";
 import { FileProductIndexStore, type ProductIndexStore } from "../catalogo/indice.js";
 import { FileOccasionTagStore, rotuloDaOcasiao, type OccasionTagStore } from "../catalogo/ocasioes.js";
 import { recomendar, type Ajuste, type Recomendacao } from "../catalogo/recomendar.js";
@@ -109,9 +109,14 @@ function formatar(r: Recomendacao, input: BuscarProdutosInput, state: Conversati
     case "encontrados": {
       for (const { produto } of r.itens) {
         for (const sub of produto.subprodutos) state.subprodutoParaProduto[sub.id] = produto.id;
-        if (!state.produtosDiscutidos.includes(produto.id)) state.produtosDiscutidos.push(produto.id);
+        discutirProduto(state, produto.id, produto.nome);
       }
-      state.ultimasOpcoes = r.itens.map(({ produto }) => ({ id: produto.id, nome: produto.nome }));
+      // Com as cores: o turno seguinte ("aceito", "pode ser essa") precisa do subproduto_id, não do id do produto (#28).
+      state.ultimasOpcoes = r.itens.map(({ produto, oferta }) => ({
+        id: produto.id,
+        nome: produto.nome,
+        cores: oferta.cores.map((c) => ({ subproduto_id: c.subproduto_id, cor: c.cor })),
+      }));
       const informada = r.quantidadeInformada;
       return {
         resultado: "produtos_encontrados",

@@ -374,7 +374,7 @@ describe("Ponte — riscos abertos fechados na rodada 3", () => {
     );
     await vi.advanceTimersByTimeAsync(66_000);
     await recebendo;
-    expect(agente.lotes[0].mensagens[0].texto).toBe("[arquivo recusado: arquivo, não foi possível baixar]");
+    expect(agente.lotes[0].mensagens[0].texto).toBe("[arquivo recusado: arquivo, não chegou por falha nossa ao baixar; não é o formato]");
   });
 
   it("evento pendente de outra conversa não segura o lote desta", async () => {

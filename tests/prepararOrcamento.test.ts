@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { MockBrindeMeClient } from "../src/integrations/brindeme/mockClient.js";
-import { prepararOrcamentoHandler } from "../src/tools/prepararOrcamento.js";
+import { AVISO_ESTIMATIVA, prepararOrcamentoHandler } from "../src/tools/prepararOrcamento.js";
 import { transferirHumanoHandler } from "../src/tools/transferirHumano.js";
 import { addMessage, createInitialState } from "../src/agent/state.js";
 import { semearMapaSubprodutos } from "./helpers/mapaSubprodutos.js";
@@ -53,6 +53,22 @@ describe("prepararOrcamento", () => {
     expect(result.resumo.total_estimado).toBe(945);
   });
 
+  it("[#26] traz o resumo pronto para o cliente: produto, cor, valores e o aviso literal", async () => {
+    const result = (await prepararOrcamentoHandler(validInput, state, client)) as {
+      resumo_para_cliente: string;
+      instrucao: string;
+    };
+    // toLocaleString separa "R$" do valor com espaço inquebrável.
+    expect(result.resumo_para_cliente.replace(/ /g, " ")).toBe(
+      [
+        "• 50× Caneca de Porcelana Personalizada (Branco) — R$ 18,90 cada = R$ 945,00",
+        "Total estimado: R$ 945,00",
+        `_${AVISO_ESTIMATIVA}_`,
+      ].join("\n")
+    );
+    expect(result.instrucao).toMatch(/resumo_para_cliente/);
+  });
+
   it("telefone do orçamento é o da conversa, não o que o modelo mandar (#12)", async () => {
     const ditadoPeloModelo = { ...validInput, telefone: "5511888887777" };
     await prepararOrcamentoHandler(ditadoPeloModelo, state, client);
@@ -87,6 +103,11 @@ describe("prepararOrcamento", () => {
     expect(r.erro).toBe("informe_a_cor");
     expect(r.opcoes).toContainEqual(expect.objectContaining({ subproduto_id: "sub-001-branco" }));
     expect(r.instrucao).toMatch(/preparar_orcamento de novo/);
+    // Resultado de ferramenta some no turno seguinte: sem isto, o "Aceito" do cliente voltava ao id do produto (#28).
+    expect(limpo.produtosDetalhados?.[0]).toMatchObject({
+      id: "prod-001",
+      cores: expect.arrayContaining([expect.objectContaining({ subproduto_id: "sub-001-branco" })]),
+    });
     const segunda = await prepararOrcamentoHandler(
       { ...validInput, itens: [{ subproduto_id: "sub-001-branco", quantidade: 50 }] },
       limpo,

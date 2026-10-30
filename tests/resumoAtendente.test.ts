@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { addMessage, createInitialState } from "../src/agent/state.js";
 import { formatarAvisoTransferencia, resumoDoEstado } from "../src/api/resumoAtendente.js";
-
 const TEL = "5583999990000";
 
 describe("aviso de transferência", () => {
@@ -55,6 +54,59 @@ describe("aviso de transferência", () => {
     expect(texto).toContain("Prazo desejado: até 10/12");
     expect(texto).toContain("Personalização: tem arte, 2 cores");
     expect(texto).toMatch(/frete e prazo a equipe confirma/);
+  });
+
+  it("[#26] no orçamento para emitir, o cabeçalho não traz o texto do modelo nem a lista de produtos discutidos", () => {
+    const estado = createInitialState(TEL);
+    estado.produtosDiscutidos = ["uuid-xicara", "uuid-vidro", "uuid-caneca"];
+    estado.fichaPedido = {
+      mensagemDoResumo: "x",
+      resumo: {
+        tipo: "PJ",
+        nome: "Empresa Teste",
+        email: "teste@empresa.test",
+        telefone: TEL,
+        itens: [{ subproduto_id: "s1", cor: "Branco", nome_produto: "Xícara com Pires", quantidade: 100, preco_unitario: 7.8, subtotal: 780 }],
+        total_estimado: 780,
+        arte_refs: [],
+      },
+    };
+    const texto = formatarAvisoTransferencia(
+      TEL,
+      resumoDoEstado(estado, "orcamento_para_emitir", "Emitir orçamento para 100 canecas brancas")
+    );
+    expect(texto.split("\n")[2]).toBe("Motivo: orcamento_para_emitir");
+    expect(texto).not.toMatch(/^Produtos:/m);
+    // O que o modelo anotou não se perde: vai depois da ficha, marcado para conferir com ela.
+    const linhas = texto.split("\n");
+    const nota = linhas.indexOf("Nota do agente (confira com a ficha): Emitir orçamento para 100 canecas brancas");
+    expect(nota).toBeGreaterThan(linhas.indexOf("📋 *Orçamento para emitir*"));
+  });
+
+  it("[#26] produtos discutidos saem pelo nome; id sem nome conhecido fica como está", () => {
+    const estado = createInitialState(TEL);
+    estado.produtosDiscutidos = ["p1", "p2", "p3"];
+    estado.ultimasOpcoes = [{ id: "p1", nome: "Caneca Cerâmica 330ml" }];
+    estado.produtosDetalhados = [{ id: "p2", nome: "Garrafa Térmica", cores: [] }];
+    const texto = formatarAvisoTransferencia(TEL, resumoDoEstado(estado, "desconto"));
+    expect(texto).toContain("Produtos: Caneca Cerâmica 330ml, Garrafa Térmica, p3");
+  });
+
+  it("resumo gravado antes de produtos_nomes existir ainda formata (deploy no meio de uma transferência)", () => {
+    const { produtos_nomes: _, ...antigo } = resumoDoEstado(
+      Object.assign(createInitialState(TEL), { produtosDiscutidos: ["prod-x"] }),
+      "pedido_cliente"
+    );
+    const texto = formatarAvisoTransferencia(TEL, antigo as ReturnType<typeof resumoDoEstado>);
+    expect(texto).toContain("Produtos: prod-x");
+  });
+
+  it("[#26] últimas mensagens saem formatadas para o WhatsApp, sem Markdown cru", () => {
+    const estado = createInitialState(TEL);
+    addMessage(estado, "assistant", "### Estimativa\n**Xícara** por R$ 7,80");
+    const texto = formatarAvisoTransferencia(TEL, resumoDoEstado(estado, "outro"));
+    expect(texto).toContain("[agente]: *Estimativa*\n*Xícara* por R$ 7,80");
+    expect(texto).not.toMatch(/###|\*\*/);
   });
 
   it("prioridade normal e cliente sem nome", () => {

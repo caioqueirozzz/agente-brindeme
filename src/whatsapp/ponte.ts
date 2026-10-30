@@ -207,7 +207,8 @@ export class Ponte {
     } catch (err) {
       this.log({ type: "midia_nao_baixou", id: m.id, erro: String(err) });
     }
-    if (!midia) return recusa("[arquivo recusado: arquivo, não foi possível baixar]");
+    // Falha nossa, não do arquivo: sem dizer isso o agente culpava o formato (#25).
+    if (!midia) return recusa("[arquivo recusado: arquivo, não chegou por falha nossa ao baixar; não é o formato]");
     const salvo = salvarMidia(this.opcoes.artesDir, telefone, m.id, midia);
     if (!salvo.ok) return recusa(`[arquivo recusado: ${salvo.nome}, ${salvo.motivo}]`);
     return { id: m.id, timestamp: m.timestamp, texto: legenda.slice(0, LIMITE_TEXTO), arquivo: salvo.arquivo };

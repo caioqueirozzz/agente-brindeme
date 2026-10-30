@@ -22,7 +22,7 @@ describe("H4 — transferência humana", () => {
     expect(r.modo).toBe("humano");
     expect(r.avisoAtendente).toMatch(/Transferência/);
     expect(r.avisoAtendente).toMatch(/Motivo: pedido_cliente/);
-    expect(r.avisoAtendente).toMatch(/Produtos: prod-001/);
+    expect(r.avisoAtendente).toMatch(/Produtos: Caneca de Porcelana Personalizada/);
     expect(r.avisoAtendente).toMatch(/quero falar com uma pessoa/);
     expect(r.avisoAtendente).toContain(`#devolver ${TEL}`);
 
