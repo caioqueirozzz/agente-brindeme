@@ -1,0 +1,373 @@
+[
+  {
+    "id": "prod-001",
+    "slug": "caneca-porcelana-personalizada",
+    "code": "CAN-POR-001",
+    "name": "Caneca de Porcelana Personalizada",
+    "sku": "CAN-POR-001",
+    "description": "Caneca de porcelana branca com impressão digital de alta resolução. Ideal para brindes corporativos, lembrancinha de eventos e presentes personalizados.",
+    "tech_description": "Porcelana branca 325ml. Impressão em silk-screen ou sublimação. Dishwasher safe.",
+    "status": true,
+    "featured": true,
+    "stock": 500,
+    "price": 18.90,
+    "min_quantity": 25,
+    "categories": [{ "id": "cat-01", "name": "Canecas" }],
+    "images": [
+      { "url": "https://cdn.brindeme.com/caneca-porcelana-branca.jpg", "alt": "Caneca porcelana branca" }
+    ],
+    "customizations": [
+      { "type": "impressao", "description": "Logo ou arte em até 2 cores" }
+    ],
+    "subproducts": [
+      {
+        "id": "sub-001-branco",
+        "sku": "CAN-POR-001-BCO",
+        "status": true,
+        "color": "Branco",
+        "stock": 300,
+        "prices": [
+          { "min": 25, "max": 99, "price": 18.90 },
+          { "min": 100, "max": 499, "price": 15.40 },
+          { "min": 500, "max": 9999, "price": 12.80 }
+        ]
+      },
+      {
+        "id": "sub-001-preto",
+        "sku": "CAN-POR-001-PTO",
+        "status": true,
+        "color": "Preto",
+        "stock": 200,
+        "prices": [
+          { "min": 25, "max": 99, "price": 19.90 },
+          { "min": 100, "max": 499, "price": 16.40 },
+          { "min": 500, "max": 9999, "price": 13.80 }
+        ]
+      }
+    ],
+    "tags_ocasiao": ["natal", "corporativo", "dia-dos-professores", "aniversario", "formatura"]
+  },
+  {
+    "id": "prod-002",
+    "slug": "squeeze-aluminio-personalizado",
+    "code": "SQZ-ALU-001",
+    "name": "Squeeze de Alumínio Personalizado",
+    "sku": "SQZ-ALU-001",
+    "description": "Squeeze de alumínio com impressão personalizada. Durável, leve e sustentável. Perfeito para brindes esportivos e eventos corporativos.",
+    "tech_description": "Alumínio 600ml. Tampa com bico dosador. Impressão laser ou silk-screen.",
+    "status": true,
+    "featured": true,
+    "stock": 400,
+    "price": 32.50,
+    "min_quantity": 50,
+    "categories": [{ "id": "cat-02", "name": "Garrafas e Squeezes" }],
+    "images": [
+      { "url": "https://cdn.brindeme.com/squeeze-aluminio-prata.jpg", "alt": "Squeeze de alumínio prata" }
+    ],
+    "customizations": [
+      { "type": "gravacao-laser", "description": "Gravação a laser do logo" }
+    ],
+    "subproducts": [
+      {
+        "id": "sub-002-prata",
+        "sku": "SQZ-ALU-001-PRA",
+        "status": true,
+        "color": "Prata",
+        "stock": 250,
+        "prices": [
+          { "min": 50, "max": 99, "price": 32.50 },
+          { "min": 100, "max": 499, "price": 28.00 },
+          { "min": 500, "max": 9999, "price": 24.50 }
+        ]
+      },
+      {
+        "id": "sub-002-azul",
+        "sku": "SQZ-ALU-001-AZL",
+        "status": true,
+        "color": "Azul",
+        "stock": 150,
+        "prices": [
+          { "min": 50, "max": 99, "price": 32.50 },
+          { "min": 100, "max": 499, "price": 28.00 },
+          { "min": 500, "max": 9999, "price": 24.50 }
+        ]
+      }
+    ],
+    "tags_ocasiao": ["corporativo", "esportivo", "dia-das-maes", "dia-dos-pais"]
+  },
+  {
+    "id": "prod-003",
+    "slug": "garrafa-termica-personalizada",
+    "code": "GAR-TER-001",
+    "name": "Garrafa Térmica Personalizada",
+    "sku": "GAR-TER-001",
+    "description": "Garrafa térmica inox de alta durabilidade com personalização. Mantém bebidas quentes por até 12h e frias por até 24h.",
+    "tech_description": "Aço inox 500ml. Dupla parede a vácuo. Tampa rosqueável. Impressão silk-screen.",
+    "status": true,
+    "featured": false,
+    "stock": 200,
+    "price": 58.00,
+    "min_quantity": 25,
+    "categories": [{ "id": "cat-02", "name": "Garrafas e Squeezes" }],
+    "images": [
+      { "url": "https://cdn.brindeme.com/garrafa-termica-preta.jpg", "alt": "Garrafa térmica preta" }
+    ],
+    "customizations": [
+      { "type": "impressao", "description": "Silk-screen ou adesivo resinado" }
+    ],
+    "subproducts": [
+      {
+        "id": "sub-003-preta",
+        "sku": "GAR-TER-001-PTO",
+        "status": true,
+        "color": "Preta",
+        "stock": 120,
+        "prices": [
+          { "min": 25, "max": 49, "price": 58.00 },
+          { "min": 50, "max": 199, "price": 52.00 },
+          { "min": 200, "max": 9999, "price": 46.00 }
+        ]
+      },
+      {
+        "id": "sub-003-branca",
+        "sku": "GAR-TER-001-BCO",
+        "status": true,
+        "color": "Branca",
+        "stock": 80,
+        "prices": [
+          { "min": 25, "max": 49, "price": 58.00 },
+          { "min": 50, "max": 199, "price": 52.00 },
+          { "min": 200, "max": 9999, "price": 46.00 }
+        ]
+      }
+    ],
+    "tags_ocasiao": ["corporativo", "natal", "dia-dos-pais", "dia-das-maes"]
+  },
+  {
+    "id": "prod-004",
+    "slug": "caderno-a5-personalizado",
+    "code": "CAD-A5-001",
+    "name": "Caderno A5 Personalizado",
+    "sku": "CAD-A5-001",
+    "description": "Caderno A5 com capa dura e lombada costurada. Personalizável na capa com logo ou arte. Ideal para brindes executivos.",
+    "tech_description": "Capa dura 2mm. 80 folhas pautadas 75g. Formato A5 (14x21cm). Impressão offset na capa.",
+    "status": true,
+    "featured": true,
+    "stock": 600,
+    "price": 22.00,
+    "min_quantity": 50,
+    "categories": [{ "id": "cat-03", "name": "Papelaria" }],
+    "images": [
+      { "url": "https://cdn.brindeme.com/caderno-a5-azul.jpg", "alt": "Caderno A5 azul" }
+    ],
+    "customizations": [
+      { "type": "impressao-capa", "description": "Impressão full-color na capa" }
+    ],
+    "subproducts": [
+      {
+        "id": "sub-004-azul",
+        "sku": "CAD-A5-001-AZL",
+        "status": true,
+        "color": "Azul",
+        "stock": 300,
+        "prices": [
+          { "min": 50, "max": 99, "price": 22.00 },
+          { "min": 100, "max": 499, "price": 18.50 },
+          { "min": 500, "max": 9999, "price": 15.00 }
+        ]
+      },
+      {
+        "id": "sub-004-vermelho",
+        "sku": "CAD-A5-001-VRM",
+        "status": true,
+        "color": "Vermelho",
+        "stock": 300,
+        "prices": [
+          { "min": 50, "max": 99, "price": 22.00 },
+          { "min": 100, "max": 499, "price": 18.50 },
+          { "min": 500, "max": 9999, "price": 15.00 }
+        ]
+      }
+    ],
+    "tags_ocasiao": ["corporativo", "dia-dos-professores", "formatura", "volta-as-aulas"]
+  },
+  {
+    "id": "prod-005",
+    "slug": "ecobag-personalizada",
+    "code": "ECO-BAG-001",
+    "name": "Ecobag Personalizada",
+    "sku": "ECO-BAG-001",
+    "description": "Sacola ecobag em algodão cru com impressão serigrafia. Sustentável, resistente e muito utilizada como brinde em eventos.",
+    "tech_description": "Algodão cru 180g/m². Alças de 60cm. Tamanho 38x40cm. Impressão serigrafia 1 a 4 cores.",
+    "status": true,
+    "featured": false,
+    "stock": 800,
+    "price": 14.50,
+    "min_quantity": 100,
+    "categories": [{ "id": "cat-04", "name": "Sacolas" }],
+    "images": [
+      { "url": "https://cdn.brindeme.com/ecobag-natural.jpg", "alt": "Ecobag natural algodão" }
+    ],
+    "customizations": [
+      { "type": "serigrafia", "description": "Impressão serigrafia até 4 cores" }
+    ],
+    "subproducts": [
+      {
+        "id": "sub-005-natural",
+        "sku": "ECO-BAG-001-NAT",
+        "status": true,
+        "color": "Natural",
+        "stock": 500,
+        "prices": [
+          { "min": 100, "max": 299, "price": 14.50 },
+          { "min": 300, "max": 999, "price": 12.00 },
+          { "min": 1000, "max": 9999, "price": 9.80 }
+        ]
+      },
+      {
+        "id": "sub-005-preto",
+        "sku": "ECO-BAG-001-PTO",
+        "status": true,
+        "color": "Preto",
+        "stock": 300,
+        "prices": [
+          { "min": 100, "max": 299, "price": 15.50 },
+          { "min": 300, "max": 999, "price": 13.00 },
+          { "min": 1000, "max": 9999, "price": 10.80 }
+        ]
+      }
+    ],
+    "tags_ocasiao": ["corporativo", "natal", "sustentabilidade", "eventos", "dia-das-maes"]
+  },
+  {
+    "id": "prod-006",
+    "slug": "chaveiro-acrilico-personalizado",
+    "code": "CHA-ACR-001",
+    "name": "Chaveiro de Acrílico Personalizado",
+    "sku": "CHA-ACR-001",
+    "description": "Chaveiro de acrílico cristal com impressão full-color. Leve, moderno e com ótimo custo-benefício para brindes em grandes quantidades.",
+    "tech_description": "Acrílico 3mm transparente. Impressão UV full-color. Argola niquelada. Tamanho 5x5cm.",
+    "status": true,
+    "featured": false,
+    "stock": 2000,
+    "price": 8.90,
+    "min_quantity": 100,
+    "categories": [{ "id": "cat-05", "name": "Chaveiros" }],
+    "images": [
+      { "url": "https://cdn.brindeme.com/chaveiro-acrilico-cristal.jpg", "alt": "Chaveiro acrílico cristal" }
+    ],
+    "customizations": [
+      { "type": "impressao-uv", "description": "Impressão UV full-color em um lado" }
+    ],
+    "subproducts": [
+      {
+        "id": "sub-006-cristal",
+        "sku": "CHA-ACR-001-CRI",
+        "status": true,
+        "color": "Cristal",
+        "stock": 1200,
+        "prices": [
+          { "min": 100, "max": 299, "price": 8.90 },
+          { "min": 300, "max": 999, "price": 7.20 },
+          { "min": 1000, "max": 9999, "price": 5.90 }
+        ]
+      },
+      {
+        "id": "sub-006-colorido",
+        "sku": "CHA-ACR-001-COR",
+        "status": true,
+        "color": "Colorido",
+        "stock": 0,
+        "prices": [
+          { "min": 100, "max": 299, "price": 9.50 },
+          { "min": 300, "max": 999, "price": 7.80 },
+          { "min": 1000, "max": 9999, "price": 6.40 }
+        ]
+      }
+    ],
+    "tags_ocasiao": ["natal", "eventos", "dia-dos-professores", "formatura", "aniversario"]
+  },
+  {
+    "id": "prod-007",
+    "slug": "kit-escritorio-personalizado",
+    "code": "KIT-ESC-001",
+    "name": "Kit Escritório Personalizado",
+    "sku": "KIT-ESC-001",
+    "description": "Kit com caneta esferográfica, bloco de notas e porta-lápis, todos personalizados com logo. Perfeito para brindes executivos de alto impacto.",
+    "tech_description": "Caneta metal 0.7mm + Bloco 80 folhas 90g + Porta-lápis acrílico. Caixa kraft personalizada inclusa.",
+    "status": true,
+    "featured": true,
+    "stock": 150,
+    "price": 42.00,
+    "min_quantity": 10,
+    "categories": [{ "id": "cat-03", "name": "Papelaria" }, { "id": "cat-06", "name": "Kits" }],
+    "images": [
+      { "url": "https://cdn.brindeme.com/kit-escritorio-preto.jpg", "alt": "Kit escritório preto" }
+    ],
+    "customizations": [
+      { "type": "impressao", "description": "Logo na caneta, bloco e porta-lápis" }
+    ],
+    "subproducts": [
+      {
+        "id": "sub-007-preto",
+        "sku": "KIT-ESC-001-PTO",
+        "status": true,
+        "color": "Preto",
+        "stock": 100,
+        "prices": [
+          { "min": 10, "max": 24, "price": 42.00 },
+          { "min": 25, "max": 99, "price": 38.50 },
+          { "min": 100, "max": 9999, "price": 34.00 }
+        ]
+      },
+      {
+        "id": "sub-007-azul-marinho",
+        "sku": "KIT-ESC-001-AZM",
+        "status": true,
+        "color": "Azul Marinho",
+        "stock": 50,
+        "prices": [
+          { "min": 10, "max": 24, "price": 42.00 },
+          { "min": 25, "max": 99, "price": 38.50 },
+          { "min": 100, "max": 9999, "price": 34.00 }
+        ]
+      }
+    ],
+    "tags_ocasiao": ["corporativo", "natal", "dia-dos-professores", "formatura", "executivo"]
+  },
+  {
+    "id": "prod-008",
+    "slug": "camiseta-personalizada",
+    "code": "CAM-ALG-001",
+    "name": "Camiseta Personalizada",
+    "sku": "CAM-ALG-001",
+    "description": "Camiseta 100% algodão personalizada com silk-screen. Excelente para eventos, uniformes e campanhas promocionais.",
+    "tech_description": "100% algodão penteado 30.1 fio. Impressão silk-screen até 4 cores. Disponível P ao GG.",
+    "status": false,
+    "featured": false,
+    "stock": 0,
+    "price": 35.00,
+    "min_quantity": 25,
+    "categories": [{ "id": "cat-07", "name": "Vestuário" }],
+    "images": [
+      { "url": "https://cdn.brindeme.com/camiseta-branca.jpg", "alt": "Camiseta branca" }
+    ],
+    "customizations": [
+      { "type": "silk-screen", "description": "Silk-screen frente e/ou costas" }
+    ],
+    "subproducts": [
+      {
+        "id": "sub-008-branca",
+        "sku": "CAM-ALG-001-BCO",
+        "status": false,
+        "color": "Branca",
+        "stock": 0,
+        "prices": [
+          { "min": 25, "max": 99, "price": 35.00 },
+          { "min": 100, "max": 9999, "price": 28.00 }
+        ]
+      }
+    ],
+    "tags_ocasiao": ["eventos", "corporativo"]
+  }
+]

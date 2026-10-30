@@ -1,0 +1,46 @@
+{
+  "categoria": "prazos",
+  "itens": [
+    {
+      "id": "prazo-de-producao",
+      "titulo": "Prazo de produção",
+      "conteudo": "O prazo padrão de produção é de [PRAZO_PRODUCAO_DIAS_UTEIS] dias úteis. Pedidos grandes podem ter prazo diferente, informado pela equipe.",
+      "palavras_chave": [
+        "prazo",
+        "demora",
+        "quanto tempo",
+        "dias",
+        "pronto",
+        "produzir",
+        "producao",
+        "quando fica pronto",
+        "ficar pronto"
+      ],
+      "perguntas_exemplo": [
+        "Em quantos dias fica pronto?",
+        "Qual o prazo de produção?"
+      ],
+      "status": "rascunho",
+      "revisar_em": "2027-04-14",
+      "nota_interna": "Produção: informar o prazo padrão e a regra para pedidos grandes."
+    },
+    {
+      "id": "inicio-da-contagem-do-prazo",
+      "titulo": "Quando o prazo de produção começa a contar",
+      "conteudo": "O prazo de produção começa a contar [INICIO_CONTAGEM_PRAZO].",
+      "palavras_chave": [
+        "quando comeca",
+        "contagem",
+        "comeca a contar",
+        "a partir de quando",
+        "inicio do prazo"
+      ],
+      "perguntas_exemplo": [
+        "O prazo conta a partir de quando?"
+      ],
+      "status": "rascunho",
+      "revisar_em": "2027-04-14",
+      "nota_interna": "Produção: definir o marco (aprovação do mockup? confirmação do pagamento?)."
+    }
+  ]
+}

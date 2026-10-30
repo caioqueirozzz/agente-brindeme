@@ -1,0 +1,10 @@
+{
+  "id": "01_saudacao",
+  "descricao": "Saudação inicial",
+  "mensagens": ["Oi, boa tarde!"],
+  "expectativas": [
+    { "tipo": "nao_chamou_ferramenta", "ferramenta": "buscar_produtos" },
+    { "tipo": "resposta_contem", "padrao": "assistente virtual" },
+    { "tipo": "resposta_nao_contem", "padrao": "(?<!n[ãa]o )sou uma pessoa" }
+  ]
+}

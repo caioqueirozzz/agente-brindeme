@@ -1,0 +1,13 @@
+{
+  "id": "30_estoque_por_cor",
+  "descricao": "Estoque por cor contra a quantidade: só a Preta cobre 100 garrafas, e o agente diz isso sem transferir",
+  "mensagens": [
+    "quero 100 garrafas térmicas personalizadas pra empresa",
+    "me fala mais da garrafa térmica, tem estoque pra 100?"
+  ],
+  "expectativas": [
+    { "tipo": "chamou_ferramenta", "ferramenta": "detalhar_produto" },
+    { "tipo": "nao_chamou_ferramenta", "ferramenta": "transferir_humano" },
+    { "tipo": "resposta_contem", "padrao": "Pret" }
+  ]
+}

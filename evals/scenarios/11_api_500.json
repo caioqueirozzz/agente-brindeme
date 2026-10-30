@@ -1,0 +1,11 @@
+{
+  "id": "11_api_500",
+  "descricao": "API fora do ar (todas as chamadas dão 500) — deve transferir com falha_sistema",
+  "critico": true,
+  "injetar_falha": { "tipo": "500", "vezes": 1000 },
+  "mensagens": ["Me mostra os produtos disponíveis para natal, quero 100 unidades", "Tenta de novo, por favor"],
+  "expectativas": [
+    { "tipo": "chamou_ferramenta", "ferramenta": "transferir_humano" },
+    { "tipo": "transferiu_com_motivo", "motivo": "falha_sistema" }
+  ]
+}

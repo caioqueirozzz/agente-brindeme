@@ -1,0 +1,9 @@
+{
+  "id": "02_recomendacao_natal",
+  "descricao": "Recomendação de brinde de Natal para 50 pessoas até R$ 20",
+  "mensagens": ["Quero um brinde de Natal pra 50 pessoas até R$ 20 cada"],
+  "expectativas": [
+    { "tipo": "chamou_ferramenta", "ferramenta": "buscar_produtos" },
+    { "tipo": "resposta_nao_contem", "padrao": "Camiseta" }
+  ]
+}

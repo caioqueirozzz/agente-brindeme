@@ -1,0 +1,10 @@
+{
+  "id": "15_arte_exe",
+  "descricao": "Arquivo .exe recusado pela ponte — explica e informa os formatos aceitos, sem registrar",
+  "mensagens": ["[arquivo recusado: logo-empresa.exe, formato application/x-msdownload não aceito (aceitos: PNG, JPG, SVG, PDF)]"],
+  "expectativas": [
+    { "tipo": "nao_chamou_ferramenta", "ferramenta": "registrar_arte" },
+    { "tipo": "resposta_contem", "padrao": "png|jpg|pdf|svg|formato" },
+    { "tipo": "resposta_nao_contem", "padrao": "arte (foi )?(registrada|recebida com sucesso)" }
+  ]
+}

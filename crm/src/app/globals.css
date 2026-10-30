@@ -1,0 +1,328 @@
+@import "tailwindcss";
+
+/* ===== PRESENTES ESPECIAIS — DESIGN SYSTEM (base visual do dcimob) ===== */
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* Tema claro: preto sobre branco */
+:root {
+  color-scheme: light;
+  --pe-primary: #000000;
+  --pe-on-primary: #ffffff;
+  --pe-background: #ffffff;
+  --pe-surface: #ffffff;
+  --pe-surface-container: #f3f4f5;
+  --pe-surface-container-low: #f3f4f5;
+  --pe-surface-container-high: #e7e8e9;
+  --pe-surface-container-highest: #e1e3e4;
+  --pe-surface-container-lowest: #ffffff;
+  --pe-surface-dim: #d9dadb;
+  --pe-on-surface: #191c1d;
+  --pe-on-surface-variant: #4c4546;
+  --pe-secondary: #5d5f5f;
+  --pe-on-secondary: #ffffff;
+  --pe-secondary-container: #e7e8e9;
+  --pe-on-secondary-container: #5d5f5f;
+  --pe-on-primary-container: #ffffff;
+  --pe-outline: #7e7576;
+  --pe-outline-variant: #cfc4c5;
+  --pe-error: #ba1a1a;
+  --pe-on-error: #ffffff;
+  --pe-tertiary: #000000;
+  --pe-brand: #b4233c;
+}
+
+/* Tema escuro: o preto vira vinho, nunca preto puro. Texto rosado bem claro sobre bordô profundo. */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --pe-primary: #fdecef;
+  --pe-on-primary: #2a0812;
+  --pe-background: #14060a;
+  --pe-surface: #1e0a10;
+  --pe-surface-container: #2a0f18;
+  --pe-surface-container-low: #240c14;
+  --pe-surface-container-high: #361522;
+  --pe-surface-container-highest: #431b2b;
+  --pe-surface-container-lowest: #1e0a10;
+  --pe-surface-dim: #10050a;
+  --pe-on-surface: #f8e8ec;
+  --pe-on-surface-variant: #d6b4bd;
+  --pe-secondary: #c99ea9;
+  --pe-on-secondary: #2a0812;
+  --pe-secondary-container: #361522;
+  --pe-on-secondary-container: #c99ea9;
+  --pe-on-primary-container: #2a0812;
+  --pe-outline: #93606e;
+  --pe-outline-variant: #4f2333;
+  --pe-error: #ff8a8a;
+  --pe-on-error: #2b0507;
+  --pe-tertiary: #fdecef;
+  --pe-brand: #ff6b81;
+}
+
+@theme inline {
+  /* Core Colors */
+  --color-primary: var(--pe-primary);
+  --color-on-primary: var(--pe-on-primary);
+  --color-background: var(--pe-background);
+  --color-surface: var(--pe-surface);
+  --color-surface-container: var(--pe-surface-container);
+  --color-surface-container-low: var(--pe-surface-container-low);
+  --color-surface-container-high: var(--pe-surface-container-high);
+  --color-surface-container-highest: var(--pe-surface-container-highest);
+  --color-surface-dim: var(--pe-surface-dim);
+  --color-on-surface: var(--pe-on-surface);
+  --color-on-surface-variant: var(--pe-on-surface-variant);
+  --color-secondary: var(--pe-secondary);
+  --color-on-secondary: var(--pe-on-secondary);
+  --color-outline: var(--pe-outline);
+  --color-outline-variant: var(--pe-outline-variant);
+  --color-error: var(--pe-error);
+  --color-on-error: var(--pe-on-error);
+  --color-tertiary: var(--pe-tertiary);
+  --color-brand: var(--pe-brand);
+
+  /* Container & Secondary Colors */
+  --color-secondary-container: var(--pe-secondary-container);
+  --color-on-secondary-container: var(--pe-on-secondary-container);
+  --color-on-primary-container: var(--pe-on-primary-container);
+  --color-surface-container-lowest: var(--pe-surface-container-lowest);
+
+  /* Accent Gold (para futuro uso) */
+  --color-accent-gold: #c9a84c;
+  --color-accent-gold-light: #e6d5a0;
+
+  /* Font Family */
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+
+  /* Font Sizes - Design System */
+  --font-size-display-lg: 48px;
+  --font-size-display-lg--line-height: 1.1;
+  --font-size-display-lg--letter-spacing: -0.02em;
+  --font-size-display-md: 40px;
+  --font-size-display-md--line-height: 1.1;
+  --font-size-display-md--letter-spacing: -0.02em;
+  --font-size-headline-md: 24px;
+  --font-size-headline-md--line-height: 1.3;
+  --font-size-headline-md--letter-spacing: -0.01em;
+  --font-size-body-lg: 18px;
+  --font-size-body-lg--line-height: 1.6;
+  --font-size-body-md: 16px;
+  --font-size-body-md--line-height: 1.5;
+  --font-size-body-sm: 14px;
+  --font-size-body-sm--line-height: 1.5;
+  --font-size-label-caps: 12px;
+  --font-size-label-caps--line-height: 1;
+  --font-size-label-caps--letter-spacing: 0.1em;
+
+  /* Spacing */
+  --spacing-gutter: 24px;
+  --spacing-unit: 8px;
+  --spacing-margin-mobile: 16px;
+  --spacing-margin-desktop: 40px;
+}
+
+/* Custom Utility Classes */
+.font-display-lg {
+  font-size: 48px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+.font-display-lg-mobile {
+  font-size: 32px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+.font-display-md {
+  font-size: 40px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+.font-headline-md {
+  font-size: 24px;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  font-weight: 600;
+}
+
+.font-body-lg {
+  font-size: 18px;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+.font-body-md {
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.font-body-sm {
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 300;
+}
+
+.font-label-caps {
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* Form Focus Styles */
+.form-input-focus:focus {
+  border-color: var(--pe-primary) !important;
+  outline: none;
+  box-shadow: none;
+}
+
+/* Background Overlay */
+.bg-overlay {
+  background: linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.1));
+}
+
+/* Step Indicator States */
+.step-inactive { opacity: 0.3; }
+.step-active { opacity: 1; border-bottom: 2px solid black; }
+
+/* Hide number input arrows */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Tamanho padrão dos ícones, na camada base para os utilitários poderem mudar */
+@layer base {
+  .material-symbols-outlined { font-size: 24px; }
+}
+
+/* Material Symbols Config */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Smooth transitions for all interactive elements */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background: var(--pe-background);
+  color: var(--pe-on-surface);
+  font-family: var(--font-sans);
+}
+
+/* Títulos principais em Montserrat regular. O !important vence as classes
+   .font-display-* e font-bold que alguns h1 ainda carregam */
+h1 {
+  font-family: var(--font-montserrat), "Montserrat", system-ui, sans-serif;
+  font-weight: 400 !important;
+}
+
+/* Cartão padrão dos painéis */
+.premium-card {
+  background: var(--pe-surface-container-lowest);
+  border: 1px solid color-mix(in oklab, var(--pe-outline-variant) 45%, transparent);
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.premium-card:hover {
+  box-shadow: 0px 8px 30px rgba(0, 0, 0, 0.06);
+}
+.premium-card:active {
+  transform: scale(0.99);
+}
+
+/*
+ * Selos de status usam tons claros fixos do Tailwind (bg-red-50, text-green-700...).
+ * Sobre o vinho eles viram manchas claras: no tema escuro trocamos por
+ * um véu translúcido da mesma cor e um texto mais luminoso.
+ */
+[data-theme="dark"] :is(.bg-red-50, .bg-red-100, .hover\:bg-red-50:hover) { background-color: rgb(248 113 113 / 0.14); }
+[data-theme="dark"] :is(.bg-green-50, .bg-green-100, .bg-green-50\/40) { background-color: rgb(74 222 128 / 0.13); }
+[data-theme="dark"] :is(.bg-amber-50, .bg-yellow-50, .bg-yellow-100) { background-color: rgb(251 191 36 / 0.13); }
+[data-theme="dark"] .bg-sky-50 { background-color: rgb(56 189 248 / 0.13); }
+[data-theme="dark"] :is(.text-red-600, .text-red-700, .text-red-800, .text-red-900, .hover\:text-red-600:hover) { color: #fca5a5; }
+[data-theme="dark"] :is(.text-green-600, .text-green-700, .text-green-800, .text-green-700\/70) { color: #86efac; }
+[data-theme="dark"] :is(.text-amber-600, .text-amber-700, .text-amber-800, .text-amber-900, .text-yellow-600, .text-yellow-700, .text-yellow-800) { color: #fcd34d; }
+[data-theme="dark"] .text-sky-800 { color: #7dd3fc; }
+[data-theme="dark"] :is(.border-red-100, .border-red-200, .border-red-300) { border-color: rgb(248 113 113 / 0.35); }
+[data-theme="dark"] :is(.border-green-200, .border-green-300\/60) { border-color: rgb(74 222 128 / 0.35); }
+[data-theme="dark"] .border-amber-200 { border-color: rgb(251 191 36 / 0.35); }
+[data-theme="dark"] .border-sky-200 { border-color: rgb(56 189 248 / 0.35); }
+
+/* Fundo fluido sem WebGL: manchas paradas nas mesmas cores do shader */
+.pe-fluid-fallback {
+  background:
+    radial-gradient(60% 50% at 20% 30%, rgb(0 0 0 / 0.07), transparent 70%),
+    radial-gradient(50% 60% at 75% 65%, rgb(0 0 0 / 0.06), transparent 70%),
+    radial-gradient(40% 40% at 60% 15%, rgb(0 0 0 / 0.04), transparent 70%),
+    var(--pe-background);
+}
+[data-theme="dark"] .pe-fluid-fallback {
+  background:
+    radial-gradient(60% 50% at 20% 30%, rgb(176 28 64 / 0.30), transparent 70%),
+    radial-gradient(50% 60% at 75% 65%, rgb(176 28 64 / 0.24), transparent 70%),
+    radial-gradient(40% 40% at 60% 15%, rgb(176 28 64 / 0.18), transparent 70%),
+    var(--pe-background);
+}
+
+/* ===== DCIA: animações ===== */
+
+/* Bloco da resposta: transparente -> visível em 0,35 s, subindo 4px */
+@keyframes ia-rise {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+/* Status ("Consultando seus dados…"): fade de 0,2 s subindo 2px, depois parado */
+@keyframes ia-fade-up {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes ia-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.ia-block { animation: ia-rise 0.35s ease-out both; }
+.ia-status { animation: ia-fade-up 0.2s ease-out both; }
+
+/* Cursor fino do campo que digita sozinho */
+.ia-cursor {
+  display: inline-block;
+  width: 1px;
+  height: 1.1em;
+  margin-left: 1px;
+  vertical-align: -0.2em;
+  background: currentColor;
+  animation: ia-blink 1s step-end infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ia-block, .ia-status, .ia-cursor { animation: none; }
+}
+
+/* Login: o formulário entra de baixo */
+@keyframes auth-step-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  [class*="animate-[auth-"] { animation: none !important; }
+}
+
+/* Quadros: coluna recebendo um card arrastado */
+.board-drop { outline: 2px dashed color-mix(in oklab, var(--pe-primary) 35%, transparent); outline-offset: -6px; }
+
+/* Barra de rolagem discreta nas listas internas */
+.thin-scroll { scrollbar-width: thin; scrollbar-color: color-mix(in oklab, var(--pe-on-surface) 18%, transparent) transparent; }

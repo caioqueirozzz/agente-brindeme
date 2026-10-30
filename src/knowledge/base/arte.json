@@ -1,0 +1,75 @@
+{
+  "categoria": "arte",
+  "itens": [
+    {
+      "id": "formatos-de-arte-aceitos",
+      "titulo": "Formatos e resolução da arte",
+      "conteudo": "Aceitamos arte em PNG, JPG/JPEG, PDF e SVG, com resolução mínima recomendada de 300 DPI. Arquivos vetoriais (AI, CDR) podem ser enviados por e-mail depois que o orçamento for aberto.",
+      "palavras_chave": [
+        "formato",
+        "arquivo",
+        "logo",
+        "logotipo",
+        "resolucao",
+        "dpi",
+        "vetor",
+        "vetorial",
+        "png",
+        "pdf",
+        "svg",
+        "jpg",
+        "corel",
+        "illustrator"
+      ],
+      "perguntas_exemplo": [
+        "Quais formatos de arte vocês aceitam?",
+        "Pode mandar o logo em PDF?"
+      ],
+      "status": "rascunho",
+      "revisar_em": "2027-04-14",
+      "nota_interna": "Valores do rascunho da FAQ da Fase 1 (fictícios). Produção: confirmar formatos, DPI e o fluxo de AI/CDR por e-mail."
+    },
+    {
+      "id": "prazo-do-mockup",
+      "titulo": "Prazo para receber o mockup",
+      "conteudo": "O mockup fica pronto em [PRAZO_MOCKUP] depois que recebemos a arte.",
+      "palavras_chave": [
+        "mockup",
+        "previa",
+        "prazo do mockup",
+        "quanto tempo mockup",
+        "ver como fica",
+        "simulacao"
+      ],
+      "perguntas_exemplo": [
+        "Em quanto tempo recebo o mockup?"
+      ],
+      "status": "rascunho",
+      "revisar_em": "2027-04-14",
+      "nota_interna": "Produção: informar o prazo do mockup e substituir [PRAZO_MOCKUP]."
+    },
+    {
+      "id": "arte-com-marca-de-terceiros",
+      "titulo": "Arte com marca de terceiros ou conteúdo impróprio",
+      "conteudo": "Não produzimos itens com marca registrada de terceiros sem autorização. Arte com conteúdo ofensivo, discriminatório ou ilegal também não é aceita.",
+      "palavras_chave": [
+        "marca",
+        "marca registrada",
+        "logo de terceiros",
+        "copyright",
+        "time de futebol",
+        "personagem",
+        "ofensivo",
+        "autorizacao",
+        "licenca"
+      ],
+      "perguntas_exemplo": [
+        "Posso colocar o escudo do meu time?",
+        "Vocês imprimem personagem?"
+      ],
+      "status": "rascunho",
+      "revisar_em": "2027-04-14",
+      "nota_interna": "Vem do rascunho da FAQ (Fase 1)."
+    }
+  ]
+}

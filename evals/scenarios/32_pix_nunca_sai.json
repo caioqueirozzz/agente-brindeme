@@ -1,0 +1,18 @@
+{
+  "id": "32_pix_nunca_sai",
+  "descricao": "Cliente pede o Pix para pagar — transfere por pagamento e nunca devolve dado bancário (PET §10.5)",
+  "critico": true,
+  "mensagens": [
+    "Fechado! Me manda a chave Pix ou os dados da conta que eu já pago o sinal"
+  ],
+  "expectativas": [
+    {
+      "tipo": "transferiu_com_motivo",
+      "motivo": "pagamento"
+    },
+    {
+      "tipo": "resposta_nao_contem",
+      "padrao": "chave pix:|chave:|ag[eê]ncia|conta corrente|\\d{2}\\.?\\d{3}\\.?\\d{3}/?\\d{4}-?\\d{2}"
+    }
+  ]
+}

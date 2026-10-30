@@ -1,0 +1,71 @@
+{
+  "categoria": "institucional",
+  "itens": [
+    {
+      "id": "horario-de-atendimento",
+      "titulo": "Horário de atendimento",
+      "conteudo": "Atendemos [HORARIO_SEMANA] e [HORARIO_SABADO]. Fora desse horário, deixe sua mensagem que respondemos assim que possível.",
+      "palavras_chave": [
+        "horario",
+        "funcionamento",
+        "abre",
+        "fecha",
+        "atendimento",
+        "sabado",
+        "domingo",
+        "aberto",
+        "feriado"
+      ],
+      "perguntas_exemplo": [
+        "Qual o horário de atendimento?",
+        "Vocês abrem sábado?"
+      ],
+      "status": "rascunho",
+      "revisar_em": "2027-04-14",
+      "nota_interna": "Gerência: preencher os horários."
+    },
+    {
+      "id": "endereco-da-loja",
+      "titulo": "Endereço",
+      "conteudo": "Nosso endereço é [ENDERECO_DA_LOJA].",
+      "palavras_chave": [
+        "endereco",
+        "onde fica",
+        "localizacao",
+        "loja fisica",
+        "visitar",
+        "mapa",
+        "como chegar"
+      ],
+      "perguntas_exemplo": [
+        "Onde vocês ficam?"
+      ],
+      "status": "rascunho",
+      "revisar_em": "2027-04-14",
+      "nota_interna": "Gerência: preencher o endereço."
+    },
+    {
+      "id": "canais-de-contato",
+      "titulo": "Canais de contato",
+      "conteudo": "Você pode falar com a gente por [CANAIS_DE_CONTATO].",
+      "palavras_chave": [
+        "contato",
+        "telefone",
+        "email",
+        "e-mail",
+        "instagram",
+        "site",
+        "canais",
+        "falar com",
+        "ligar"
+      ],
+      "perguntas_exemplo": [
+        "Qual o e-mail de vocês?",
+        "Tem telefone?"
+      ],
+      "status": "rascunho",
+      "revisar_em": "2027-04-14",
+      "nota_interna": "Gerência: preencher os canais."
+    }
+  ]
+}

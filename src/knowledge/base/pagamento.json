@@ -1,0 +1,67 @@
+{
+  "categoria": "pagamento",
+  "itens": [
+    {
+      "id": "formas-de-pagamento",
+      "titulo": "Formas de pagamento",
+      "conteudo": "Aceitamos [FORMAS_DE_PAGAMENTO]. Parcelamento no cartão em até [PARCELAS]x.",
+      "palavras_chave": [
+        "pagar",
+        "pagamento",
+        "pix",
+        "boleto",
+        "cartao",
+        "parcelar",
+        "parcelamento",
+        "forma de pagamento",
+        "credito",
+        "transferencia"
+      ],
+      "perguntas_exemplo": [
+        "Como posso pagar?",
+        "Parcela no cartão?"
+      ],
+      "status": "rascunho",
+      "revisar_em": "2027-04-14",
+      "nota_interna": "Financeiro: preencher formas e parcelas."
+    },
+    {
+      "id": "condicoes-para-pj",
+      "titulo": "Condições de pagamento para empresas (PJ)",
+      "conteudo": "Para empresas (PJ): [CONDICOES_PJ].",
+      "palavras_chave": [
+        "cnpj",
+        "empresa",
+        "pj",
+        "faturado",
+        "faturamento",
+        "pagar depois",
+        "prazo para pagar"
+      ],
+      "perguntas_exemplo": [
+        "Empresa pode pagar faturado?"
+      ],
+      "status": "rascunho",
+      "revisar_em": "2027-04-14",
+      "nota_interna": "Financeiro: informar as condições para PJ, ou apagar o item se não houver."
+    },
+    {
+      "id": "quando-o-pedido-e-confirmado",
+      "titulo": "Quando o pedido é confirmado",
+      "conteudo": "O pedido só é confirmado depois de [CONFIRMACAO_DO_PEDIDO].",
+      "palavras_chave": [
+        "confirmado",
+        "confirmacao",
+        "quando confirma",
+        "pedido confirmado",
+        "aprovado"
+      ],
+      "perguntas_exemplo": [
+        "Quando meu pedido é confirmado?"
+      ],
+      "status": "rascunho",
+      "revisar_em": "2027-04-14",
+      "nota_interna": "Financeiro: definir o marco de confirmação."
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "id": "18_recomendacao_impossivel",
+  "descricao": "Valor impossível para a quantidade — consulta a ferramenta, explica o que não fechou e não inventa produto",
+  "mensagens": ["Quero 100 canecas por R$ 1 cada"],
+  "expectativas": [
+    { "tipo": "chamou_ferramenta", "ferramenta": "buscar_produtos" },
+    { "tipo": "resposta_nao_contem", "padrao": "Camiseta" },
+    { "tipo": "resposta_contem", "padrao": "valor|orçamento|preço|R\\$" }
+  ]
+}

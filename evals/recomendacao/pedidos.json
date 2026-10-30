@@ -1,0 +1,214 @@
+{
+  "_instrucoes": "Pedidos de recomendação da Fase 3. 'pedido' é o que o cliente disse; os demais campos são o que buscar_produtos receberia. Esta lista inicial foi escrita por quem implementou a ferramenta: a loja deve substituí-la/estendê-la com 30 pedidos reais (critério de pronto da Fase 3). Rode: npm run avaliar:recomendacao",
+  "pedidos": [
+    {
+      "id": "01",
+      "pedido": "Quero um brinde para 50 pessoas no Natal",
+      "consulta": "brinde",
+      "quantidade": 50,
+      "ocasiao": "natal"
+    },
+    {
+      "id": "02",
+      "pedido": "Preciso de 100 canecas, até R$ 20 cada",
+      "consulta": "caneca",
+      "quantidade": 100,
+      "preco_max_unitario": 20
+    },
+    {
+      "id": "03",
+      "pedido": "200 squeezes para um evento esportivo, até R$ 15",
+      "consulta": "squeeze",
+      "quantidade": 200,
+      "preco_max_unitario": 15,
+      "ocasiao": "esportivo"
+    },
+    {
+      "id": "04",
+      "pedido": "Algo para presentear 60 professores",
+      "consulta": "algo para professores",
+      "quantidade": 60
+    },
+    {
+      "id": "05",
+      "pedido": "30 cadernos, tenho R$ 600 no total",
+      "consulta": "caderno",
+      "quantidade": 30,
+      "orcamento_total": 600
+    },
+    {
+      "id": "06",
+      "pedido": "500 ecobags para uma feira, até R$ 6 cada",
+      "consulta": "ecobag",
+      "quantidade": 500,
+      "preco_max_unitario": 6,
+      "ocasiao": "eventos"
+    },
+    {
+      "id": "07",
+      "pedido": "Kit de boas-vindas para 15 novos colaboradores",
+      "consulta": "kit",
+      "quantidade": 15,
+      "ocasiao": "onboarding"
+    },
+    {
+      "id": "08",
+      "pedido": "40 canecas térmicas",
+      "consulta": "caneca térmica",
+      "quantidade": 40
+    },
+    {
+      "id": "09",
+      "pedido": "80 garrafas, no máximo R$ 35 cada",
+      "consulta": "garrafa",
+      "quantidade": 80,
+      "preco_max_unitario": 35
+    },
+    {
+      "id": "10",
+      "pedido": "Brinde para evento corporativo, 300 pessoas, até R$ 10",
+      "consulta": "brinde",
+      "quantidade": 300,
+      "preco_max_unitario": 10,
+      "ocasiao": "corporativo"
+    },
+    {
+      "id": "11",
+      "pedido": "1000 canetas, até R$ 2 cada",
+      "consulta": "caneta",
+      "quantidade": 1000,
+      "preco_max_unitario": 2
+    },
+    {
+      "id": "12",
+      "pedido": "50 mochilas até R$ 60",
+      "consulta": "mochila",
+      "quantidade": 50,
+      "preco_max_unitario": 60
+    },
+    {
+      "id": "13",
+      "pedido": "Quero só 10 canecas",
+      "consulta": "caneca",
+      "quantidade": 10
+    },
+    {
+      "id": "14",
+      "pedido": "100 canecas, mas só tenho R$ 100 no total",
+      "consulta": "caneca",
+      "quantidade": 100,
+      "orcamento_total": 100
+    },
+    {
+      "id": "15",
+      "pedido": "2000 chaveiros até R$ 1,50",
+      "consulta": "chaveiro",
+      "quantidade": 2000,
+      "preco_max_unitario": 1.5
+    },
+    {
+      "id": "16",
+      "pedido": "Necessaire para o Dia das Mães, 40 unidades",
+      "consulta": "necessaire",
+      "quantidade": 40,
+      "ocasiao": "dia das mães"
+    },
+    {
+      "id": "17",
+      "pedido": "100 carregadores portáteis, até R$ 40",
+      "consulta": "power bank",
+      "quantidade": 100,
+      "preco_max_unitario": 40
+    },
+    {
+      "id": "18",
+      "pedido": "150 bonés para a equipe",
+      "consulta": "boné",
+      "quantidade": 150
+    },
+    {
+      "id": "19",
+      "pedido": "Brinde sustentável para 200 clientes",
+      "consulta": "brinde sustentável",
+      "quantidade": 200,
+      "ocasiao": "sustentabilidade"
+    },
+    {
+      "id": "20",
+      "pedido": "70 guarda-chuvas, até R$ 30",
+      "consulta": "guarda-chuva",
+      "quantidade": 70,
+      "preco_max_unitario": 30
+    },
+    {
+      "id": "21",
+      "pedido": "120 copos para a festa da empresa",
+      "consulta": "copo",
+      "quantidade": 120,
+      "ocasiao": "eventos"
+    },
+    {
+      "id": "22",
+      "pedido": "Kit de formatura com caderno e caneta, 80 unidades",
+      "consulta": "caderno",
+      "quantidade": 80,
+      "ocasiao": "formatura"
+    },
+    {
+      "id": "23",
+      "pedido": "Agenda para dar aos clientes, 250 unidades",
+      "consulta": "agenda",
+      "quantidade": 250
+    },
+    {
+      "id": "24",
+      "pedido": "25 almofadas personalizadas",
+      "consulta": "almofada",
+      "quantidade": 25
+    },
+    {
+      "id": "25",
+      "pedido": "60 toalhas para academia, até R$ 25",
+      "consulta": "toalha",
+      "quantidade": 60,
+      "preco_max_unitario": 25,
+      "ocasiao": "esportivo"
+    },
+    {
+      "id": "26",
+      "pedido": "100 camisetas para o evento",
+      "consulta": "camiseta",
+      "quantidade": 100,
+      "ocasiao": "eventos"
+    },
+    {
+      "id": "27",
+      "pedido": "Brinde baratinho, 1000 unidades, até R$ 3",
+      "consulta": "brinde",
+      "quantidade": 1000,
+      "preco_max_unitario": 3
+    },
+    {
+      "id": "28",
+      "pedido": "Quero 5 carros elétricos de brinde",
+      "consulta": "carro elétrico",
+      "quantidade": 5
+    },
+    {
+      "id": "29",
+      "pedido": "Presente executivo para 20 diretores, até R$ 150",
+      "consulta": "presente executivo",
+      "quantidade": 20,
+      "preco_max_unitario": 150,
+      "ocasiao": "executivo"
+    },
+    {
+      "id": "30",
+      "pedido": "Dia dos Pais: 45 unidades, R$ 1.500 no total",
+      "consulta": "brinde",
+      "quantidade": 45,
+      "orcamento_total": 1500,
+      "ocasiao": "dia dos pais"
+    }
+  ]
+}

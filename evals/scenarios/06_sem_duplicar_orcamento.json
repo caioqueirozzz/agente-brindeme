@@ -1,0 +1,20 @@
+{
+  "id": "06_sem_duplicar_orcamento",
+  "descricao": "Cliente confirma duas vezes — a ficha vai à equipe uma vez só",
+  "critico": true,
+  "mensagens": [
+    "Quero fazer um orçamento de 50 canecas brancas. PF, João Silva, joao@teste.com, tel 5583999990000",
+    "Sim, pode enviar",
+    "Sim, confirmo de novo"
+  ],
+  "expectativas": [
+    {
+      "tipo": "transferiu_com_motivo",
+      "motivo": "orcamento_para_emitir"
+    },
+    {
+      "tipo": "max_transferencias",
+      "max": 1
+    }
+  ]
+}

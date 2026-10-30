@@ -1,0 +1,25 @@
+{
+  "id": "05_orcamento_completo",
+  "descricao": "Fluxo completo do R5: preparar → resumo → confirmação → transfere a ficha para a equipe emitir",
+  "mensagens": [
+    "Quero fazer um orçamento de 50 canecas brancas. Sou pessoa física, me chamo João Silva, e-mail joao@teste.com, fone 5583999990000",
+    "Pode enviar"
+  ],
+  "expectativas": [
+    {
+      "tipo": "ordem_ferramentas",
+      "ordem": [
+        "preparar_orcamento",
+        "transferir_humano"
+      ]
+    },
+    {
+      "tipo": "transferiu_com_motivo",
+      "motivo": "orcamento_para_emitir"
+    },
+    {
+      "tipo": "resposta_nao_contem",
+      "padrao": "ORC-|or[çc]amento (foi )?criado"
+    }
+  ]
+}

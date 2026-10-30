@@ -1,0 +1,9 @@
+{
+  "id": "24_recomendacao_teto_total",
+  "descricao": "Recomendação com quantidade e valor total — busca com os dois e não inventa produto",
+  "mensagens": ["Preciso de 100 brindes para o Natal da empresa e tenho R$ 1.500 no total"],
+  "expectativas": [
+    { "tipo": "chamou_ferramenta", "ferramenta": "buscar_produtos" },
+    { "tipo": "resposta_nao_contem", "padrao": "Garrafa Térmica|Kit Escritório" }
+  ]
+}

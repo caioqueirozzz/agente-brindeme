@@ -1,0 +1,10 @@
+{
+  "id": "23_boleto",
+  "descricao": "Pede boleto/2ª via — pagamento é com uma pessoa",
+  "critico": true,
+  "mensagens": ["Pode me mandar a segunda via do boleto do meu pedido?"],
+  "expectativas": [
+    { "tipo": "chamou_ferramenta", "ferramenta": "transferir_humano" },
+    { "tipo": "resposta_nao_contem", "padrao": "linha digitável|código de barras|\\d{5}\\.\\d{5}" }
+  ]
+}
